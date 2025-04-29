@@ -1,0 +1,36 @@
+[gd_scene load_steps=5 format=3 uid="uid://bksiqj83372tt"]
+
+[ext_resource type="Texture2D" uid="uid://c4hjp2sytg8lt" path="res://Assets/Sprite/Airship/Airship1_3.png" id="1_xx53n"]
+[ext_resource type="Script" uid="uid://bku6peurf8mw6" path="res://Characters/Scripts/MainShipController.gd" id="2_2v6dj"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_2v6dj"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_xx53n")
+}],
+"loop": true,
+"name": &"AirShipIdle",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xx53n"]
+size = Vector2(910, 830)
+
+[node name="AirShip" type="Node2D"]
+
+[node name="AirShip" type="AnimatedSprite2D" parent="."]
+position = Vector2(271, 51.2)
+scale = Vector2(0.1, 0.1)
+sprite_frames = SubResource("SpriteFrames_2v6dj")
+animation = &"AirShipIdle"
+
+[node name="Area2D" type="Area2D" parent="AirShip"]
+position = Vector2(-15, 2.99997)
+scale = Vector2(1, 1)
+script = ExtResource("2_2v6dj")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AirShip/Area2D"]
+shape = SubResource("RectangleShape2D_xx53n")
+
+[connection signal="input_event" from="AirShip/Area2D" to="AirShip/Area2D" method="_on_input_event"]
