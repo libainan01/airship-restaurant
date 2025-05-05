@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://cqiv8xsfwflqs"]
+
+[ext_resource type="Script" uid="uid://25lahct0wga8" path="res://Characters/Scripts/key_monitor.gd" id="1_u2ei1"]
+
+[node name="Restauranteur" type="Node2D"]
+
+[node name="KeyMonitor" type="Node" parent="."]
+script = ExtResource("1_u2ei1")
+
+[node name="RestauranteurTimeLine" type="Timer" parent="KeyMonitor"]
+
+[connection signal="timeout" from="KeyMonitor/RestauranteurTimeLine" to="KeyMonitor" method="_on_restauranteur_time_line_timeout"]

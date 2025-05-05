@@ -1,0 +1,16 @@
+res://Characters/truck.tscn
+res://Characters/Scripts/Airship/kitchen_control.gd
+res://Characters/trunk_pulley.gd
+res://Characters/cable_base.tscn
+res://Characters/line_2d_control.gd
+res://Levels/testLevel.tscn
+res://Characters/MainAirship.tscn
+res://Characters/resturant.tscn
+res://Characters/trunk_controller.gd
+res://Characters/Scripts/Airship/MainShipController.gd
+res://Characters/trunk_base.gd
+res://Characters/Pulley.gd
+res://Characters/restauranteur.tscn
+res://Characters/Scripts/key_monitor.gd
+res://Characters/Scripts/Pulley.gd
+res://Characters/Scripts/line_2d_control.gd

@@ -1,7 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://bksiqj83372tt"]
+[gd_scene load_steps=7 format=3 uid="uid://bksiqj83372tt"]
 
 [ext_resource type="Texture2D" uid="uid://c4hjp2sytg8lt" path="res://Assets/Sprite/Airship/Airship1_3.png" id="1_xx53n"]
-[ext_resource type="Script" uid="uid://bku6peurf8mw6" path="res://Characters/Scripts/MainShipController.gd" id="2_2v6dj"]
+[ext_resource type="Script" uid="uid://bku6peurf8mw6" path="res://Characters/Scripts/Airship/MainShipController.gd" id="2_2v6dj"]
+[ext_resource type="Script" uid="uid://diefyddief16i" path="res://Characters/Scripts/Airship/kitchen_control.gd" id="3_t31kf"]
+[ext_resource type="Texture2D" uid="uid://6hx5ea3mfb4w" path="res://icon.svg" id="4_ki46s"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_2v6dj"]
 animations = [{
@@ -18,19 +20,34 @@ animations = [{
 size = Vector2(910, 830)
 
 [node name="AirShip" type="Node2D"]
+metadata/cable_start_point = NodePath("AirShip/cable_start_point")
 
 [node name="AirShip" type="AnimatedSprite2D" parent="."]
-position = Vector2(271, 51.2)
+position = Vector2(47, 48)
 scale = Vector2(0.1, 0.1)
 sprite_frames = SubResource("SpriteFrames_2v6dj")
 animation = &"AirShipIdle"
 
 [node name="Area2D" type="Area2D" parent="AirShip"]
-position = Vector2(-15, 2.99997)
-scale = Vector2(1, 1)
 script = ExtResource("2_2v6dj")
+metadata/AirShip = NodePath("..")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AirShip/Area2D"]
 shape = SubResource("RectangleShape2D_xx53n")
 
+[node name="KitchenControl" type="Node" parent="AirShip"]
+script = ExtResource("3_t31kf")
+
+[node name="KitchenTimer" type="Timer" parent="AirShip/KitchenControl"]
+
+[node name="cable_start_point" type="Node2D" parent="AirShip"]
+position = Vector2(460, -70)
+
+[node name="Icon" type="Sprite2D" parent="AirShip/cable_start_point"]
+visible = false
+texture = ExtResource("4_ki46s")
+
 [connection signal="input_event" from="AirShip/Area2D" to="AirShip/Area2D" method="_on_input_event"]
+[connection signal="mouse_entered" from="AirShip/Area2D" to="AirShip/Area2D" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="AirShip/Area2D" to="AirShip/Area2D" method="_on_mouse_exited"]
+[connection signal="timeout" from="AirShip/KitchenControl/KitchenTimer" to="AirShip/KitchenControl" method="_on_kitchen_timer_timeout"]
