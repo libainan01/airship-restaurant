@@ -1,3 +1,4 @@
+class_name line_2d_control
 extends Line2D
 
 var StartPoint

@@ -1,5 +1,6 @@
+class_name trunk_base
 extends Node2D
-var Kitchen:Node
+var Kitchen:kitchen_control
 @onready var TrunkTimer = $Pulley/TrunkTimer
 
 

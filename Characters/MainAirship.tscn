@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://bksiqj83372tt"]
+[gd_scene load_steps=8 format=3 uid="uid://bksiqj83372tt"]
 
 [ext_resource type="Texture2D" uid="uid://c4hjp2sytg8lt" path="res://Assets/Sprite/Airship/Airship1_3.png" id="1_xx53n"]
 [ext_resource type="Script" uid="uid://bku6peurf8mw6" path="res://Characters/Scripts/Airship/MainShipController.gd" id="2_2v6dj"]
 [ext_resource type="Script" uid="uid://diefyddief16i" path="res://Characters/Scripts/Airship/kitchen_control.gd" id="3_t31kf"]
 [ext_resource type="Texture2D" uid="uid://6hx5ea3mfb4w" path="res://icon.svg" id="4_ki46s"]
+[ext_resource type="PackedScene" uid="uid://cqiv8xsfwflqs" path="res://Characters/restauranteur.tscn" id="5_o8mtk"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_2v6dj"]
 animations = [{
@@ -46,6 +47,8 @@ position = Vector2(460, -70)
 [node name="Icon" type="Sprite2D" parent="AirShip/cable_start_point"]
 visible = false
 texture = ExtResource("4_ki46s")
+
+[node name="Restauranteur" parent="AirShip" instance=ExtResource("5_o8mtk")]
 
 [connection signal="input_event" from="AirShip/Area2D" to="AirShip/Area2D" method="_on_input_event"]
 [connection signal="mouse_entered" from="AirShip/Area2D" to="AirShip/Area2D" method="_on_mouse_entered"]

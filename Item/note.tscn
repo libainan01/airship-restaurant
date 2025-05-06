@@ -1,4 +1,18 @@
-[gd_scene format=3 uid="uid://collcavxopfnk"]
+[gd_scene load_steps=4 format=3 uid="uid://collcavxopfnk"]
+
+[ext_resource type="Script" uid="uid://dmbkyvreqlf0o" path="res://Item/Scripts/note_button.gd" id="1_j6e3w"]
+[ext_resource type="Texture2D" uid="uid://b8vb2cusrx1qu" path="res://Assets/Sprite/Note.png" id="1_j21et"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_j21et"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_j21et")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
 
 [node name="Note" type="Control"]
 layout_mode = 3
@@ -7,3 +21,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="NoteButton" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 15.0
+script = ExtResource("1_j6e3w")
+
+[node name="Note" type="AnimatedSprite2D" parent="NoteButton"]
+position = Vector2(5.12, 7.68)
+scale = Vector2(0.01, 0.01)
+sprite_frames = SubResource("SpriteFrames_j21et")

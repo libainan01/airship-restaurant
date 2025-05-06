@@ -1,3 +1,4 @@
+class_name MainShipController
 extends Area2D
 
 var left_hoding_trigger_time = 0.5

@@ -1,3 +1,4 @@
+class_name kitchen_control
 extends Node
 @onready var KitchenTimer = $KitchenTimer
 var ware_house_current_space : int

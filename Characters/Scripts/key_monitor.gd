@@ -1,12 +1,15 @@
+class_name key_monitor
 extends Node
 @onready var restauranteur_time_line = $RestauranteurTimeLine
 
 enum WORK_STATE
 {
-	workhard,
-	rest,
-	worknormal
+	workhard = 0,
+	rest = 1,
+	worknormal = 2
 }
+
+signal settlement_work_status_signal(work_state:WORK_STATE)
 
 var current_work_state : WORK_STATE = WORK_STATE.rest #当前的工作状态
 
@@ -18,6 +21,7 @@ func _on_restauranteur_time_line_timeout() -> void:
 	_settlement_work_status(current_work_state)#每隔10分钟结算一次工作状态
 
 func _input(event: InputEvent) -> void:
+	emit_signal("settlement_work_status_signal",current_work_state)
 	if event is InputEventKey:
 		workload += 1
 	if workload <= 500:
@@ -35,6 +39,7 @@ func _settlement_work_status(work_state:WORK_STATE)->void:
 			_worknormal_event()
 		WORK_STATE.workhard:
 			_workhard_event()
+	#emit_signal("settlement_work_status_signal",work_state)
 
 func _workhard_event()->void:
 	pass
