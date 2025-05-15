@@ -32,3 +32,5 @@ script = ExtResource("1_j6e3w")
 position = Vector2(5.12, 7.68)
 scale = Vector2(0.01, 0.01)
 sprite_frames = SubResource("SpriteFrames_j21et")
+
+[connection signal="button_down" from="NoteButton" to="NoteButton" method="_on_button_down"]

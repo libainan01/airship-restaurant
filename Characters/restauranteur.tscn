@@ -1,13 +1,25 @@
-[gd_scene load_steps=4 format=3 uid="uid://cqiv8xsfwflqs"]
+[gd_scene load_steps=5 format=3 uid="uid://cqiv8xsfwflqs"]
 
 [ext_resource type="Script" uid="uid://25lahct0wga8" path="res://Characters/Scripts/key_monitor.gd" id="1_u2ei1"]
+[ext_resource type="Texture2D" uid="uid://6hx5ea3mfb4w" path="res://icon.svg" id="1_wdxvt"]
 [ext_resource type="Script" uid="uid://mcqqvrxek1mu" path="res://Characters/Scripts/restauranteur.gd" id="1_wones"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_u2ei1"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_wdxvt")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
 
 [node name="Restauranteur" type="Node2D"]
 
 [node name="Restauranteur" type="AnimatedSprite2D" parent="."]
+position = Vector2(34, 33)
+scale = Vector2(0.5, 0.5)
 sprite_frames = SubResource("SpriteFrames_u2ei1")
 script = ExtResource("1_wones")
 

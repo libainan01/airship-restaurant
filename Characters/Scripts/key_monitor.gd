@@ -21,7 +21,6 @@ func _on_restauranteur_time_line_timeout() -> void:
 	_settlement_work_status(current_work_state)#每隔10分钟结算一次工作状态
 
 func _input(event: InputEvent) -> void:
-	emit_signal("settlement_work_status_signal",current_work_state)
 	if event is InputEventKey:
 		workload += 1
 	if workload <= 500:
@@ -30,6 +29,7 @@ func _input(event: InputEvent) -> void:
 		_change_work_state(WORK_STATE.worknormal)
 	if workload >= 1000:
 		_change_work_state(WORK_STATE.workhard)
+	print("PressButton %s"%[workload])
 
 func _settlement_work_status(work_state:WORK_STATE)->void:
 	match work_state:
@@ -39,7 +39,7 @@ func _settlement_work_status(work_state:WORK_STATE)->void:
 			_worknormal_event()
 		WORK_STATE.workhard:
 			_workhard_event()
-	#emit_signal("settlement_work_status_signal",work_state)
+	emit_signal("settlement_work_status_signal",work_state)#后续需要根据不同的WORK_STATE选择不同的文本库
 
 func _workhard_event()->void:
 	pass

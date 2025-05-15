@@ -30,5 +30,4 @@ animation = &"Idle"
 
 [node name="TrunkTimer" type="Timer" parent="Pulley"]
 
-[connection signal="trunk_state_change_signal" from="." to="Pulley" method="_on_trunk_base_trunk_state_change_signal"]
 [connection signal="timeout" from="Pulley/TrunkTimer" to="." method="_on_trunk_timer_timeout"]

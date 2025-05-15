@@ -13,8 +13,6 @@ enum TRUNK_STATE{
 
 var current_trunk_state:TRUNK_STATE = TRUNK_STATE.WAITATSTART
 
-signal trunk_state_change_signal(message:TRUNK_STATE)
-
 var Capacity = 4
 var CurrentCapacity = 0
 
@@ -26,7 +24,6 @@ func packing (num:int)->void :
 	CurrentCapacity += num
 	Kitchen.send_dining(num)
 	if CurrentCapacity >= Capacity:
-		emit_signal("trunk_state_change_signal",TRUNK_STATE.TOEND)
 		change_trunk_state(TRUNK_STATE.TOEND)
 
 func get_dining ()->void:

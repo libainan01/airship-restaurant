@@ -12,13 +12,9 @@ config_version=5
 
 config/name="Airship Restaurant"
 run/main_scene="uid://iclvqa0dsjqj"
-config/features=PackedStringArray("4.4", "Forward Plus")
+config/features=PackedStringArray("4.4", "C#", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 0)
 config/icon="res://icon.svg"
-
-[autoload]
-
-GameMode="*res://Script/GameMode.gd"
 
 [debug]
 
@@ -26,6 +22,9 @@ file_logging/enable_file_logging=true
 
 [display]
 
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/size/mode=3
 window/size/borderless=true
 window/size/always_on_top=true
 window/size/transparent=true
@@ -38,7 +37,7 @@ project/assembly_name="Airship Restaurant"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/enhanceinput/plugin.cfg", "res://addons/mouse_passthrough/plugin.cfg")
+enabled=PackedStringArray("res://addons/window_controller/plugin.cfg")
 
 [rendering]
 

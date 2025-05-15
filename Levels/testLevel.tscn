@@ -1,20 +1,29 @@
-[gd_scene load_steps=6 format=3 uid="uid://iclvqa0dsjqj"]
+[gd_scene load_steps=5 format=3 uid="uid://iclvqa0dsjqj"]
 
 [ext_resource type="Script" uid="uid://wnm5iquy4pkw" path="res://Levels/main_scene_controller.gd" id="1_faoc1"]
 [ext_resource type="PackedScene" uid="uid://bksiqj83372tt" path="res://Characters/MainAirship.tscn" id="1_xeujy"]
 [ext_resource type="PackedScene" uid="uid://cfibamxfjjfs" path="res://Characters/resturant.tscn" id="2_ftlgd"]
 [ext_resource type="PackedScene" uid="uid://lsw03arsiqei" path="res://Characters/truck.tscn" id="4_owrup"]
-[ext_resource type="PackedScene" uid="uid://3m8s5piih5ki" path="res://Characters/cable_base.tscn" id="5_owrup"]
 
 [node name="MainScene" type="Node2D"]
 script = ExtResource("1_faoc1")
 
-[node name="CableBase" parent="." instance=ExtResource("5_owrup")]
+[node name="AirShipWindow" type="Window" parent="."]
+initial_position = 1
+borderless = true
 
-[node name="AirShip" parent="." instance=ExtResource("1_xeujy")]
+[node name="AirShip" parent="AirShipWindow" instance=ExtResource("1_xeujy")]
 position = Vector2(0, -6)
 
-[node name="Resturant" parent="." instance=ExtResource("2_ftlgd")]
-position = Vector2(870, 563)
+[node name="ResturantWindow" type="Window" parent="."]
+position = Vector2i(0, 36)
+borderless = true
 
-[node name="Truck" parent="." instance=ExtResource("4_owrup")]
+[node name="Resturant" parent="ResturantWindow" instance=ExtResource("2_ftlgd")]
+position = Vector2(1689, 979)
+
+[node name="TruckWindow" type="Window" parent="."]
+position = Vector2i(0, 36)
+borderless = true
+
+[node name="Truck" parent="TruckWindow" instance=ExtResource("4_owrup")]

@@ -49,6 +49,7 @@ visible = false
 texture = ExtResource("4_ki46s")
 
 [node name="Restauranteur" parent="AirShip" instance=ExtResource("5_o8mtk")]
+position = Vector2(10, 150)
 
 [connection signal="input_event" from="AirShip/Area2D" to="AirShip/Area2D" method="_on_input_event"]
 [connection signal="mouse_entered" from="AirShip/Area2D" to="AirShip/Area2D" method="_on_mouse_entered"]

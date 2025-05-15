@@ -19,7 +19,7 @@ func _ready() -> void:
 	path2D = get_node("/root/MainScene/CableBase/Line2D/Path2D") as Path2D
 
 func _process(delta: float) -> void:
-	pulley_move(_trunk_base.current_trunk_state,delta)
+	pulley_move(_trunk_base.current_trunk_state,delta)#获取到Trunk_base中的State，来切换移动状态
 
 func pulley_move(move_state:int,delta:float)->void:
 	if move_state == 2 or move_state == 3: return # 如果当前状态是Wait，则直接返回
@@ -28,19 +28,17 @@ func pulley_move(move_state:int,delta:float)->void:
 		var path_length = path2D.curve.get_baked_length()
 		if path_follow.progress >= path_length-5:
 			position = EndPoint
-			_trunk_base.change_trunk_state(3)#当到达终点，停止运动
+			_trunk_base.change_trunk_state(trunk_base.TRUNK_STATE.WAITATEND)#当到达终点，停止运动
 			return
 		position = path_follow.global_position
 	if move_state == 1:
 		path_follow.progress -= MoveSpeed*delta
 		if path_follow.progress <= 5:
 			position = StartPoint
-			_trunk_base.change_trunk_state(2)#当到达终点，停止运动
+			_trunk_base.change_trunk_state(trunk_base.TRUNK_STATE.WAITATSTART)#当到达终点，停止运动
 			return
 		position = path_follow.global_position
 
 func update_position () ->void:
-	StartPoint = get_node("/root/MainScene/AirShip/AirShip/cable_start_point").global_position
-	EndPoint = get_node("/root/MainScene/Resturant/cable_end_point").global_position
 	if _trunk_base.current_trunk_state == 2 :
 		position = StartPoint
