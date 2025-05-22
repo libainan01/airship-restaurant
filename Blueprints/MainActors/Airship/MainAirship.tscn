@@ -1,0 +1,52 @@
+[gd_scene load_steps=8 format=3 uid="uid://bksiqj83372tt"]
+
+[ext_resource type="Script" uid="uid://bpr41wae5q4lh" path="res://Blueprints/MainActors/Airship/Scripts/airship_scene.gd" id="1_r0d50"]
+[ext_resource type="Texture2D" uid="uid://c4hjp2sytg8lt" path="res://Assets/Sprite/Airship/Airship1_3.png" id="2_0l8c3"]
+[ext_resource type="Script" uid="uid://diefyddief16i" path="res://Blueprints/MainActors/Airship/Scripts/kitchen_control.gd" id="3_dq4a1"]
+[ext_resource type="PackedScene" uid="uid://cqiv8xsfwflqs" path="res://Blueprints/MainActors/Restauranterur/restauranteur.tscn" id="5_ta1ni"]
+[ext_resource type="Script" uid="uid://bku6peurf8mw6" path="res://Blueprints/MainActors/Airship/Scripts/airship_controller.gd" id="6_5cscw"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_2v6dj"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_0l8c3")
+}],
+"loop": true,
+"name": &"AirShipIdle",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xx53n"]
+size = Vector2(707.499, 702.501)
+
+[node name="AirShip" type="Node2D"]
+script = ExtResource("1_r0d50")
+
+[node name="AirShip" type="AnimatedSprite2D" parent="."]
+position = Vector2(40, 42)
+scale = Vector2(0.0783203, 0.0822266)
+sprite_frames = SubResource("SpriteFrames_2v6dj")
+animation = &"AirShipIdle"
+
+[node name="KitchenControl" type="Node" parent="AirShip"]
+script = ExtResource("3_dq4a1")
+
+[node name="KitchenTimer" type="Timer" parent="AirShip/KitchenControl"]
+
+[node name="Restauranteur" parent="AirShip" instance=ExtResource("5_ta1ni")]
+position = Vector2(10, 150)
+
+[node name="Airship_Controller" type="Area2D" parent="AirShip"]
+position = Vector2(141.726, 110.67)
+scale = Vector2(1.27681, 1.21615)
+script = ExtResource("6_5cscw")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AirShip/Airship_Controller"]
+position = Vector2(-103.75, -101.25)
+shape = SubResource("RectangleShape2D_xx53n")
+
+[connection signal="timeout" from="AirShip/KitchenControl/KitchenTimer" to="AirShip/KitchenControl" method="_on_kitchen_timer_timeout"]
+[connection signal="input_event" from="AirShip/Airship_Controller" to="AirShip/Airship_Controller" method="_on_input_event"]
+[connection signal="mouse_entered" from="AirShip/Airship_Controller" to="AirShip/Airship_Controller" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="AirShip/Airship_Controller" to="AirShip/Airship_Controller" method="_on_mouse_exited"]

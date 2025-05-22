@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://iclvqa0dsjqj"]
+
+[ext_resource type="Script" uid="uid://wnm5iquy4pkw" path="res://Blueprints/Levels/main_scene_controller.gd" id="1_faoc1"]
+[ext_resource type="PackedScene" uid="uid://bksiqj83372tt" path="res://Blueprints/MainActors/Airship/MainAirship.tscn" id="2_l2po4"]
+
+[node name="MainScene" type="Node2D"]
+script = ExtResource("1_faoc1")
+
+[node name="AirShip" parent="." instance=ExtResource("2_l2po4")]
