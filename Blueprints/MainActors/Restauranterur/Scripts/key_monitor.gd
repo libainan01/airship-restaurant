@@ -29,7 +29,7 @@ func _input(event: InputEvent) -> void:
 		_change_work_state(WORK_STATE.worknormal)
 	if workload >= 1000:
 		_change_work_state(WORK_STATE.workhard)
-	print("PressButton %s"%[workload])
+	#print("PressButton %s"%[workload])
 
 func _settlement_work_status(work_state:WORK_STATE)->void:
 	match work_state:
