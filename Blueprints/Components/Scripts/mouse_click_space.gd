@@ -1,8 +1,5 @@
 extends Path2D
 
-
-
-
 class_name MouseClickSpace
 
 var _path_points:PackedVector2Array #异形窗口边框
