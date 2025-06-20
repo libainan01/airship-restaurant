@@ -1,0 +1,3 @@
+[gd_scene format=3 uid="uid://cmyhpa662cocp"]
+
+[node name="DockingDevice" type="Node2D"]

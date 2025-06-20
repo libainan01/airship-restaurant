@@ -1,5 +1,6 @@
-[gd_scene load_steps=5 format=3 uid="uid://cqiv8xsfwflqs"]
+[gd_scene load_steps=6 format=3 uid="uid://cqiv8xsfwflqs"]
 
+[ext_resource type="Script" uid="uid://buh16r8gs1bg2" path="res://Blueprints/MainActors/Restauranterur/Scripts/restauranteur_base.gd" id="1_j1c80"]
 [ext_resource type="Script" uid="uid://25lahct0wga8" path="res://Blueprints/MainActors/Restauranterur/Scripts/key_monitor.gd" id="1_u2ei1"]
 [ext_resource type="Texture2D" uid="uid://6hx5ea3mfb4w" path="res://icon.svg" id="1_wdxvt"]
 [ext_resource type="Script" uid="uid://mcqqvrxek1mu" path="res://Blueprints/MainActors/Restauranterur/Scripts/restauranteur.gd" id="1_wones"]
@@ -15,7 +16,8 @@ animations = [{
 "speed": 5.0
 }]
 
-[node name="Restauranteur" type="Node2D"]
+[node name="Restauranteur_base" type="Node2D"]
+script = ExtResource("1_j1c80")
 
 [node name="Restauranteur" type="AnimatedSprite2D" parent="."]
 position = Vector2(34, 33)

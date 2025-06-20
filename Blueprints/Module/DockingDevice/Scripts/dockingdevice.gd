@@ -1,0 +1,2 @@
+class_name Docking_device
+extends Node

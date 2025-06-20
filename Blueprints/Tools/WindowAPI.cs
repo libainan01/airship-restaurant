@@ -6,9 +6,9 @@ using System;
 public partial class WindowAPI : Node
 {
 
-   public enum WindowsStyle
+	public enum WindowsStyle
 	{
-		ToolWindow,
+		ToolWindow = 0,
 	}
 
 	[DllImport("user32.dll",SetLastError = true)]
@@ -27,22 +27,16 @@ public partial class WindowAPI : Node
 	private const int SWP_NOZORDER = 0x0004;
 	private const int SWP_FRAMECHANGED = 0x0020;
 
-	public void Setwindowstyle (Window window , WindowsStyle windowsStyle)
+	public void Setwindowstyle (IntPtr windowHandle , WindowsStyle windowsStyle)
 	{
-		if (window == null) return; 
-		IntPtr windowHandle = (IntPtr)DisplayServer.WindowGetNativeHandle((DisplayServer.HandleType)0,0);
-		
-		if(windowHandle == IntPtr.Zero) return;
-		
 		//获取当前窗口样式
+		if (windowHandle == IntPtr.Zero) return;
 		IntPtr exStyle = GetWindowLong(windowHandle,GWL_EXSTYLE);
 		switch (windowsStyle)
 		{
 			case WindowsStyle.ToolWindow:
-			IntPtr newExStyle = exStyle & ~WS_EX_APPWINDOW | WS_EX_TOOLWINDOW;
-			SetWindowLong(windowHandle,GWL_EXSTYLE,newExStyle);
-			SetWindowPos(windowHandle,0,0,0,0,0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-			break;
+				SetWindowLong(windowHandle, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW);
+				break;
 		}
 	}
 

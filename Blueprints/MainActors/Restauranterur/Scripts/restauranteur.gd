@@ -1,4 +1,4 @@
-class_name restauranteur
+class_name restauranteur_anim
 extends AnimatedSprite2D
 
 const NOTE_MANAGER_PATH = preload("res://Blueprints/Item/Scripts/NoteManager.gd")

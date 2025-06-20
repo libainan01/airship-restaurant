@@ -1,0 +1,2 @@
+class_name restauranteur
+extends AirshipNode2D
