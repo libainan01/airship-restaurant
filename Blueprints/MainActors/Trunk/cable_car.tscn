@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://c5mqfu87vd1gq"]
 
 [ext_resource type="Script" uid="uid://py1ch1occj2o" path="res://Blueprints/MainActors/Trunk/Scripts/cable_car.gd" id="1_aysl2"]
-[ext_resource type="Script" uid="uid://dh2xkx76c8lrr" path="res://Blueprints/MainActors/Trunk/Scripts/pulley.gd" id="1_vk0og"]
+[ext_resource type="Script" uid="uid://dh2xkx76c8lrr" path="res://Blueprints/MainActors/Trunk/Scripts/Pulley.gd" id="1_vk0og"]
 [ext_resource type="Texture2D" uid="uid://vuvysw7k1php" path="res://Assets/Sprite/Airship/Platform.png" id="2_aysl2"]
 [ext_resource type="Script" uid="uid://cjtjx5w6b1lce" path="res://Blueprints/MainActors/Trunk/Scripts/trunk.gd" id="3_5t7yw"]
 

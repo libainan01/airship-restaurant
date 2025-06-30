@@ -1,12 +1,8 @@
 class_name Cable_car
 extends Node2D
 
-var _path_follow:PathFollow2D
-var _docing_device:Docking_device
-
-func _init(new_path_follow:PathFollow2D,new_docking_device:Docking_device) -> void:
-	_path_follow = new_path_follow
-	_docing_device = new_docking_device
+func _init_cable_car(new_path_follow:PathFollow2D) -> void:
+	_move_path = new_path_follow
 
 func _ready() -> void:
 	pass
@@ -17,6 +13,7 @@ var _MoveSpeed = 100
 var _target_position:Vector2
 var _canmove :bool = false
 var _move_path :PathFollow2D
+var _task_progress :float
 #endregion
 
 #region 移动相关
@@ -29,7 +26,7 @@ func _process(delta: float) -> void:
 	pass
 
 func _cable_car_move(delta:float)->void:
-	
+	_move_path.progress = _move_path.progress + _MoveSpeed * delta
 	pass
 
 func _call_the_trunk(caller:Node2D)->void:

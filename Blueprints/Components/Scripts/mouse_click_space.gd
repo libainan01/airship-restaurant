@@ -114,17 +114,17 @@ func insert_point (newPoint:PolygonPoint,polygonPoint_owner:Node,pointRangeHead:
 			_insert_point(newPoint,insertposition)
 	_reload_all_point()
 
-func insert_list (head:PolygonPoint,tile:PolygonPoint,polygonPoint_owner,pointRangeHead:PointType,pointRangeTail:PointType)->void:
-	var _head = head
+func insert_list (new_head:PolygonPoint,new_tile:PolygonPoint,polygonPoint_owner,pointRangeHead:PointType,pointRangeTail:PointType)->void:
+	var _head = new_head
 	while _head != null:
 		_limitation_to_border(_head)
 		_head = _head.next_point
-	_PolygonPointMap.get_or_add(polygonPoint_owner,[head,tile])
+	_PolygonPointMap.get_or_add(polygonPoint_owner,[new_head,new_tile])
 	var point_direction = _judge_point_direction(pointRangeHead,pointRangeTail)
 	match point_direction:
 		0:#上方
-			var insertposition = _calculate_insert_position(head,point_direction)
-			_insert_list(head,tile,insertposition)
+			var insertposition = _calculate_insert_position(new_head,point_direction)
+			_insert_list(new_head,new_tile,insertposition)
 	_reload_all_point()
 
 func delete_list (polygonPoint_owner:Node,clean_click_space:bool = true) ->void:
@@ -134,10 +134,10 @@ func delete_list (polygonPoint_owner:Node,clean_click_space:bool = true) ->void:
 	if list == null : 
 		#push_error("can not find owner. ownerID : %s",polygonPoint_owner)
 		return
-	var head = list.get(0) as PolygonPoint
-	var tile = list.get(1) as PolygonPoint
-	head.last_point.next_point = tile.next_point
-	tile.next_point.last_point = head.last_point
+	var _head = list.get(0) as PolygonPoint
+	var _tile = list.get(1) as PolygonPoint
+	_head.last_point.next_point = _tile.next_point
+	_tile.next_point.last_point = _head.last_point
 	_reload_all_point()
 
 #endregion
@@ -193,7 +193,6 @@ func _limitation_to_border(newPoint:PolygonPoint) -> PolygonPoint:
 		_newPoint.pp_position.y = _screen_size.y - _minsize
 		
 	return _newPoint
-	pass
 
 #将外部添加的点依次加到数组中
 #func _update_path_points () ->void: #！！！！！！！！！！！！！！！！！！！！！！！！！状态好的时候看看这里能不能做性能优化
