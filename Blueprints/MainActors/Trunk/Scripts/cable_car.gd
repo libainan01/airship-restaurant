@@ -29,8 +29,8 @@ func _cable_car_move(delta:float)->void:
 	_move_path.progress = _move_path.progress + _MoveSpeed * delta
 	pass
 
-func _call_the_trunk(caller:Node2D)->void:
-	_target_position = caller.global_position
+func send_task(position:Vector2)->void:
+	_target_position = position
 	_canmove = true
 	
 
