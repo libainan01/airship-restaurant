@@ -16,6 +16,11 @@ config/features=PackedStringArray("4.4", "C#", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 0)
 config/icon="res://icon.svg"
 
+[autoload]
+
+Cable_Car_Controller="*res://Blueprints/AirshipBuilding/Cable_Car/Scripts/cable_car_controller.gd"
+AirshipWindowController="*res://Blueprints/AirshipMoudle/MouseClickSpace/Scripts/airship_window_controller.gd"
+
 [debug]
 
 file_logging/enable_file_logging=true
@@ -24,10 +29,11 @@ file_logging/enable_file_logging=true
 
 window/size/viewport_width=2560
 window/size/viewport_height=1440
-window/size/mode=3
 window/size/borderless=true
 window/size/always_on_top=true
 window/size/transparent=true
+window/size/sharp_corners=true
+window/energy_saving/keep_screen_on=false
 window/subwindows/embed_subwindows=false
 window/stretch/mode="canvas_items"
 window/per_pixel_transparency/allowed=true
@@ -39,6 +45,15 @@ project/assembly_name="Airship Restaurant"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/mouse_passthrough/plugin.cfg")
+
+[file_customization]
+
+folder_colors={
+"res://Blueprints/AirshipBuilding/Airship/": "purple",
+"res://Blueprints/AirshipBuilding/BarCounter/": "blue",
+"res://Blueprints/AirshipBuilding/Cable_Car/": "orange",
+"res://Blueprints/AirshipBuilding/Restauranterur/": "red"
+}
 
 [input]
 

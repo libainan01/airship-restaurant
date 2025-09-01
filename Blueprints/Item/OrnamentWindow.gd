@@ -3,9 +3,11 @@ extends Window
 var window_controller = preload("res://addons/mouse_passthrough/bin/windows_linker.gdextension")
 
 func _ready() -> void:
-	
-	var windowhandle = DisplayServer.window_get_native_handle(DisplayServer.WINDOW_HANDLE,1)
-	var windows_controller = WindowController.new()
+	#var windowhandle = DisplayServer.window_get_native_handle(DisplayServer.WINDOW_HANDLE,1)
+	#var windows_controller = WindowController.new()
 	#windows_controller.SetWindowMousePassthrough(windowhandle,true)
 	#windows_controller.UpdateBitmap(0,0,PackedByteArray())
-	
+	#set_window_size(get_parent().get_window().size)
+	pass
+func set_window_size (new_size:Vector2i)->void:
+	self.size = new_size

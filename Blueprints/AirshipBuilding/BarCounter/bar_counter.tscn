@@ -1,0 +1,41 @@
+[gd_scene load_steps=6 format=3 uid="uid://cfibamxfjjfs"]
+
+[ext_resource type="Script" uid="uid://cm1e16mjcoxcy" path="res://Blueprints/AirshipBuilding/bar_counter.gd" id="1_p0mkn"]
+[ext_resource type="Texture2D" uid="uid://cdjnioh5sv4g7" path="res://Assets/Sprite/Airship/Barcounter1_2.png" id="2_855iv"]
+[ext_resource type="Script" uid="uid://dnv3omelpfpwj" path="res://Blueprints/AirshipMoudle/DockingDevice/Scripts/dockingdevice.gd" id="3_i0i0i"]
+[ext_resource type="Script" uid="uid://ceytifnj3874y" path="res://Blueprints/AirshipMoudle/Storage/Scripts/storage.gd" id="4_ch6lg"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ggeel"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_855iv")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]
+
+[node name="Resturant" type="Node2D" node_paths=PackedStringArray("docking_device")]
+script = ExtResource("1_p0mkn")
+docking_device = NodePath("Docking_device")
+
+[node name="resturant" type="AnimatedSprite2D" parent="."]
+position = Vector2(65.6, 45.6)
+scale = Vector2(0.1, 0.1)
+sprite_frames = SubResource("SpriteFrames_ggeel")
+animation = &"idle"
+
+[node name="Docking_device" type="Node2D" parent="."]
+script = ExtResource("3_i0i0i")
+metadata/_custom_type_script = "uid://dnv3omelpfpwj"
+
+[node name="Storage" type="Node2D" parent="."]
+script = ExtResource("4_ch6lg")
+_volum = 10
+metadata/_custom_type_script = "uid://ceytifnj3874y"
+
+[connection signal="message_docking_complete" from="Docking_device" to="." method="_on_docking_device_message_docking_complete"]
+[connection signal="message_is_empty" from="Storage" to="." method="_on_storage_message_is_empty"]
+[connection signal="message_is_full" from="Storage" to="." method="_on_storage_message_is_full"]
+[connection signal="message_reserves_changed" from="Storage" to="." method="_on_storage_message_reserves_changed"]

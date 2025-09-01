@@ -1,2 +1,0 @@
-class_name Connecting_rod
-extends Node2D
