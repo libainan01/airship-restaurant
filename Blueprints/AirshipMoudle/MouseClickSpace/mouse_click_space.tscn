@@ -1,9 +1,0 @@
-[gd_scene load_steps=3 format=3 uid="uid://cihg5jqkgqa28"]
-
-[ext_resource type="Script" uid="uid://grjk3vouyaev" path="res://Blueprints/AirshipMoudle/MouseClickSpace/Scripts/special_shaped_window.gd" id="1_j5y65"]
-
-[sub_resource type="Curve2D" id="Curve2D_j5y65"]
-
-[node name="MouseClickSpace" type="Path2D"]
-curve = SubResource("Curve2D_j5y65")
-script = ExtResource("1_j5y65")

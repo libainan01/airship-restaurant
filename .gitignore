@@ -1,5 +1,16 @@
-addons/mouse_passthrough/.vs/
-.godot
-.vs
-.vscode
-.godot
+# Godot-generated files
+.godot/
+*.tmp
+
+# Codex document build and review intermediates
+.codex_doc_work/
+.codex_doc_review/
+
+# The browser prototype is a separate local Git repository.
+prototype/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+
