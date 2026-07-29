@@ -1,0 +1,86 @@
+:root {
+  color: #2f2a26;
+  font-family: "Microsoft YaHei UI", sans-serif;
+  background: #eee4cf;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 640px;
+  min-height: 480px;
+  margin: 0;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 44%), transparent 46%),
+    #eee4cf;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.management-shell {
+  width: min(880px, calc(100% - 64px));
+  margin: 48px auto;
+}
+
+header {
+  padding: 30px 32px;
+  border: 1px solid #ba9a66;
+  border-radius: 20px;
+  background: rgb(255 250 237 / 90%);
+  box-shadow: 0 18px 50px rgb(71 49 29 / 12%);
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #94613a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+h1 {
+  margin: 0;
+  font-size: 34px;
+}
+
+header p:last-child {
+  max-width: 620px;
+  margin: 16px 0 0;
+  color: #655a51;
+  line-height: 1.75;
+}
+
+.status-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px 24px;
+  margin-top: 22px;
+  padding: 20px 24px;
+  border-left: 5px solid #a35d3b;
+  border-radius: 12px;
+  background: rgb(255 248 232 / 84%);
+}
+
+.status-card span {
+  color: #776a5f;
+}
+
+nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+nav button {
+  min-height: 64px;
+  border: 1px solid #c8ad7c;
+  border-radius: 12px;
+  color: #70665c;
+  background: rgb(250 243 225 / 70%);
+}

@@ -1,0 +1,32 @@
+{
+  "name": "airship-restaurant",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Windows desktop companion idle game built with Electron, Phaser, React and TypeScript.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "scripts": {
+    "build:packages": "npm run build -w @airship-restaurant/contracts && npm run build -w @airship-restaurant/core && npm run build -w @airship-restaurant/content && npm run build -w @airship-restaurant/persistence && npm run build -w @airship-restaurant/test-support",
+    "build": "npm run build:packages && npm run build -w @airship-restaurant/desktop",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run --config vitest.config.ts",
+    "check": "npm run typecheck && npm run test && npm run build",
+    "start": "npm run start -w @airship-restaurant/desktop",
+    "smoke": "npm run smoke -w @airship-restaurant/desktop"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.2",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.4",
+    "electron": "43.2.0",
+    "typescript": "7.0.2",
+    "vite": "8.1.5",
+    "vitest": "4.1.10"
+  }
+}

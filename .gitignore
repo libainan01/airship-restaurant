@@ -1,10 +1,16 @@
-# Godot-generated files
-.godot/
+# Temporary files
 *.tmp
+
+# Node.js / Electron generated files
+node_modules/
+dist/
+coverage/
+*.log
 
 # Codex document build and review intermediates
 .codex_doc_work/
 .codex_doc_review/
+.codex_qa/
 
 # The browser prototype is a separate local Git repository.
 prototype/
@@ -13,4 +19,3 @@ prototype/
 .DS_Store
 Thumbs.db
 desktop.ini
-

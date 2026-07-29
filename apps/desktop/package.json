@@ -1,0 +1,20 @@
+{
+  "name": "@airship-restaurant/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:renderer": "vite build",
+    "build": "npm run build:electron && npm run build:renderer",
+    "typecheck": "tsc -p tsconfig.electron.json --noEmit && tsc -p tsconfig.json --noEmit",
+    "start": "npm run build && electron dist/main/index.js --show-management",
+    "smoke": "npm run build && electron dist/main/index.js --smoke-test"
+  },
+  "dependencies": {
+    "@airship-restaurant/contracts": "0.1.0",
+    "phaser": "4.2.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  }
+}

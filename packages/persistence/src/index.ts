@@ -1,0 +1,17 @@
+export interface SaveEnvelope<TPayload> {
+  readonly schemaVersion: number;
+  readonly savedAtUtcMs: number;
+  readonly payload: TPayload;
+}
+
+export function createSaveEnvelope<TPayload>(
+  schemaVersion: number,
+  savedAtUtcMs: number,
+  payload: TPayload,
+): SaveEnvelope<TPayload> {
+  return {
+    schemaVersion,
+    savedAtUtcMs,
+    payload,
+  };
+}
