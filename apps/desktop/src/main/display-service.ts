@@ -4,6 +4,7 @@ const MANAGEMENT_MIN_WIDTH = 640;
 const MANAGEMENT_MIN_HEIGHT = 480;
 const MANAGEMENT_DEFAULT_WIDTH = 1024;
 const MANAGEMENT_DEFAULT_HEIGHT = 720;
+const TRANSPARENT_WINDOW_WIDTH_INSET = 1;
 
 export function fitBoundsToWorkArea(
   bounds: Readonly<Rectangle>,
@@ -25,6 +26,22 @@ export function fitBoundsToWorkArea(
     y: Math.min(Math.max(bounds.y, workArea.y), maximumY),
     width,
     height,
+  };
+}
+
+export function getTransparentDesktopBounds(
+  workArea: Readonly<Rectangle>,
+): Rectangle {
+  return {
+    ...workArea,
+    // A hardware-accelerated transparent BrowserWindow that exactly matches
+    // the Windows work area can be promoted to an opaque fullscreen surface.
+    // Leaving one physical-independent pixel on the right prevents that path
+    // without changing focus, topmost, or GPU policies.
+    width: Math.max(
+      1,
+      workArea.width - TRANSPARENT_WINDOW_WIDTH_INSET,
+    ),
   };
 }
 
@@ -62,7 +79,9 @@ export class DisplayService {
   }
 
   getDesktopBounds(): Rectangle {
-    return { ...this.getTargetDisplay().workArea };
+    return getTransparentDesktopBounds(
+      this.getTargetDisplay().workArea,
+    );
   }
 
   getInitialManagementBounds(): Rectangle {

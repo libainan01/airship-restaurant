@@ -20,4 +20,5 @@ body,
 
 canvas {
   display: block;
+  background: transparent !important;
 }

@@ -1,0 +1,60 @@
+.runtime-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 22px;
+  padding: 22px 24px;
+  border: 1px solid #b68c55;
+  border-radius: 14px;
+  background: rgb(255 250 237 / 92%);
+}
+
+.runtime-control__label {
+  margin: 0 0 6px;
+  color: #94613a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.runtime-control h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.runtime-control div > p:last-child {
+  max-width: 540px;
+  margin: 8px 0 0;
+  color: #655a51;
+  line-height: 1.6;
+}
+
+.runtime-control button {
+  flex: 0 0 auto;
+  min-width: 148px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid #87482f;
+  border-radius: 10px;
+  color: #fff8e9;
+  background: #9e5032;
+  cursor: pointer;
+}
+
+.runtime-control button:disabled {
+  border-color: #b8a893;
+  color: #786f66;
+  background: #d9cdbc;
+  cursor: wait;
+}
+
+.runtime-error {
+  margin: 14px 0 0;
+  padding: 12px 16px;
+  border-left: 4px solid #a83e32;
+  border-radius: 8px;
+  color: #6e2923;
+  background: #f9ded6;
+}

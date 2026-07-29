@@ -1,11 +1,44 @@
-import { contextBridge } from "electron";
-import type { WorkspaceBridgeInfo } from "@airship-restaurant/contracts";
+import {
+  IPC_CHANNELS,
+  type DesktopBridge,
+  type DesktopCursorListener,
+  type DesktopCursorPoint,
+  type DesktopInteractionRequest,
+  type WorkspaceBridgeInfo,
+} from "@airship-restaurant/contracts";
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
+import { createRuntimeBridge } from "./runtime-bridge";
 
 const workspaceInfo: WorkspaceBridgeInfo = Object.freeze({
   channel: "desktop",
   version: "0.1.0",
 });
 
-contextBridge.exposeInMainWorld("airshipDesktop", {
-  getWorkspaceInfo: (): WorkspaceBridgeInfo => workspaceInfo,
+const desktopBridge: DesktopBridge = Object.freeze({
+  ...createRuntimeBridge(workspaceInfo),
+  openManagement: (): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.windowOpenManagement),
+  setInteraction: (
+    request: DesktopInteractionRequest,
+  ): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.desktopSetInteraction, request),
+  onCursorPosition: (
+    listener: DesktopCursorListener,
+  ): (() => void) => {
+    const ipcListener = (
+      _event: IpcRendererEvent,
+      point: DesktopCursorPoint,
+    ): void => {
+      listener(point);
+    };
+    ipcRenderer.on(IPC_CHANNELS.desktopCursorPosition, ipcListener);
+    return () => {
+      ipcRenderer.removeListener(
+        IPC_CHANNELS.desktopCursorPosition,
+        ipcListener,
+      );
+    };
+  },
 });
+
+contextBridge.exposeInMainWorld("airshipDesktop", desktopBridge);

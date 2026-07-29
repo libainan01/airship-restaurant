@@ -1,13 +1,12 @@
-import type { WorkspaceBridgeInfo } from "@airship-restaurant/contracts";
-
-interface WorkspaceBridge {
-  getWorkspaceInfo(): WorkspaceBridgeInfo;
-}
+import type {
+  DesktopBridge,
+  ManagementBridge,
+} from "@airship-restaurant/contracts";
 
 declare global {
   interface Window {
-    airshipDesktop?: WorkspaceBridge;
-    airshipManagement?: WorkspaceBridge;
+    airshipDesktop?: DesktopBridge;
+    airshipManagement?: ManagementBridge;
   }
 }
 

@@ -1,11 +1,33 @@
-import { BrowserWindow, type Rectangle } from "electron";
+import {
+  IPC_CHANNELS,
+  type DesktopCursorPoint,
+} from "@airship-restaurant/contracts";
+import {
+  BrowserWindow,
+  screen,
+  type Rectangle,
+  type WebContents,
+} from "electron";
 import path from "node:path";
 import { DisplayService } from "./display-service";
 
-type RendererPage = "desktop" | "management";
+type ManagedWindowKind = "desktop" | "management";
+type RendererPage = ManagedWindowKind;
 
 export interface WindowManagerOptions {
   readonly rendererBaseUrl: string | null;
+}
+
+function rectanglesAreEqual(
+  left: Readonly<Rectangle>,
+  right: Readonly<Rectangle>,
+): boolean {
+  return (
+    left.x === right.x &&
+    left.y === right.y &&
+    left.width === right.width &&
+    left.height === right.height
+  );
 }
 
 export class WindowManager {
@@ -14,6 +36,9 @@ export class WindowManager {
   #desktopWindow: BrowserWindow | null = null;
   #managementWindow: BrowserWindow | null = null;
   #desktopRecoveryTimer: NodeJS.Timeout | null = null;
+  #desktopCompositionTimer: NodeJS.Timeout | null = null;
+  #desktopMouseIgnored = true;
+  #desktopCursorTimer: NodeJS.Timeout | null = null;
   #isShuttingDown = false;
 
   constructor(
@@ -29,6 +54,7 @@ export class WindowManager {
       this.#handleDisplaysChanged();
     });
     this.ensureDesktopWindow();
+    this.#startCursorTracking();
   }
 
   shutdown(): void {
@@ -44,15 +70,31 @@ export class WindowManager {
       this.#desktopRecoveryTimer = null;
     }
 
+    if (this.#desktopCompositionTimer !== null) {
+      clearTimeout(this.#desktopCompositionTimer);
+      this.#desktopCompositionTimer = null;
+    }
+
+
+    if (this.#desktopCursorTimer !== null) {
+      clearInterval(this.#desktopCursorTimer);
+      this.#desktopCursorTimer = null;
+    }
     this.#managementWindow?.destroy();
     this.#desktopWindow?.destroy();
     this.#managementWindow = null;
     this.#desktopWindow = null;
+    this.#desktopMouseIgnored = true;
   }
 
   ensureDesktopWindow(): BrowserWindow | null {
     if (this.#isShuttingDown) {
       return null;
+    }
+
+    if (this.#desktopRecoveryTimer !== null) {
+      clearTimeout(this.#desktopRecoveryTimer);
+      this.#desktopRecoveryTimer = null;
     }
 
     if (
@@ -90,10 +132,8 @@ export class WindowManager {
     });
 
     this.#desktopWindow = desktopWindow;
+    this.#desktopMouseIgnored = true;
     desktopWindow.setMenuBarVisibility(false);
-
-    // Until SemanticHitMap is migrated, the formal shell must never block
-    // the entire desktop.
     desktopWindow.setIgnoreMouseEvents(true, { forward: true });
 
     desktopWindow.once("ready-to-show", () => {
@@ -101,15 +141,19 @@ export class WindowManager {
         return;
       }
 
-      desktopWindow.setBounds(this.#displayService.getDesktopBounds(), false);
+      // Do not call setBounds here. Resizing a hardware-accelerated
+      // transparent Windows surface after its first paint can make it opaque.
       desktopWindow.showInactive();
+      this.#primeTransparentComposition(desktopWindow);
     });
 
     desktopWindow.on("closed", () => {
-      if (this.#desktopWindow === desktopWindow) {
-        this.#desktopWindow = null;
+      if (this.#desktopWindow !== desktopWindow) {
+        return;
       }
 
+      this.#desktopWindow = null;
+      this.#desktopMouseIgnored = true;
       this.#scheduleDesktopRecovery();
     });
 
@@ -181,9 +225,65 @@ export class WindowManager {
     return managementWindow;
   }
 
+  setDesktopInteractive(interactive: boolean): void {
+    const desktopWindow = this.#desktopWindow;
+
+    if (desktopWindow === null || desktopWindow.isDestroyed()) {
+      return;
+    }
+
+    const shouldIgnoreMouse = !interactive;
+    if (shouldIgnoreMouse === this.#desktopMouseIgnored) {
+      return;
+    }
+
+    desktopWindow.setIgnoreMouseEvents(shouldIgnoreMouse, {
+      forward: shouldIgnoreMouse,
+    });
+    this.#desktopMouseIgnored = shouldIgnoreMouse;
+  }
+
   handleSecondInstance(): void {
     this.ensureDesktopWindow();
     this.openManagementWindow();
+  }
+
+  getWindowKindForWebContents(
+    webContentsId: number,
+  ): ManagedWindowKind | null {
+    if (
+      this.#desktopWindow !== null &&
+      !this.#desktopWindow.isDestroyed() &&
+      this.#desktopWindow.webContents.id === webContentsId
+    ) {
+      return "desktop";
+    }
+
+    if (
+      this.#managementWindow !== null &&
+      !this.#managementWindow.isDestroyed() &&
+      this.#managementWindow.webContents.id === webContentsId
+    ) {
+      return "management";
+    }
+
+    return null;
+  }
+
+  getRendererWebContents(): readonly WebContents[] {
+    const renderers: WebContents[] = [];
+
+    for (const window of [this.#desktopWindow, this.#managementWindow]) {
+      if (
+        window !== null &&
+        !window.isDestroyed() &&
+        !window.webContents.isDestroyed()
+      ) {
+        renderers.push(window.webContents);
+      }
+    }
+
+    return renderers;
   }
 
   #attachSharedWindowGuards(
@@ -240,13 +340,17 @@ export class WindowManager {
 
   #handleDisplaysChanged(): void {
     if (
-      this.#desktopWindow !== null &&
-      !this.#desktopWindow.isDestroyed()
+      this.#desktopWindow === null ||
+      this.#desktopWindow.isDestroyed()
     ) {
-      this.#desktopWindow.setBounds(
-        this.#displayService.getDesktopBounds(),
-        false,
-      );
+      this.ensureDesktopWindow();
+    } else {
+      const targetBounds = this.#displayService.getDesktopBounds();
+      const currentBounds = this.#desktopWindow.getBounds();
+
+      if (!rectanglesAreEqual(currentBounds, targetBounds)) {
+        this.#recreateDesktopWindow();
+      }
     }
 
     if (
@@ -259,6 +363,81 @@ export class WindowManager {
         false,
       );
     }
+  }
+
+  #recreateDesktopWindow(): void {
+    const previousWindow = this.#desktopWindow;
+    this.#desktopWindow = null;
+    this.#desktopMouseIgnored = true;
+
+    if (previousWindow !== null && !previousWindow.isDestroyed()) {
+      previousWindow.destroy();
+    }
+
+    this.ensureDesktopWindow();
+  }
+
+  #startCursorTracking(): void {
+    if (this.#desktopCursorTimer !== null) {
+      return;
+    }
+
+    this.#desktopCursorTimer = setInterval(() => {
+      this.#publishCursorPosition();
+    }, 50);
+  }
+
+  #publishCursorPosition(): void {
+    const desktopWindow = this.#desktopWindow;
+
+    if (
+      desktopWindow === null ||
+      desktopWindow.isDestroyed() ||
+      desktopWindow.webContents.isDestroyed()
+    ) {
+      return;
+    }
+
+    const cursor = screen.getCursorScreenPoint();
+    const bounds = desktopWindow.getBounds();
+    const x = cursor.x - bounds.x;
+    const y = cursor.y - bounds.y;
+    const point: DesktopCursorPoint = {
+      x,
+      y,
+      inside:
+        x >= 0 && x < bounds.width && y >= 0 && y < bounds.height,
+    };
+
+    desktopWindow.webContents.send(
+      IPC_CHANNELS.desktopCursorPosition,
+      point,
+    );
+  }
+
+  #primeTransparentComposition(desktopWindow: BrowserWindow): void {
+    if (this.#desktopCompositionTimer !== null) {
+      clearTimeout(this.#desktopCompositionTimer);
+    }
+
+    // On Windows 10/11, a large frameless window can be initially promoted
+    // to an opaque DWM surface even when Chromium's captured pixels contain
+    // alpha. A brief topmost transition forces DWM to create the correct
+    // per-pixel-alpha surface. Removing topmost keeps that surface intact.
+    desktopWindow.setAlwaysOnTop(true);
+    this.#desktopCompositionTimer = setTimeout(() => {
+      this.#desktopCompositionTimer = null;
+
+      if (
+        desktopWindow.isDestroyed() ||
+        this.#isShuttingDown ||
+        this.#desktopWindow !== desktopWindow
+      ) {
+        return;
+      }
+
+      desktopWindow.setAlwaysOnTop(false);
+    }, 100);
   }
 
   #getPreloadPath(page: RendererPage): string {

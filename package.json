@@ -16,8 +16,10 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run --config vitest.config.ts",
     "check": "npm run typecheck && npm run test && npm run build",
-    "start": "npm run start -w @airship-restaurant/desktop",
-    "smoke": "npm run smoke -w @airship-restaurant/desktop"
+    "start": "npm run build && electron apps/desktop/dist/main/index.js",
+    "start:management": "npm run build && electron apps/desktop/dist/main/index.js --show-management",
+    "smoke": "npm run build && electron apps/desktop/dist/main/index.js --smoke-test",
+    "smoke:transparency": "npm run build && electron apps/desktop/scripts/transparency-smoke.cjs"
   },
   "devDependencies": {
     "@types/node": "26.1.2",

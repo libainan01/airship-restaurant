@@ -22,18 +22,25 @@ Git 记录追溯，但不再参与正式开发。
 
 ```text
 apps/desktop/             Electron 主进程、双 preload、Phaser 与 React 渲染入口
-packages/contracts/       跨进程命令、事件和只读 DTO
-packages/core/            不依赖平台的游戏运行时与玩法逻辑
+packages/contracts/       跨进程命令、事件、校验器和只读 DTO
+packages/core/            不依赖平台的权威 GameRuntime 与玩法逻辑
 packages/content/         静态内容定义、索引和校验
 packages/persistence/     存档信封、迁移和持久化边界
 packages/test-support/    手动时钟、固定随机数和测试夹具
 ```
 
-根目录使用 npm workspaces 和单一锁文件。安装和检查：
+安装、检查和启动透明桌面层：
 
 ```powershell
 npm install
 npm run check
+npm start
+```
+
+需要同时检查普通管理窗口时：
+
+```powershell
+npm run start:management
 ```
 
 详细目录边界见 `WORKSPACE.md`。
@@ -46,22 +53,8 @@ npm run check
 
 ## 技术验证工程
 
-Phaser + Electron 技术验证位于：
-
-`spikes/phaser-electron`
-
-已验证：
-
-- 单个覆盖显示器工作区的透明 Electron 窗口；
-- 不连续视觉内容；
-- 中央角色和特效可见但鼠标穿透；
-- 固定与动态语义交互区域；
-- 按下期间输入锁，避免 `pointerup` 落到后方应用；
-- 点击游戏内容不抢走当前工作软件的键盘焦点；
-- TypeScript 检查、命中地图测试与生产构建。
-
-验证工程只用于证明关键桌面能力，不继续承载正式玩法。正式代码只进入 `apps/` 和
-`packages/`。
+Phaser + Electron 技术验证位于 `spikes/phaser-electron`。它已经验证透明窗口、不连续
+视觉、动态热区、输入锁和非抢焦点行为，只用于提供技术依据，不继续承载正式玩法。
 
 ## 已完成的正式基础
 
@@ -70,13 +63,19 @@ Phaser + Electron 技术验证位于：
 - 透明 DesktopWindow 和普通 ManagementWindow；
 - 主显示器工作区适配、显示器变化响应和窗口越界恢复；
 - 渲染器崩溃隔离与桌面窗口恢复；
-- Electron 自动烟雾测试。
+- 双 preload、白名单 IPC 和 sender／载荷校验；
+- 主进程权威 GameRuntime、类型化命令和双窗口状态广播；
+- 管理窗口切换安静模式，Phaser桌面状态同步；
+- 自动测试、生产构建和 Electron 烟雾测试。
+- 响应式 Phaser 桌面世界首版：飞艇厨房、底部全宽餐厅，以及沿屏幕右缘连接空中装卸站与地面交换站的运输缆车；
+- 正式 `SemanticHitMap`、主进程光标采样、局部点击穿透与输入锁；
+- 飞艇和餐厅点击进入管理窗口，缆车、角色和空白区保持穿透。
 
 ## 下一阶段
 
-M1 正式桌面壳将继续完成：
+M1 正式桌面壳接下来继续完成：
 
-1. 类型化 IPC 与权威 GameRuntime；
-2. 首次启动、目标显示器和设置保存；
-3. 多DPI、任务栏和动态命中地图平台验证；
-4. 最小 React Flow 科技树页面，用于验证多窗口状态同步。
+1. 首次启动、目标显示器、置顶选择和设置保存；
+2. 多 DPI、任务栏和动态命中地图平台验证；
+3. 将当前桌面世界拆分为 Boot、World、Environment 和 UI 场景；
+4. 最小 React Flow 科技树页面，用于验证复杂管理界面。
