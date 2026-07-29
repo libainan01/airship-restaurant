@@ -1,3 +1,7 @@
+export * from "./content-registry";
+export * from "./definitions";
+export * from "./m2-content";
+
 export interface ContentRecord {
   readonly id: string;
 }

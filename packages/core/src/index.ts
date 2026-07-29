@@ -5,12 +5,12 @@ import type {
   GameSnapshot,
   RejectedCommandResult,
 } from "@airship-restaurant/contracts";
+import type { GameClock } from "./game-time";
+
+export * from "./game-time";
+export * from "./inventory-system";
 
 const COMMAND_HISTORY_LIMIT = 512;
-
-export interface GameClock {
-  nowUtcMs(): number;
-}
 
 export interface RuntimeState {
   readonly revision: number;

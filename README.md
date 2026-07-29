@@ -50,6 +50,8 @@ npm run start:management
 - 正式技术设计：`Document/空艇餐厅-Phaser-Electron技术设计文档-v1.0.docx`
 - 开发任务拆分：`Document/Phaser-Electron开发任务拆分-v0.1.md`
 - 技术验证记录：`Document/Phaser-Electron桌面陪伴技术验证记录.md`
+- M1 平台回归基线：`Document/M1平台回归基线-v0.1.md`
+- M2 经营规则草案：`Document/M2最小经营闭环规则草案-v0.1.md`
 
 ## 技术验证工程
 
@@ -74,6 +76,10 @@ Phaser + Electron 技术验证位于 `spikes/phaser-electron`。它已经验证�
 - 港口预留位置；环境层可在安静模式整体休眠而不影响主进程状态；
 - 正式 `SemanticHitMap`、主进程光标采样、局部点击穿透与输入锁；
 - 飞艇和餐厅点击进入管理窗口，缆车、角色和空白区保持穿透。
+
+M2 已开始：纯 TypeScript 核心层现已包含防系统时间回拨的 `GameTimeTracker`、
+受校验的五种食材／三道食谱／基础补给内容注册表，以及支持预留、容量限制、
+重复操作保护和原子转移的 `InventorySystem`。
 
 ## 下一阶段
 
