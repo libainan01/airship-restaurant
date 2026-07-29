@@ -1,5 +1,9 @@
 import Phaser from "phaser";
-import { WorkspaceScene } from "./WorkspaceScene";
+import { BootScene } from "./BootScene";
+import { DesktopUiScene } from "./DesktopUiScene";
+import { EnvironmentScene } from "./EnvironmentScene";
+import { InteractionDebugScene } from "./InteractionDebugScene";
+import { DesktopWorldScene } from "./WorkspaceScene";
 import "./style.css";
 
 const game = new Phaser.Game({
@@ -8,7 +12,13 @@ const game = new Phaser.Game({
   transparent: true,
   width: window.innerWidth,
   height: window.innerHeight,
-  scene: [WorkspaceScene],
+  scene: [
+    BootScene,
+    EnvironmentScene,
+    DesktopWorldScene,
+    DesktopUiScene,
+    InteractionDebugScene,
+  ],
   scale: {
     mode: Phaser.Scale.RESIZE,
     width: window.innerWidth,

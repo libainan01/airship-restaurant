@@ -12,6 +12,10 @@ export const IPC_CHANNELS = {
   windowOpenManagement: "window:open-management",
   desktopSetInteraction: "desktop:set-interaction",
   desktopCursorPosition: "desktop:cursor-position",
+  settingsGetSnapshot: "settings:get-snapshot",
+  settingsUpdate: "settings:update",
+  settingsChanged: "settings:changed",
+  settingsListDisplays: "settings:list-displays",
 } as const;
 
 export type RuntimePhase = "booting" | "ready";
@@ -62,6 +66,61 @@ export type CommandResult =
 
 export type SnapshotChangedListener = (snapshot: GameSnapshot) => void;
 
+export type PresentationMode = "normal" | "quiet" | "reduced";
+
+export interface WindowBoundsDto {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface DisplayOption {
+  readonly id: string;
+  readonly label: string;
+  readonly bounds: WindowBoundsDto;
+  readonly workArea: WindowBoundsDto;
+  readonly scaleFactor: number;
+  readonly isPrimary: boolean;
+}
+
+export interface AppSettingsSnapshot {
+  readonly revision: number;
+  readonly onboardingCompleted: boolean;
+  readonly targetDisplayId: string;
+  readonly alwaysOnTop: boolean;
+  readonly presentationMode: PresentationMode;
+  readonly uiScale: number;
+  readonly managementWindowBounds: WindowBoundsDto | null;
+  readonly needsDisplayConfirmation: boolean;
+}
+
+export interface AppSettingsUpdate {
+  readonly onboardingCompleted?: boolean;
+  readonly targetDisplayId?: string;
+  readonly alwaysOnTop?: boolean;
+  readonly presentationMode?: PresentationMode;
+  readonly uiScale?: number;
+  readonly managementWindowBounds?: WindowBoundsDto | null;
+  readonly needsDisplayConfirmation?: boolean;
+}
+
+export type AppSettingsListener = (
+  snapshot: AppSettingsSnapshot,
+) => void;
+
+export interface SettingsReadBridge {
+  getSettings(): Promise<AppSettingsSnapshot>;
+  onSettingsChanged(listener: AppSettingsListener): () => void;
+}
+
+export interface SettingsWriteBridge extends SettingsReadBridge {
+  updateSettings(
+    update: AppSettingsUpdate,
+  ): Promise<AppSettingsSnapshot>;
+  listDisplays(): Promise<readonly DisplayOption[]>;
+}
+
 export interface DesktopInteractionRequest {
   readonly interactive: boolean;
   readonly reason: string;
@@ -82,13 +141,13 @@ export interface RuntimeBridge {
   onSnapshotChanged(listener: SnapshotChangedListener): () => void;
 }
 
-export interface DesktopBridge extends RuntimeBridge {
+export interface DesktopBridge extends RuntimeBridge, SettingsReadBridge {
   openManagement(): Promise<void>;
   setInteraction(request: DesktopInteractionRequest): Promise<void>;
   onCursorPosition(listener: DesktopCursorListener): () => void;
 }
 
-export interface ManagementBridge extends RuntimeBridge {}
+export interface ManagementBridge extends RuntimeBridge, SettingsWriteBridge {}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -132,5 +191,93 @@ export function isDesktopInteractionRequest(
     typeof value.reason === "string" &&
     value.reason.length > 0 &&
     value.reason.length <= 64
+  );
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isWindowBounds(value: unknown): value is WindowBoundsDto {
+  return (
+    isRecord(value) &&
+    isFiniteNumber(value.x) &&
+    isFiniteNumber(value.y) &&
+    isFiniteNumber(value.width) &&
+    value.width > 0 &&
+    isFiniteNumber(value.height) &&
+    value.height > 0
+  );
+}
+
+function isPresentationMode(value: unknown): value is PresentationMode {
+  return (
+    value === "normal" ||
+    value === "quiet" ||
+    value === "reduced"
+  );
+}
+
+export function isAppSettingsSnapshot(
+  value: unknown,
+): value is AppSettingsSnapshot {
+  return (
+    isRecord(value) &&
+    Number.isInteger(value.revision) &&
+    (value.revision as number) >= 0 &&
+    typeof value.onboardingCompleted === "boolean" &&
+    typeof value.targetDisplayId === "string" &&
+    value.targetDisplayId.length <= 64 &&
+    typeof value.alwaysOnTop === "boolean" &&
+    isPresentationMode(value.presentationMode) &&
+    isFiniteNumber(value.uiScale) &&
+    value.uiScale >= 0.75 &&
+    value.uiScale <= 1.5 &&
+    (value.managementWindowBounds === null ||
+      isWindowBounds(value.managementWindowBounds)) &&
+    typeof value.needsDisplayConfirmation === "boolean"
+  );
+}
+
+export function isAppSettingsUpdate(
+  value: unknown,
+): value is AppSettingsUpdate {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const allowedKeys = new Set([
+    "onboardingCompleted",
+    "targetDisplayId",
+    "alwaysOnTop",
+    "presentationMode",
+    "uiScale",
+    "managementWindowBounds",
+    "needsDisplayConfirmation",
+  ]);
+  if (Object.keys(value).some((key) => !allowedKeys.has(key))) {
+    return false;
+  }
+
+  return (
+    (value.onboardingCompleted === undefined ||
+      typeof value.onboardingCompleted === "boolean") &&
+    (value.targetDisplayId === undefined ||
+      (typeof value.targetDisplayId === "string" &&
+        value.targetDisplayId.length > 0 &&
+        value.targetDisplayId.length <= 64)) &&
+    (value.alwaysOnTop === undefined ||
+      typeof value.alwaysOnTop === "boolean") &&
+    (value.presentationMode === undefined ||
+      isPresentationMode(value.presentationMode)) &&
+    (value.uiScale === undefined ||
+      (isFiniteNumber(value.uiScale) &&
+        value.uiScale >= 0.75 &&
+        value.uiScale <= 1.5)) &&
+    (value.managementWindowBounds === undefined ||
+      value.managementWindowBounds === null ||
+      isWindowBounds(value.managementWindowBounds)) &&
+    (value.needsDisplayConfirmation === undefined ||
+      typeof value.needsDisplayConfirmation === "boolean")
   );
 }

@@ -1,3 +1,7 @@
+import type {
+  DisplayOption,
+  WindowBoundsDto,
+} from "@airship-restaurant/contracts";
 import { screen, type Display, type Rectangle } from "electron";
 
 const MANAGEMENT_MIN_WIDTH = 640;
@@ -34,14 +38,18 @@ export function getTransparentDesktopBounds(
 ): Rectangle {
   return {
     ...workArea,
-    // A hardware-accelerated transparent BrowserWindow that exactly matches
-    // the Windows work area can be promoted to an opaque fullscreen surface.
-    // Leaving one physical-independent pixel on the right prevents that path
-    // without changing focus, topmost, or GPU policies.
-    width: Math.max(
-      1,
-      workArea.width - TRANSPARENT_WINDOW_WIDTH_INSET,
-    ),
+    // Windows DWM can promote an exactly work-area-sized transparent
+    // BrowserWindow to an opaque fullscreen surface. One DIP avoids it.
+    width: Math.max(1, workArea.width - TRANSPARENT_WINDOW_WIDTH_INSET),
+  };
+}
+
+function toBoundsDto(bounds: Readonly<Rectangle>): WindowBoundsDto {
+  return {
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
   };
 }
 
@@ -74,18 +82,55 @@ export class DisplayService {
     this.#onDisplaysChanged = null;
   }
 
-  getTargetDisplay(): Display {
-    return screen.getPrimaryDisplay();
+  getPrimaryDisplayId(): string {
+    return String(screen.getPrimaryDisplay().id);
   }
 
-  getDesktopBounds(): Rectangle {
-    return getTransparentDesktopBounds(
-      this.getTargetDisplay().workArea,
+  hasDisplay(displayId: string): boolean {
+    return screen
+      .getAllDisplays()
+      .some((display) => String(display.id) === displayId);
+  }
+
+  getTargetDisplay(displayId: string): Display {
+    return (
+      screen
+        .getAllDisplays()
+        .find((display) => String(display.id) === displayId) ??
+      screen.getPrimaryDisplay()
     );
   }
 
-  getInitialManagementBounds(): Rectangle {
-    const workArea = this.getTargetDisplay().workArea;
+  listDisplays(): readonly DisplayOption[] {
+    const primaryId = this.getPrimaryDisplayId();
+    return screen.getAllDisplays().map((display, index) => ({
+      id: String(display.id),
+      label:
+        display.label.trim().length > 0
+          ? display.label
+          : `显示器 ${index + 1}`,
+      bounds: toBoundsDto(display.bounds),
+      workArea: toBoundsDto(display.workArea),
+      scaleFactor: display.scaleFactor,
+      isPrimary: String(display.id) === primaryId,
+    }));
+  }
+
+  getDesktopBounds(displayId: string): Rectangle {
+    return getTransparentDesktopBounds(
+      this.getTargetDisplay(displayId).workArea,
+    );
+  }
+
+  getInitialManagementBounds(
+    displayId: string,
+    savedBounds: Readonly<Rectangle> | null,
+  ): Rectangle {
+    if (savedBounds !== null) {
+      return this.fitManagementBounds(savedBounds);
+    }
+
+    const workArea = this.getTargetDisplay(displayId).workArea;
     const width = Math.min(MANAGEMENT_DEFAULT_WIDTH, workArea.width);
     const height = Math.min(MANAGEMENT_DEFAULT_HEIGHT, workArea.height);
 

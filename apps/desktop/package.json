@@ -12,6 +12,7 @@
   "dependencies": {
     "@airship-restaurant/contracts": "0.1.0",
     "@airship-restaurant/core": "0.1.0",
+    "@airship-restaurant/persistence": "0.1.0",
     "phaser": "4.2.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"

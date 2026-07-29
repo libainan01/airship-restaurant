@@ -1,5 +1,6 @@
 import {
   IPC_CHANNELS,
+  type AppSettingsSnapshot,
   type DesktopCursorPoint,
 } from "@airship-restaurant/contracts";
 import {
@@ -10,6 +11,7 @@ import {
 } from "electron";
 import path from "node:path";
 import { DisplayService } from "./display-service";
+import { SettingsStore } from "./settings-store";
 
 type ManagedWindowKind = "desktop" | "management";
 type RendererPage = ManagedWindowKind;
@@ -32,26 +34,34 @@ function rectanglesAreEqual(
 
 export class WindowManager {
   readonly #displayService: DisplayService;
+  readonly #settingsStore: SettingsStore;
   readonly #options: WindowManagerOptions;
   #desktopWindow: BrowserWindow | null = null;
   #managementWindow: BrowserWindow | null = null;
   #desktopRecoveryTimer: NodeJS.Timeout | null = null;
   #desktopCompositionTimer: NodeJS.Timeout | null = null;
+  #managementBoundsTimer: NodeJS.Timeout | null = null;
   #desktopMouseIgnored = true;
   #desktopCursorTimer: NodeJS.Timeout | null = null;
+  #unsubscribeSettings: (() => void) | null = null;
   #isShuttingDown = false;
 
   constructor(
     displayService: DisplayService,
+    settingsStore: SettingsStore,
     options: WindowManagerOptions,
   ) {
     this.#displayService = displayService;
+    this.#settingsStore = settingsStore;
     this.#options = options;
   }
 
   start(): void {
     this.#displayService.start(() => {
       this.#handleDisplaysChanged();
+    });
+    this.#unsubscribeSettings = this.#settingsStore.subscribe((settings) => {
+      this.#applySettings(settings);
     });
     this.ensureDesktopWindow();
     this.#startCursorTracking();
@@ -64,6 +74,9 @@ export class WindowManager {
 
     this.#isShuttingDown = true;
     this.#displayService.dispose();
+    this.#unsubscribeSettings?.();
+    this.#unsubscribeSettings = null;
+    void this.#settingsStore.flush();
 
     if (this.#desktopRecoveryTimer !== null) {
       clearTimeout(this.#desktopRecoveryTimer);
@@ -73,6 +86,11 @@ export class WindowManager {
     if (this.#desktopCompositionTimer !== null) {
       clearTimeout(this.#desktopCompositionTimer);
       this.#desktopCompositionTimer = null;
+    }
+
+    if (this.#managementBoundsTimer !== null) {
+      clearTimeout(this.#managementBoundsTimer);
+      this.#managementBoundsTimer = null;
     }
 
 
@@ -104,7 +122,8 @@ export class WindowManager {
       return this.#desktopWindow;
     }
 
-    const bounds = this.#displayService.getDesktopBounds();
+    const settings = this.#settingsStore.getSnapshot();
+    const bounds = this.#displayService.getDesktopBounds(settings.targetDisplayId);
     const desktopWindow = new BrowserWindow({
       ...bounds,
       title: "空艇餐厅",
@@ -181,7 +200,11 @@ export class WindowManager {
       return this.#managementWindow;
     }
 
-    const bounds = this.#displayService.getInitialManagementBounds();
+    const settings = this.#settingsStore.getSnapshot();
+    const bounds = this.#displayService.getInitialManagementBounds(
+      settings.targetDisplayId,
+      settings.managementWindowBounds,
+    );
     const managementWindow = new BrowserWindow({
       ...bounds,
       title: "空艇餐厅 · 管理界面",
@@ -203,6 +226,7 @@ export class WindowManager {
 
     this.#managementWindow = managementWindow;
     managementWindow.setMenuBarVisibility(false);
+    managementWindow.webContents.setZoomFactor(settings.uiScale);
 
     managementWindow.once("ready-to-show", () => {
       if (managementWindow.isDestroyed() || this.#isShuttingDown) {
@@ -211,6 +235,14 @@ export class WindowManager {
 
       managementWindow.show();
       managementWindow.focus();
+    });
+
+    managementWindow.on("move", () => {
+      this.#scheduleManagementBoundsPersistence(managementWindow);
+    });
+
+    managementWindow.on("resize", () => {
+      this.#scheduleManagementBoundsPersistence(managementWindow);
     });
 
     managementWindow.on("closed", () => {
@@ -321,6 +353,7 @@ export class WindowManager {
         );
       },
     );
+
   }
 
   #scheduleDesktopRecovery(): void {
@@ -339,13 +372,25 @@ export class WindowManager {
   }
 
   #handleDisplaysChanged(): void {
+    const settings = this.#settingsStore.getSnapshot();
+    if (!this.#displayService.hasDisplay(settings.targetDisplayId)) {
+      void this.#settingsStore.update({
+        targetDisplayId: this.#displayService.getPrimaryDisplayId(),
+        needsDisplayConfirmation: true,
+      });
+      this.openManagementWindow();
+      return;
+    }
+
     if (
       this.#desktopWindow === null ||
       this.#desktopWindow.isDestroyed()
     ) {
       this.ensureDesktopWindow();
     } else {
-      const targetBounds = this.#displayService.getDesktopBounds();
+      const targetBounds = this.#displayService.getDesktopBounds(
+        settings.targetDisplayId,
+      );
       const currentBounds = this.#desktopWindow.getBounds();
 
       if (!rectanglesAreEqual(currentBounds, targetBounds)) {
@@ -436,8 +481,71 @@ export class WindowManager {
         return;
       }
 
-      desktopWindow.setAlwaysOnTop(false);
+      desktopWindow.setAlwaysOnTop(
+        this.#settingsStore.getSnapshot().alwaysOnTop,
+      );
     }, 100);
+  }
+
+  #applySettings(settings: AppSettingsSnapshot): void {
+    const desktopWindow = this.#desktopWindow;
+    if (desktopWindow !== null && !desktopWindow.isDestroyed()) {
+      const expectedBounds = this.#displayService.getDesktopBounds(
+        settings.targetDisplayId,
+      );
+      if (!rectanglesAreEqual(desktopWindow.getBounds(), expectedBounds)) {
+        this.#recreateDesktopWindow();
+      } else if (this.#desktopCompositionTimer === null) {
+        desktopWindow.setAlwaysOnTop(settings.alwaysOnTop);
+      }
+    }
+
+    const managementWindow = this.#managementWindow;
+    if (
+      managementWindow !== null &&
+      !managementWindow.isDestroyed() &&
+      !managementWindow.webContents.isDestroyed()
+    ) {
+      managementWindow.webContents.setZoomFactor(settings.uiScale);
+    }
+  }
+
+  #scheduleManagementBoundsPersistence(
+    managementWindow: BrowserWindow,
+  ): void {
+    if (
+      this.#isShuttingDown ||
+      managementWindow.isDestroyed() ||
+      managementWindow.isMinimized() ||
+      managementWindow.isMaximized()
+    ) {
+      return;
+    }
+
+    if (this.#managementBoundsTimer !== null) {
+      clearTimeout(this.#managementBoundsTimer);
+    }
+
+    this.#managementBoundsTimer = setTimeout(() => {
+      this.#managementBoundsTimer = null;
+      if (
+        this.#isShuttingDown ||
+        managementWindow.isDestroyed() ||
+        this.#managementWindow !== managementWindow
+      ) {
+        return;
+      }
+
+      const bounds = managementWindow.getBounds();
+      void this.#settingsStore.update({
+        managementWindowBounds: {
+          x: bounds.x,
+          y: bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        },
+      });
+    }, 300);
   }
 
   #getPreloadPath(page: RendererPage): string {

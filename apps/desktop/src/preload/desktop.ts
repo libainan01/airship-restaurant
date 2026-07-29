@@ -8,6 +8,7 @@ import {
 } from "@airship-restaurant/contracts";
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
 import { createRuntimeBridge } from "./runtime-bridge";
+import { createSettingsReadBridge } from "./settings-bridge";
 
 const workspaceInfo: WorkspaceBridgeInfo = Object.freeze({
   channel: "desktop",
@@ -16,6 +17,7 @@ const workspaceInfo: WorkspaceBridgeInfo = Object.freeze({
 
 const desktopBridge: DesktopBridge = Object.freeze({
   ...createRuntimeBridge(workspaceInfo),
+  ...createSettingsReadBridge(),
   openManagement: (): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.windowOpenManagement),
   setInteraction: (

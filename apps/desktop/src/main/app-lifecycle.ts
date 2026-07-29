@@ -8,6 +8,7 @@ import {
   parseLaunchOptions,
 } from "./launch-options";
 import { verifyRendererBridges } from "./renderer-bridge-smoke";
+import { SettingsStore } from "./settings-store";
 import { SystemClock } from "./system-clock";
 import { WindowManager } from "./window-manager";
 
@@ -57,17 +58,44 @@ export class AppLifecycle {
     await app.whenReady();
     app.setAppUserModelId(WINDOWS_APP_USER_MODEL_ID);
 
+    const displayService = new DisplayService();
+    const settingsStore = new SettingsStore(
+      app.getPath("userData"),
+      displayService.getPrimaryDisplayId(),
+    );
+    let settings = await settingsStore.load();
+    if (!displayService.hasDisplay(settings.targetDisplayId)) {
+      settings = await settingsStore.update({
+        targetDisplayId: displayService.getPrimaryDisplayId(),
+        needsDisplayConfirmation: true,
+      });
+    }
+
     const runtime = new GameRuntime(new SystemClock());
-    this.#windowManager = new WindowManager(new DisplayService(), {
-      rendererBaseUrl: getRendererBaseUrl(process.env),
-    });
-    this.#ipcRouter = new IpcRouter(this.#windowManager, runtime);
+    this.#windowManager = new WindowManager(
+      displayService,
+      settingsStore,
+      {
+        rendererBaseUrl: getRendererBaseUrl(process.env),
+      },
+    );
+    this.#ipcRouter = new IpcRouter(
+      this.#windowManager,
+      runtime,
+      settingsStore,
+      displayService,
+    );
 
     this.#ipcRouter.start();
     this.#windowManager.start();
     runtime.markReady();
+    this.#ipcRouter.syncRuntimeSettings();
 
-    if (launchOptions.showManagement) {
+    if (
+      launchOptions.showManagement ||
+      !settings.onboardingCompleted ||
+      settings.needsDisplayConfirmation
+    ) {
       this.#windowManager.openManagementWindow();
     }
 

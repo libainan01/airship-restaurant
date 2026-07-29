@@ -1,13 +1,17 @@
 import {
   IPC_CHANNELS,
   getCommandId,
+  isAppSettingsUpdate,
   isDesktopInteractionRequest,
   isGameCommand,
+  type AppSettingsSnapshot,
   type CommandResult,
   type GameSnapshot,
 } from "@airship-restaurant/contracts";
 import type { GameRuntime } from "@airship-restaurant/core";
 import { ipcMain, type IpcMainInvokeEvent } from "electron";
+import type { DisplayService } from "./display-service";
+import type { SettingsStore } from "./settings-store";
 import type { WindowManager } from "./window-manager";
 
 type AllowedWindow = "desktop" | "management";
@@ -15,12 +19,22 @@ type AllowedWindow = "desktop" | "management";
 export class IpcRouter {
   readonly #windowManager: WindowManager;
   readonly #runtime: GameRuntime;
+  readonly #settingsStore: SettingsStore;
+  readonly #displayService: DisplayService;
   #unsubscribeRuntime: (() => void) | null = null;
+  #unsubscribeSettings: (() => void) | null = null;
   #isStarted = false;
 
-  constructor(windowManager: WindowManager, runtime: GameRuntime) {
+  constructor(
+    windowManager: WindowManager,
+    runtime: GameRuntime,
+    settingsStore: SettingsStore,
+    displayService: DisplayService,
+  ) {
     this.#windowManager = windowManager;
     this.#runtime = runtime;
+    this.#settingsStore = settingsStore;
+    this.#displayService = displayService;
   }
 
   start(): void {
@@ -40,7 +54,7 @@ export class IpcRouter {
 
     ipcMain.handle(
       IPC_CHANNELS.runtimeDispatchCommand,
-      (event, payload: unknown): CommandResult => {
+      async (event, payload: unknown): Promise<CommandResult> => {
         this.#assertTrustedSender(event, ["desktop", "management"]);
 
         if (!isGameCommand(payload)) {
@@ -53,17 +67,25 @@ export class IpcRouter {
           };
         }
 
-        return this.#runtime.dispatch(payload);
+        const result = this.#runtime.dispatch(payload);
+        if (
+          result.accepted &&
+          payload.type === "settings.set-quiet-mode"
+        ) {
+          await this.#settingsStore.update({
+            presentationMode: payload.payload.enabled
+              ? "quiet"
+              : "normal",
+          });
+        }
+        return result;
       },
     );
 
-    ipcMain.handle(
-      IPC_CHANNELS.windowOpenManagement,
-      (event): void => {
-        this.#assertTrustedSender(event, ["desktop", "management"]);
-        this.#windowManager.openManagementWindow();
-      },
-    );
+    ipcMain.handle(IPC_CHANNELS.windowOpenManagement, (event): void => {
+      this.#assertTrustedSender(event, ["desktop", "management"]);
+      this.#windowManager.openManagementWindow();
+    });
 
     ipcMain.handle(
       IPC_CHANNELS.desktopSetInteraction,
@@ -80,11 +102,55 @@ export class IpcRouter {
       },
     );
 
+    ipcMain.handle(
+      IPC_CHANNELS.settingsGetSnapshot,
+      (event): AppSettingsSnapshot => {
+        this.#assertTrustedSender(event, ["desktop", "management"]);
+        return this.#settingsStore.getSnapshot();
+      },
+    );
+
+    ipcMain.handle(
+      IPC_CHANNELS.settingsUpdate,
+      async (event, payload: unknown): Promise<AppSettingsSnapshot> => {
+        this.#assertTrustedSender(event, ["management"]);
+        if (!isAppSettingsUpdate(payload)) {
+          throw new Error("Settings update failed runtime validation.");
+        }
+
+        if (
+          payload.targetDisplayId !== undefined &&
+          !this.#displayService.hasDisplay(payload.targetDisplayId)
+        ) {
+          throw new Error("Selected display is no longer available.");
+        }
+
+        const settings = await this.#settingsStore.update(payload);
+        this.#syncRuntimeQuietMode(settings);
+        return settings;
+      },
+    );
+
+    ipcMain.handle(IPC_CHANNELS.settingsListDisplays, (event) => {
+      this.#assertTrustedSender(event, ["management"]);
+      return this.#displayService.listDisplays();
+    });
+
     this.#unsubscribeRuntime = this.#runtime.subscribe((snapshot) => {
       for (const webContents of this.#windowManager.getRendererWebContents()) {
         webContents.send(IPC_CHANNELS.runtimeSnapshotChanged, snapshot);
       }
     });
+
+    this.#unsubscribeSettings = this.#settingsStore.subscribe((snapshot) => {
+      for (const webContents of this.#windowManager.getRendererWebContents()) {
+        webContents.send(IPC_CHANNELS.settingsChanged, snapshot);
+      }
+    });
+  }
+
+  syncRuntimeSettings(): void {
+    this.#syncRuntimeQuietMode(this.#settingsStore.getSnapshot());
   }
 
   stop(): void {
@@ -95,11 +161,29 @@ export class IpcRouter {
     this.#isStarted = false;
     this.#unsubscribeRuntime?.();
     this.#unsubscribeRuntime = null;
+    this.#unsubscribeSettings?.();
+    this.#unsubscribeSettings = null;
 
     ipcMain.removeHandler(IPC_CHANNELS.runtimeGetSnapshot);
     ipcMain.removeHandler(IPC_CHANNELS.runtimeDispatchCommand);
     ipcMain.removeHandler(IPC_CHANNELS.windowOpenManagement);
     ipcMain.removeHandler(IPC_CHANNELS.desktopSetInteraction);
+    ipcMain.removeHandler(IPC_CHANNELS.settingsGetSnapshot);
+    ipcMain.removeHandler(IPC_CHANNELS.settingsUpdate);
+    ipcMain.removeHandler(IPC_CHANNELS.settingsListDisplays);
+  }
+
+  #syncRuntimeQuietMode(settings: AppSettingsSnapshot): void {
+    const enabled = settings.presentationMode === "quiet";
+    if (this.#runtime.getSnapshot().settings.quietMode === enabled) {
+      return;
+    }
+
+    this.#runtime.dispatch({
+      id: `settings-sync-${settings.revision}`,
+      type: "settings.set-quiet-mode",
+      payload: { enabled },
+    });
   }
 
   #assertTrustedSender(

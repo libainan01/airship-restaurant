@@ -12,6 +12,7 @@ src/main/app-lifecycle.ts          单实例、启动、退出、运行时组合
 src/main/display-service.ts        工作区边界、居中和显示器变化
 src/main/window-manager.ts         双窗口创建、复用、sender识别和崩溃隔离
 src/main/ipc-router.ts             白名单IPC、载荷校验、命令派发和状态广播
+src/main/settings-store.ts         版本化设置读取、串行原子写入和订阅
 src/main/renderer-bridge-smoke.ts  真实Electron bridge和IPC烟雾断言
 src/main/system-clock.ts           GameRuntime的现实UTC时钟适配器
 src/main/launch-options.ts         启动参数与开发渲染地址校验
@@ -77,8 +78,20 @@ npm run smoke
 npm run smoke:transparency
 ```
 
-不带 `--show-management` 启动时，只创建桌面陪伴窗口。再次启动同一应用不会创建
-第二个实例，而会让已有实例打开并聚焦管理窗口。
+首次启动或显示器回退待确认时，应用会自动打开管理窗口；完成引导后，不带
+`--show-management` 启动时只创建桌面陪伴窗口。再次启动同一应用不会创建第二个
+实例，而会让已有实例打开并聚焦管理窗口。
+
+## 场景骨架与设置持久化
+
+Phaser 由 `BootScene` 启动 `EnvironmentScene`、`DesktopWorldScene` 和
+`DesktopUiScene`；开发构建额外启动 `InteractionDebugScene`，显示命中轮廓、鼠标
+DIP 坐标与穿透状态。`EnvironmentScene` 在安静模式独立休眠，世界逻辑仍由主进程
+继续运行。桌面世界当前还包含一个不参与点击的港口预留占位。
+
+ManagementWindow 提供目标显示器、置顶、正常/安静/低动态和 UI 缩放设置。主进程
+将设置保存在专用用户数据目录的 `settings.json`，同时记录管理窗口位置。显示器热
+插拔后若原目标不存在，会回退主显示器、打开管理窗口并要求重新确认。
 
 ## 桌面世界与语义交互
 

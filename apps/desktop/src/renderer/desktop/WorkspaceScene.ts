@@ -1,4 +1,8 @@
-import type { GameSnapshot } from "@airship-restaurant/contracts";
+import type {
+  AppSettingsSnapshot,
+  GameSnapshot,
+  PresentationMode,
+} from "@airship-restaurant/contracts";
 import Phaser from "phaser";
 import {
   SemanticHitMap,
@@ -13,6 +17,13 @@ import {
   type CablePoint,
   type CableRoute,
 } from "./cable-route";
+import {
+  DEFAULT_DESKTOP_SETTINGS,
+  DESKTOP_EVENTS,
+  DESKTOP_REGISTRY_KEYS,
+  DESKTOP_SCENE_KEYS,
+  type DesktopDebugSnapshot,
+} from "./scene-contracts";
 
 type InteractiveZoneId = "airship" | "restaurant";
 
@@ -45,7 +56,7 @@ const COLORS = {
 const FONT_FAMILY =
   '"Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif';
 
-export class WorkspaceScene extends Phaser.Scene {
+export class DesktopWorldScene extends Phaser.Scene {
   readonly #hitMap = new SemanticHitMap();
 
   #cableGraphics!: Phaser.GameObjects.Graphics;
@@ -61,6 +72,7 @@ export class WorkspaceScene extends Phaser.Scene {
   #groundExchangeText!: Phaser.GameObjects.Text;
   #cableStatusText!: Phaser.GameObjects.Text;
   #toastText!: Phaser.GameObjects.Text;
+  #portStatusText!: Phaser.GameObjects.Text;
 
   #viewportWidth = 1280;
   #viewportHeight = 720;
@@ -83,12 +95,14 @@ export class WorkspaceScene extends Phaser.Scene {
   #lastInteractionReason = "";
   #inputLock = false;
   #quietMode = false;
+  #presentationMode: PresentationMode = "normal";
   #runtimePhase = "正在连接主进程";
   #unsubscribeSnapshot: (() => void) | null = null;
   #unsubscribeCursor: (() => void) | null = null;
+  #unsubscribeSettings: (() => void) | null = null;
 
   constructor() {
-    super("Workspace");
+    super(DESKTOP_SCENE_KEYS.world);
   }
 
   create(): void {
@@ -191,6 +205,20 @@ export class WorkspaceScene extends Phaser.Scene {
       .setDepth(20)
       .setVisible(false);
 
+    this.#portStatusText = this.add
+      .text(0, 0, "港口预留位 · M3开放", {
+        color: "#e5c28e",
+        fontFamily: FONT_FAMILY,
+        fontSize: "10px",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setAlpha(0.72);
+
+    this.registry.set(
+      DESKTOP_REGISTRY_KEYS.settings,
+      DEFAULT_DESKTOP_SETTINGS,
+    );
     this.#layoutWorld(this.scale.width, this.scale.height);
     this.scale.on(
       Phaser.Scale.Events.RESIZE,
@@ -220,6 +248,8 @@ export class WorkspaceScene extends Phaser.Scene {
       this.#unsubscribeSnapshot = null;
       this.#unsubscribeCursor?.();
       this.#unsubscribeCursor = null;
+      this.#unsubscribeSettings?.();
+      this.#unsubscribeSettings = null;
     });
   }
 
@@ -352,6 +382,10 @@ export class WorkspaceScene extends Phaser.Scene {
       this.#viewportWidth / 2,
       this.#restaurantY - 46,
     );
+    this.#portStatusText.setPosition(
+      88,
+      this.#restaurantY - 29,
+    );
 
     this.#drawStaticWorld();
     this.#routeCursor(this.#cursor);
@@ -388,6 +422,7 @@ export class WorkspaceScene extends Phaser.Scene {
     this.#drawRestaurant(graphics);
     this.#drawAirshipExchangeStation(graphics);
     this.#drawGroundExchangeStation(graphics);
+    this.#drawPortPlaceholder(graphics);
     this.#refreshLabels();
   }
 
@@ -833,10 +868,29 @@ export class WorkspaceScene extends Phaser.Scene {
     graphics.fillCircle(x, y, 3);
   }
 
+  #drawPortPlaceholder(
+    graphics: Phaser.GameObjects.Graphics,
+  ): void {
+    const y = this.#restaurantY - 18;
+    graphics.fillStyle(COLORS.ink, 0.2);
+    graphics.fillRoundedRect(12, y - 38, 152, 38, 8);
+    graphics.lineStyle(2, COLORS.brass, 0.5);
+    graphics.strokeRoundedRect(12, y - 38, 152, 38, 8);
+    graphics.lineBetween(26, y - 38, 26, y - 68);
+    graphics.lineBetween(26, y - 68, 62, y - 57);
+    graphics.fillStyle(COLORS.copperLight, 0.42);
+    graphics.fillTriangle(27, y - 67, 61, y - 57, 27, y - 50);
+  }
+
   #drawMotion(time: number): void {
     const graphics = this.#motionGraphics;
     graphics.clear();
-    const motionScale = this.#quietMode ? 0.35 : 1;
+    const motionScale =
+      this.#presentationMode === "quiet"
+        ? 0.25
+        : this.#presentationMode === "reduced"
+          ? 0.55
+          : 1;
 
     const cableRoute = this.#drawCableInfrastructure();
     this.#drawCableCar(graphics, cableRoute, time, motionScale);
@@ -1117,6 +1171,8 @@ export class WorkspaceScene extends Phaser.Scene {
       ? "input-lock"
       : (hit?.id ?? "desktop");
 
+    this.#publishDebugSnapshot(interactive, reason);
+
     if (
       interactive === this.#lastInteractive &&
       reason === this.#lastInteractionReason
@@ -1221,6 +1277,19 @@ export class WorkspaceScene extends Phaser.Scene {
     this.#unsubscribeCursor = bridge.onCursorPosition((point) => {
       this.#routeCursor(point);
     });
+    this.#unsubscribeSettings = bridge.onSettingsChanged((settings) => {
+      this.#applySettings(settings);
+    });
+    void bridge
+      .getSettings()
+      .then((settings) => {
+        if (this.scene.isActive()) {
+          this.#applySettings(settings);
+        }
+      })
+      .catch((error: unknown) => {
+        console.error("Unable to read desktop settings.", error);
+      });
     void bridge
       .getSnapshot()
       .then((snapshot) => {
@@ -1245,6 +1314,41 @@ export class WorkspaceScene extends Phaser.Scene {
         : "世界正在启动";
     this.#runtimeStatusText.setText(this.#runtimePhase);
     this.#refreshLabels();
+  }
+
+  #applySettings(settings: AppSettingsSnapshot): void {
+    this.#presentationMode = settings.presentationMode;
+    this.#quietMode = settings.presentationMode === "quiet";
+    this.registry.set(DESKTOP_REGISTRY_KEYS.settings, settings);
+    this.game.events.emit(DESKTOP_EVENTS.settingsChanged, settings);
+    this.#refreshLabels();
+  }
+
+  #publishDebugSnapshot(
+    interactive: boolean,
+    interactionReason: string,
+  ): void {
+    const snapshot: DesktopDebugSnapshot = {
+      viewport: {
+        x: 0,
+        y: 0,
+        width: this.#viewportWidth,
+        height: this.#viewportHeight,
+      },
+      airshipHitPoints: this.#airshipHitPoints,
+      restaurantBounds: {
+        x: 0,
+        y: this.#restaurantY,
+        width: this.#viewportWidth,
+        height: this.#restaurantHeight,
+      },
+      cursor: this.#cursor,
+      hoveredZoneId: this.#hoveredZoneId,
+      interactive,
+      interactionReason,
+    };
+    this.registry.set(DESKTOP_REGISTRY_KEYS.debugSnapshot, snapshot);
+    this.game.events.emit(DESKTOP_EVENTS.debugSnapshotChanged, snapshot);
   }
 
   #refreshLabels(): void {
