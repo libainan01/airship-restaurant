@@ -39,7 +39,7 @@ const PRESENTATION_OPTIONS: readonly {
 const RECIPE_NAMES: Readonly<Record<string, string>> = {
   "recipe.hearth_flatbread": "炉火云麦饼",
   "recipe.windroot_soup": "风根浓汤",
-  "recipe.homecoming_stew": "归航炖锅",
+  "recipe.homecoming_stew": "贝尔家的炉火炖菜",
 };
 
 const ITEM_NAMES: Readonly<Record<string, string>> = {
@@ -50,7 +50,7 @@ const ITEM_NAMES: Readonly<Record<string, string>> = {
   "ingredient.moon_herb": "月露香草",
   "dish.hearth_flatbread": "炉火云麦饼",
   "dish.windroot_soup": "风根浓汤",
-  "dish.homecoming_stew": "归航炖锅",
+  "dish.homecoming_stew": "贝尔家的炉火炖菜",
 };
 
 function getItemName(itemId: string): string {
@@ -83,7 +83,7 @@ const RECIPES: readonly {
   },
   {
     id: "recipe.homecoming_stew",
-    name: "归航炖锅",
+    name: "贝尔家的炉火炖菜",
     duration: "180 秒",
     yield: "每锅 4 份",
     price: "每份 12 铜币",

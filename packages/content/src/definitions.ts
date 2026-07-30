@@ -39,6 +39,57 @@ export interface CustomerDefinition {
   readonly characterId: string;
 }
 
+export interface LocationDefinition {
+  readonly id: string;
+  readonly name: string;
+  readonly localizationKey: string;
+}
+
+export interface DialogueSpeakerDefinition {
+  readonly id: string;
+  readonly name: string;
+  readonly localizationKey: string;
+  readonly characterId: string | null;
+}
+
+export type AmbientDialogueContext =
+  | "arrival"
+  | "waiting"
+  | "eating"
+  | "departing"
+  | "idle";
+
+export type DialogueFamiliarity = "new" | "returning" | "regular";
+
+export interface DialogueLineDefinition {
+  readonly speakerId: string;
+  readonly localizationKey: string;
+  readonly durationMs: number;
+}
+
+export interface AmbientDialogueDefinition {
+  readonly id: string;
+  readonly kind: "ambient";
+  readonly locationId: string;
+  readonly contexts: readonly AmbientDialogueContext[];
+  readonly minimumFamiliarity: DialogueFamiliarity;
+  readonly weight: number;
+  readonly cooldownMs: number;
+  readonly maxPlaysPerSession: number;
+  readonly prerequisiteEventIds: readonly string[];
+  readonly lines: readonly DialogueLineDefinition[];
+}
+
+export interface StoryDialogueDefinition {
+  readonly id: string;
+  readonly kind: "story";
+  readonly lines: readonly DialogueLineDefinition[];
+}
+
+export type DialogueDefinition =
+  | AmbientDialogueDefinition
+  | StoryDialogueDefinition;
+
 export type StoryPresentation =
   | "dialogue"
   | "note"
@@ -65,6 +116,7 @@ export interface StoryEventDefinition {
   readonly recipeId: string | null;
   readonly prerequisiteEventIds: readonly string[];
   readonly conditions: readonly StoryConditionDefinition[];
+  readonly dialogueId?: string | null;
 }
 
 export interface RecipeJournalDefinition {
@@ -82,6 +134,9 @@ export interface ContentDefinitions {
   readonly characters?: readonly CharacterDefinition[];
   readonly customers?: readonly CustomerDefinition[];
   readonly storyEvents?: readonly StoryEventDefinition[];
+  readonly locations?: readonly LocationDefinition[];
+  readonly dialogueSpeakers?: readonly DialogueSpeakerDefinition[];
+  readonly dialogues?: readonly DialogueDefinition[];
   readonly recipeJournals?: readonly RecipeJournalDefinition[];
   readonly localizations?: Readonly<Record<string, string>>;
 }

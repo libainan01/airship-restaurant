@@ -160,6 +160,20 @@ export interface NarrativeSnapshot {
   readonly events: readonly NarrativeEventSnapshot[];
 }
 
+export interface AmbientDialogueActiveSnapshot {
+  readonly dialogueId: string;
+  readonly lineIndex: number;
+  readonly startedAtUtcMs: number;
+  readonly endsAtUtcMs: number;
+}
+
+export interface AmbientDialogueSnapshot {
+  readonly revision: number;
+  readonly active: AmbientDialogueActiveSnapshot | null;
+  readonly lastCompletedDialogueId: string | null;
+  readonly nextTransitionUtcMs: number | null;
+}
+
 export interface GameSnapshot {
   readonly revision: number;
   readonly phase: RuntimePhase;
@@ -167,6 +181,7 @@ export interface GameSnapshot {
   readonly settings: RuntimeSettingsSnapshot;
   readonly gameplay: GameplaySnapshot | null;
   readonly narrative: NarrativeSnapshot | null;
+  readonly dialogue: AmbientDialogueSnapshot | null;
   readonly offlineEarnings: OfflineEarningsSummary | null;
 }
 

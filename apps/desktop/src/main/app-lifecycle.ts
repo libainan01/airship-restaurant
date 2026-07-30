@@ -3,10 +3,12 @@ import {
   M2_INITIAL_INGREDIENTS,
 } from "@airship-restaurant/content";
 import {
+  AmbientDialogueSystem,
   createOfflineEarningsSummary,
   GameRuntime,
   M2Simulation,
   NarrativeSystem,
+  SeededRandom,
 } from "@airship-restaurant/core";
 import { app, type Event } from "electron";
 import path from "node:path";
@@ -192,11 +194,33 @@ export class AppLifecycle {
       loadedSave.envelope?.payload.narrative,
     );
     this.#narrative = narrative;
+    const dialogue = new AmbientDialogueSystem({
+      dialogues: content.listAmbientDialogues().map((definition) => ({
+        id: definition.id,
+        locationId: definition.locationId,
+        contexts: definition.contexts,
+        minimumFamiliarity: definition.minimumFamiliarity,
+        weight: definition.weight,
+        cooldownMs: definition.cooldownMs,
+        maxPlaysPerSession: definition.maxPlaysPerSession,
+        prerequisiteEventIds: definition.prerequisiteEventIds,
+        lineDurationsMs: definition.lines.map(
+          (line) => line.durationMs,
+        ),
+      })),
+      random: new SeededRandom(0x0d1a_109e),
+      locationId: "location.greyfeather_beacon",
+      minimumGapMs: 20_000,
+      quietModeGapMultiplier: 3,
+      returningAfterSales: 5,
+      regularAfterSales: 15,
+    });
     const runtime = new GameRuntime(
       clock,
       simulation,
       offlineEarnings,
       narrative,
+      dialogue,
     );
     this.#windowManager = new WindowManager(
       displayService,

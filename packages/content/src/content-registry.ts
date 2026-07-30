@@ -1,14 +1,20 @@
 import type {
+  AmbientDialogueDefinition,
   CharacterDefinition,
   ContentDefinitions,
   ContentQuantity,
   CustomerDefinition,
+  DialogueDefinition,
+  DialogueSpeakerDefinition,
   IngredientDefinition,
+  LocationDefinition,
   RecipeJournalDefinition,
   RecipeDefinition,
+  StoryDialogueDefinition,
   StoryEventDefinition,
   SupplyBundleDefinition,
 } from "./definitions";
+import { DialogueContentRegistry } from "./dialogue-content-registry";
 import { NarrativeContentRegistry } from "./narrative-content-registry";
 
 const CONTENT_ID_PATTERN = /^[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+$/;
@@ -105,6 +111,7 @@ export class ContentRegistry {
   readonly #ingredients: ReadonlyMap<string, IngredientDefinition>;
   readonly #recipes: ReadonlyMap<string, RecipeDefinition>;
   readonly #supplyBundles: ReadonlyMap<string, SupplyBundleDefinition>;
+  readonly #dialogue: DialogueContentRegistry;
   readonly #narrative: NarrativeContentRegistry;
 
   constructor(definitions: ContentDefinitions) {
@@ -200,6 +207,7 @@ export class ContentRegistry {
       dishIds,
       issues,
     );
+    this.#dialogue = new DialogueContentRegistry(definitions, issues);
 
     if (issues.length > 0) {
       throw new ContentValidationError(issues);
@@ -263,6 +271,40 @@ export class ContentRegistry {
 
   listRecipeJournals(): readonly RecipeJournalDefinition[] {
     return this.#narrative.listRecipeJournals();
+  }
+
+  listLocations(): readonly LocationDefinition[] {
+    return this.#dialogue.listLocations();
+  }
+
+  listDialogueSpeakers(): readonly DialogueSpeakerDefinition[] {
+    return this.#dialogue.listSpeakers();
+  }
+
+  listDialogues(): readonly DialogueDefinition[] {
+    return this.#dialogue.listDialogues();
+  }
+
+  listAmbientDialogues(): readonly AmbientDialogueDefinition[] {
+    return this.#dialogue.listAmbientDialogues();
+  }
+
+  listStoryDialogues(): readonly StoryDialogueDefinition[] {
+    return this.#dialogue.listStoryDialogues();
+  }
+
+  getLocation(id: string): LocationDefinition | undefined {
+    return this.#dialogue.getLocation(id);
+  }
+
+  getDialogueSpeaker(
+    id: string,
+  ): DialogueSpeakerDefinition | undefined {
+    return this.#dialogue.getSpeaker(id);
+  }
+
+  getDialogue(id: string): DialogueDefinition | undefined {
+    return this.#dialogue.getDialogue(id);
   }
 
   getCharacter(id: string): CharacterDefinition | undefined {

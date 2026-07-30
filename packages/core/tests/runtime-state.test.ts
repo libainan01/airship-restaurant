@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  AmbientDialogueSystem,
   GameRuntime,
   M2Simulation,
   NarrativeSystem,
+  SeededRandom,
   createInitialRuntimeState,
 } from "../src";
 
@@ -198,6 +200,58 @@ describe("GameRuntime", () => {
           ],
         },
       },
+    });
+  });
+
+  it("publishes ambient dialogue selected from online customer state", () => {
+    const simulation = createSimulation();
+    let nowUtcMs = 0;
+    const dialogue = new AmbientDialogueSystem({
+      dialogues: [
+        {
+          id: "dialogue.test.arrival",
+          locationId: "location.test",
+          contexts: ["arrival", "waiting", "eating"],
+          minimumFamiliarity: "new",
+          weight: 1,
+          cooldownMs: 0,
+          maxPlaysPerSession: 1,
+          prerequisiteEventIds: [],
+          lineDurationsMs: [5_000],
+        },
+      ],
+      random: new SeededRandom(123),
+      locationId: "location.test",
+      minimumGapMs: 0,
+      quietModeGapMultiplier: 3,
+      returningAfterSales: 2,
+      regularAfterSales: 4,
+    });
+    const runtime = new GameRuntime(
+      { nowUtcMs: () => nowUtcMs },
+      simulation,
+      null,
+      null,
+      dialogue,
+    );
+    runtime.markReady();
+
+    nowUtcMs = 60_000;
+    expect(runtime.tick()).toMatchObject({
+      dialogue: {
+        active: {
+          dialogueId: "dialogue.test.arrival",
+          lineIndex: 0,
+          startedAtUtcMs: 60_000,
+          endsAtUtcMs: 65_000,
+        },
+      },
+    });
+
+    nowUtcMs = 65_000;
+    expect(runtime.tick().dialogue).toMatchObject({
+      active: null,
+      lastCompletedDialogueId: "dialogue.test.arrival",
     });
   });
 });

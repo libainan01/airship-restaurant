@@ -1,5 +1,6 @@
 import type {
   AcceptedCommandResult,
+  AmbientDialogueSnapshot,
   CommandResult,
   GameCommand,
   GameSnapshot,
@@ -8,6 +9,10 @@ import type {
   OfflineEarningsSummary,
   RejectedCommandResult,
 } from "@airship-restaurant/contracts";
+import type {
+  AmbientDialogueAdvanceResult,
+  AmbientDialogueFacts,
+} from "./ambient-dialogue-system";
 import type { GameClock } from "./game-time";
 import type {
   M2SimulationActionResult,
@@ -20,6 +25,7 @@ import type {
 } from "./narrative-system";
 
 
+export * from "./ambient-dialogue-system";
 export * from "./cooking-system";
 export * from "./game-time";
 export * from "./inventory-system";
@@ -64,8 +70,38 @@ export interface RuntimeNarrative {
   complete(eventId: string, atUtcMs: number): NarrativeActionResult;
 }
 
+export interface RuntimeDialogue {
+  getSnapshot(): AmbientDialogueSnapshot;
+  observeOnline(
+    before: AmbientDialogueFacts,
+    after: AmbientDialogueFacts,
+    completedStoryEventIds: readonly string[],
+    quietMode: boolean,
+    atUtcMs: number,
+  ): AmbientDialogueAdvanceResult;
+}
+
 function narrativeFacts(snapshot: GameplaySnapshot): NarrativeGameplayFacts {
   return { soldByDish: snapshot.restaurant.soldByDish };
+}
+
+function dialogueFacts(snapshot: GameplaySnapshot): AmbientDialogueFacts {
+  return {
+    activeCustomerId: snapshot.restaurant.activeCustomer?.id ?? null,
+    totalSoldQuantity: snapshot.restaurant.totalSoldQuantity,
+    totalCustomersLeft: snapshot.restaurant.totalCustomersLeft,
+  };
+}
+
+function completedStoryEventIds(
+  narrative: RuntimeNarrative | null,
+): readonly string[] {
+  return Object.freeze(
+    narrative
+      ?.getSnapshot()
+      .events.filter((event) => event.status === "completed")
+      .map((event) => event.eventId) ?? [],
+  );
 }
 
 export function createInitialRuntimeState(
@@ -85,6 +121,7 @@ export class GameRuntime {
   readonly #offlineEarnings: OfflineEarningsSummary | null;
   readonly #simulation: RuntimeSimulation | null;
   readonly #narrative: RuntimeNarrative | null;
+  readonly #dialogue: RuntimeDialogue | null;
   readonly #listeners = new Set<RuntimeSnapshotListener>();
   readonly #processedCommandIds = new Set<string>();
   readonly #commandHistory: string[] = [];
@@ -94,11 +131,13 @@ export class GameRuntime {
     simulation: RuntimeSimulation | null = null,
     offlineEarnings: OfflineEarningsSummary | null = null,
     narrative: RuntimeNarrative | null = null,
+    dialogue: RuntimeDialogue | null = null,
   ) {
     this.#clock = clock;
     this.#offlineEarnings = offlineEarnings;
     this.#simulation = simulation;
     this.#narrative = narrative;
+    this.#dialogue = dialogue;
     this.#state = createInitialRuntimeState(clock.nowUtcMs());
   }
 
@@ -112,6 +151,7 @@ export class GameRuntime {
       }),
       gameplay: this.#simulation?.getSnapshot() ?? null,
       narrative: this.#narrative?.getSnapshot() ?? null,
+      dialogue: this.#dialogue?.getSnapshot() ?? null,
       offlineEarnings: this.#offlineEarnings,
     });
   }
@@ -142,7 +182,18 @@ export class GameRuntime {
       narrativeFacts(result.snapshot),
       result.snapshot.currentUtcMs,
     );
-    if (!result.changed && narrativeResult?.changed !== true) {
+    const dialogueResult = this.#dialogue?.observeOnline(
+      dialogueFacts(before),
+      dialogueFacts(result.snapshot),
+      completedStoryEventIds(this.#narrative),
+      this.#state.quietMode,
+      result.snapshot.currentUtcMs,
+    );
+    if (
+      !result.changed &&
+      narrativeResult?.changed !== true &&
+      dialogueResult?.changed !== true
+    ) {
       return this.getSnapshot();
     }
 

@@ -3,6 +3,12 @@ import type {
   ContentDefinitions,
   ContentQuantity,
 } from "./definitions";
+import {
+  M3_DIALOGUE_LOCALIZATIONS,
+  M3_DIALOGUE_SPEAKERS,
+  M3_DIALOGUES,
+  M3_LOCATIONS,
+} from "./m3-dialogue-content";
 
 export const M2_CONTENT_DEFINITIONS: ContentDefinitions = {
   ingredients: [
@@ -60,7 +66,7 @@ export const M2_CONTENT_DEFINITIONS: ContentDefinitions = {
     },
     {
       id: "recipe.homecoming_stew",
-      name: "归航炖锅",
+      name: "贝尔家的炉火炖菜",
       durationMs: 180_000,
       outputItemId: "dish.homecoming_stew",
       outputQuantity: 4,
@@ -88,38 +94,62 @@ export const M2_CONTENT_DEFINITIONS: ContentDefinitions = {
   ],
   characters: [
     {
-      id: "character.placeholder_cook",
-      name: "飞艇厨师（占位）",
+      id: "character.baiyecheng",
+      name: "白夜城",
       localizationKey:
-        "localization.character.placeholder_cook.name",
+        "localization.character.baiyecheng.name",
     },
     {
-      id: "character.placeholder_wayfarer",
-      name: "归航旅人（占位）",
+      id: "character.otto",
+      name: "奥托",
       localizationKey:
-        "localization.character.placeholder_wayfarer.name",
+        "localization.character.otto.name",
+    },
+    {
+      id: "character.martha_bell",
+      name: "玛莎·贝尔",
+      localizationKey:
+        "localization.character.martha_bell.name",
+    },
+    {
+      id: "character.thomas_bell",
+      name: "托马斯·贝尔",
+      localizationKey:
+        "localization.character.thomas_bell.name",
     },
   ],
   customers: [
     {
-      id: "customer.placeholder_wayfarer",
-      name: "第一位故事客人（占位）",
+      id: "customer.martha_bell",
+      name: "玛莎·贝尔",
       localizationKey:
-        "localization.customer.placeholder_wayfarer.name",
-      characterId: "character.placeholder_wayfarer",
+        "localization.customer.martha_bell.name",
+      characterId: "character.martha_bell",
+    },
+    {
+      id: "customer.thomas_bell",
+      name: "托马斯·贝尔",
+      localizationKey:
+        "localization.customer.thomas_bell.name",
+      characterId: "character.thomas_bell",
     },
   ],
+  locations: M3_LOCATIONS,
+  dialogueSpeakers: M3_DIALOGUE_SPEAKERS,
+  dialogues: M3_DIALOGUES,
   storyEvents: [
     {
-      id: "story.homecoming_stew_first_sale",
-      title: "归航炖锅·第一次售出（占位）",
+      id: "story.bell_stew_first_service",
+      title: "贝尔家的炉火炖菜·第一次上桌",
       localizationKey:
-        "localization.story.homecoming_stew_first_sale.body",
+        "localization.story.bell_stew_first_service.body",
       presentation: "recipe-log",
       priority: 100,
       characterIds: [
-        "character.placeholder_cook",
-        "character.placeholder_wayfarer",
+        "character.baiyecheng",
+        "character.otto",
+        "character.martha_bell",
+        "character.thomas_bell",
       ],
       recipeId: "recipe.homecoming_stew",
       prerequisiteEventIds: [],
@@ -130,29 +160,31 @@ export const M2_CONTENT_DEFINITIONS: ContentDefinitions = {
           quantity: 1,
         },
       ],
+      dialogueId: "dialogue.story.bell_stew_first_service",
     },
   ],
   recipeJournals: [
     {
-      id: "journal.homecoming_stew",
+      id: "journal.bell_hearth_stew",
       recipeId: "recipe.homecoming_stew",
-      sourceCharacterId: "character.placeholder_wayfarer",
+      sourceCharacterId: "character.martha_bell",
       localizationKey:
-        "localization.journal.homecoming_stew.summary",
-      storyEventIds: ["story.homecoming_stew_first_sale"],
+        "localization.journal.bell_hearth_stew.summary",
+      storyEventIds: ["story.bell_stew_first_service"],
     },
   ],
   localizations: {
-    "localization.character.placeholder_cook.name":
-      "飞艇厨房的年轻经营者（占位）",
-    "localization.character.placeholder_wayfarer.name":
-      "正在寻找归路的旅人（占位）",
-    "localization.customer.placeholder_wayfarer.name":
-      "第一位故事客人（占位）",
-    "localization.story.homecoming_stew_first_sale.body":
-      "旅人尝到炖锅后认出了熟悉的香草气味。这是一段用于验证系统的占位文字。",
-    "localization.journal.homecoming_stew.summary":
-      "一道关于远行与归来的炖锅；人物和具体回忆尚待正式剧情确定。",
+    ...M3_DIALOGUE_LOCALIZATIONS,
+    "localization.character.baiyecheng.name": "白夜城",
+    "localization.character.otto.name": "奥托",
+    "localization.character.martha_bell.name": "玛莎·贝尔",
+    "localization.character.thomas_bell.name": "托马斯·贝尔",
+    "localization.customer.martha_bell.name": "玛莎·贝尔",
+    "localization.customer.thomas_bell.name": "托马斯·贝尔",
+    "localization.story.bell_stew_first_service.body":
+      "玛莎想要的原本只是一顿安稳的热饭。后来，托马斯把这顿饭做了很多年。",
+    "localization.journal.bell_hearth_stew.summary":
+      "玛莎想要的原本只是一顿安稳的热饭。后来，托马斯把这顿饭做了很多年。",
   },
 };
 

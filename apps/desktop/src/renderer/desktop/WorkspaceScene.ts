@@ -1,3 +1,4 @@
+import { createM2ContentRegistry } from "@airship-restaurant/content";
 import type {
   AppSettingsSnapshot,
   GameSnapshot,
@@ -18,6 +19,10 @@ import {
   type CablePoint,
   type CableRoute,
 } from "./cable-route";
+import {
+  resolveDialogueBubblePresentation,
+  type DialogueBubblePresentation,
+} from "./dialogue-bubble-presenter";
 import {
   DEFAULT_DESKTOP_SETTINGS,
   DESKTOP_EVENTS,
@@ -57,10 +62,12 @@ const COLORS = {
 const FONT_FAMILY =
   '"Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif';
 
+const DESKTOP_CONTENT = createM2ContentRegistry();
+
 const RECIPE_NAMES: Readonly<Record<string, string>> = {
   "recipe.hearth_flatbread": "炉火云麦饼",
   "recipe.windroot_soup": "风根浓汤",
-  "recipe.homecoming_stew": "归航炖锅",
+  "recipe.homecoming_stew": "贝尔家的炉火炖菜",
 };
 
 const getRecipeName = (recipeId: string | null): string =>
@@ -74,6 +81,9 @@ export class DesktopWorldScene extends Phaser.Scene {
   #cableGraphics!: Phaser.GameObjects.Graphics;
   #worldGraphics!: Phaser.GameObjects.Graphics;
   #motionGraphics!: Phaser.GameObjects.Graphics;
+  #dialogueBubbleGraphics!: Phaser.GameObjects.Graphics;
+  #dialogueSpeakerText!: Phaser.GameObjects.Text;
+  #dialogueLineText!: Phaser.GameObjects.Text;
   #runtimeStatusText!: Phaser.GameObjects.Text;
   #airshipTitleText!: Phaser.GameObjects.Text;
   #airshipStatusText!: Phaser.GameObjects.Text;
@@ -110,6 +120,7 @@ export class DesktopWorldScene extends Phaser.Scene {
   #presentationMode: PresentationMode = "normal";
   #runtimePhase = "正在连接主进程";
   #gameplaySnapshot: GameplaySnapshot | null = null;
+  #dialogueBubble: DialogueBubblePresentation | null = null;
   #unsubscribeSnapshot: (() => void) | null = null;
   #unsubscribeCursor: (() => void) | null = null;
   #unsubscribeSettings: (() => void) | null = null;
@@ -122,6 +133,33 @@ export class DesktopWorldScene extends Phaser.Scene {
     this.#cableGraphics = this.add.graphics();
     this.#worldGraphics = this.add.graphics();
     this.#motionGraphics = this.add.graphics();
+    this.#dialogueBubbleGraphics = this.add
+      .graphics()
+      .setDepth(30);
+
+    this.#dialogueSpeakerText = this.add
+      .text(0, 0, "", {
+        color: "#a94f36",
+        fontFamily: FONT_FAMILY,
+        fontSize: "10px",
+        fontStyle: "bold",
+      })
+      .setDepth(31)
+      .setVisible(false);
+
+    this.#dialogueLineText = this.add
+      .text(0, 0, "", {
+        color: "#3f2d27",
+        fontFamily: FONT_FAMILY,
+        fontSize: "12px",
+        lineSpacing: 3,
+        wordWrap: {
+          width: 220,
+          useAdvancedWrap: true,
+        },
+      })
+      .setDepth(31)
+      .setVisible(false);
 
     this.#runtimeStatusText = this.add
       .text(0, 0, this.#runtimePhase, {
@@ -909,6 +947,7 @@ export class DesktopWorldScene extends Phaser.Scene {
     this.#drawCableCar(graphics, cableRoute, time, motionScale);
     this.#drawAirshipMotion(graphics, time, motionScale);
     this.#drawRestaurantMotion(graphics, time, motionScale);
+    this.#drawDialogueBubble(time, motionScale);
   }
 
   #drawCableCar(
@@ -1208,6 +1247,110 @@ export class DesktopWorldScene extends Phaser.Scene {
     }
   }
 
+  #drawDialogueBubble(
+    time: number,
+    motionScale: number,
+  ): void {
+    const graphics = this.#dialogueBubbleGraphics;
+    graphics.clear();
+
+    const bubble = this.#dialogueBubble;
+    if (bubble === null) {
+      this.#dialogueSpeakerText.setVisible(false);
+      this.#dialogueLineText.setVisible(false);
+      return;
+    }
+
+    const bubbleWidth = Phaser.Math.Clamp(
+      Math.round(this.#viewportWidth * 0.2),
+      200,
+      270,
+    );
+    const textWidth = bubbleWidth - 24;
+    this.#dialogueSpeakerText
+      .setText(bubble.speakerName)
+      .setVisible(true);
+    this.#dialogueLineText
+      .setWordWrapWidth(textWidth, true)
+      .setText(bubble.text)
+      .setVisible(true);
+
+    const bubbleHeight = Math.ceil(
+      10 +
+        this.#dialogueSpeakerText.height +
+        2 +
+        this.#dialogueLineText.height +
+        11,
+    );
+    const seatXs = [
+      this.#viewportWidth * 0.32,
+      this.#viewportWidth * 0.5,
+      this.#viewportWidth * 0.68,
+    ] as const;
+    const seatX =
+      seatXs[bubble.restaurantSeatIndex] ?? seatXs[1];
+    const direction =
+      bubble.restaurantSeatIndex % 2 === 0 ? 1 : -1;
+    const bounce =
+      Math.sin(time * 0.003 * motionScale) * 2 * direction;
+    const speakerHeadY =
+      this.#restaurantY + this.#restaurantHeight * 0.52 + bounce;
+    const bubbleLeft = Phaser.Math.Clamp(
+      seatX - bubbleWidth / 2,
+      12,
+      this.#viewportWidth - bubbleWidth - 12,
+    );
+    const bubbleTop = speakerHeadY - bubbleHeight - 19;
+    const bubbleBottom = bubbleTop + bubbleHeight;
+    const tailX = Phaser.Math.Clamp(
+      seatX,
+      bubbleLeft + 18,
+      bubbleLeft + bubbleWidth - 18,
+    );
+
+    graphics.fillStyle(COLORS.ink, 0.16);
+    graphics.fillRoundedRect(
+      bubbleLeft + 3,
+      bubbleTop + 4,
+      bubbleWidth,
+      bubbleHeight,
+      10,
+    );
+    graphics.fillStyle(COLORS.creamLight, 0.98);
+    graphics.fillRoundedRect(
+      bubbleLeft,
+      bubbleTop,
+      bubbleWidth,
+      bubbleHeight,
+      10,
+    );
+    graphics.fillTriangle(
+      tailX - 8,
+      bubbleBottom - 1,
+      tailX + 8,
+      bubbleBottom - 1,
+      tailX,
+      bubbleBottom + 9,
+    );
+    graphics.lineStyle(2, COLORS.copper, 0.92);
+    graphics.strokeRoundedRect(
+      bubbleLeft,
+      bubbleTop,
+      bubbleWidth,
+      bubbleHeight,
+      10,
+    );
+
+    this.#dialogueSpeakerText.setPosition(
+      bubbleLeft + 12,
+      bubbleTop + 8,
+    );
+    this.#dialogueLineText.setPosition(
+      bubbleLeft + 12,
+      bubbleTop + 10 + this.#dialogueSpeakerText.height,
+    );
+  }
+
   #strokePolygon(
     graphics: Phaser.GameObjects.Graphics,
     points: readonly HitPoint[],
@@ -1384,6 +1527,10 @@ export class DesktopWorldScene extends Phaser.Scene {
   #applySnapshot(snapshot: GameSnapshot): void {
     this.#quietMode = snapshot.settings.quietMode;
     this.#gameplaySnapshot = snapshot.gameplay;
+    this.#dialogueBubble = resolveDialogueBubblePresentation(
+      snapshot.dialogue,
+      DESKTOP_CONTENT,
+    );
     this.#runtimePhase =
       snapshot.phase === "ready"
         ? `世界在线 · 经营修订 ${

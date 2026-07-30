@@ -7,7 +7,7 @@ import {
 } from "../src";
 
 describe("M2 content", () => {
-  it("loads M2 gameplay and the M3 placeholder narrative slice", () => {
+  it("loads M2 gameplay and the formal M3 dialogue slice", () => {
     const registry = createM2ContentRegistry();
     expect(registry.listIngredients()).toHaveLength(5);
     expect(registry.listRecipes()).toHaveLength(3);
@@ -20,16 +20,39 @@ describe("M2 content", () => {
       outputQuantity: 2,
       unitPriceCopper: 4,
     });
-    expect(registry.listCharacters()).toHaveLength(2);
-    expect(registry.listCustomers()).toHaveLength(1);
+    expect(registry.listCharacters()).toHaveLength(4);
+    expect(registry.listCustomers()).toHaveLength(2);
     expect(registry.listStoryEvents()).toHaveLength(1);
     expect(registry.listRecipeJournals()).toHaveLength(1);
+    expect(registry.listLocations()).toHaveLength(1);
+    expect(registry.listDialogueSpeakers()).toHaveLength(25);
+    expect(registry.listAmbientDialogues()).toHaveLength(21);
+    expect(registry.listStoryDialogues()).toHaveLength(7);
     expect(
-      registry.getStoryEvent("story.homecoming_stew_first_sale"),
+      registry.getStoryEvent("story.bell_stew_first_service"),
     ).toMatchObject({
       presentation: "recipe-log",
       recipeId: "recipe.homecoming_stew",
+      dialogueId: "dialogue.story.bell_stew_first_service",
     });
+    expect(
+      registry.getDialogue("dialogue.ambient.d001_cold_wind"),
+    ).toMatchObject({
+      kind: "ambient",
+      locationId: "location.greyfeather_beacon",
+      contexts: ["waiting"],
+      minimumFamiliarity: "new",
+    });
+    const firstAmbientLine = registry
+      .getDialogue("dialogue.ambient.d001_cold_wind")
+      ?.lines[0];
+    expect(
+      firstAmbientLine === undefined
+        ? undefined
+        : registry.getLocalizedText(
+            firstAmbientLine.localizationKey,
+          ),
+    ).toBe("先来碗热汤。风快把耳朵刮走了。");
   });
 
   it("provides exactly two basic supply bundles as initial stock", () => {
@@ -186,6 +209,71 @@ describe("ContentRegistry validation", () => {
       expect(error).toHaveProperty(
         "message",
         expect.stringContaining("Content validation failed"),
+      );
+    }
+  });
+
+  it("reports writer-readable dialogue metadata errors", () => {
+    expect.assertions(2);
+    try {
+      new ContentRegistry({
+        ingredients: [],
+        recipes: [],
+        supplyBundles: [],
+        locations: [
+          {
+            id: "location.known",
+            name: "Known",
+            localizationKey: "localization.location.known.name",
+          },
+        ],
+        dialogueSpeakers: [
+          {
+            id: "speaker.invalid",
+            name: "Invalid",
+            localizationKey:
+              "localization.speaker.invalid.name",
+            characterId: "character.missing",
+          },
+        ],
+        dialogues: [
+          {
+            id: "dialogue.ambient.invalid",
+            kind: "ambient",
+            locationId: "location.missing",
+            contexts: ["waiting", "waiting"],
+            minimumFamiliarity: "new",
+            weight: 0,
+            cooldownMs: -1,
+            maxPlaysPerSession: 0,
+            prerequisiteEventIds: ["story.missing"],
+            lines: [
+              {
+                speakerId: "speaker.missing",
+                localizationKey:
+                  "localization.dialogue.invalid.line_1",
+                durationMs: 0,
+              },
+            ],
+          },
+        ],
+        localizations: {
+          "localization.location.known.name": "Known",
+        },
+      });
+    } catch (error: unknown) {
+      expect(error).toBeInstanceOf(ContentValidationError);
+      expect((error as ContentValidationError).issues).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/unknown character/),
+          expect.stringMatching(/missing localization/),
+          expect.stringMatching(/unknown speaker/),
+          expect.stringMatching(/duration must be a positive integer/),
+          expect.stringMatching(/unknown location/),
+          expect.stringMatching(/unique valid contexts/),
+          expect.stringMatching(/weight, cooldown and session limit/),
+          expect.stringMatching(/unknown prerequisite/),
+        ]),
       );
     }
   });
