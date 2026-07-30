@@ -73,6 +73,8 @@ node scripts/run-resident-stability.mjs `
 - M1 平台回归基线：`Document/M1平台回归基线-v0.1.md`
 - M2 经营规则草案：`Document/M2最小经营闭环规则草案-v0.1.md`
 - M3 食谱叙事系统基线：`Document/M3食谱叙事系统基线-v0.1.md`
+- M3 剧情方向决策：`Document/M3剧情方向决策记录-v0.1.md`
+- M3 普通客人日常对话 Demo：`Document/M3普通客人日常对话Demo-v0.1.md`
 
 ## 技术验证工程
 
