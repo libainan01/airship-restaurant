@@ -16,6 +16,64 @@ describe("isGameCommand", () => {
     ).toBe(true);
   });
 
+  it("accepts validated gameplay operation commands", () => {
+    expect(
+      isGameCommand({
+        id: "select-menu-1",
+        type: "gameplay.select-recipe",
+        payload: { recipeId: "recipe.windroot_soup" },
+      }),
+    ).toBe(true);
+    expect(
+      isGameCommand({
+        id: "auto-repeat-off",
+        type: "gameplay.set-auto-repeat",
+        payload: { enabled: false },
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts bounded narrative event commands", () => {
+    expect(
+      isGameCommand({
+        id: "view-story-1",
+        type: "narrative.mark-viewed",
+        payload: { eventId: "story.first_meal" },
+      }),
+    ).toBe(true);
+    expect(
+      isGameCommand({
+        id: "complete-story-1",
+        type: "narrative.complete",
+        payload: { eventId: "story.first_meal" },
+      }),
+    ).toBe(true);
+    expect(
+      isGameCommand({
+        id: "complete-story-invalid",
+        type: "narrative.complete",
+        payload: { eventId: "" },
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects malformed gameplay operation commands", () => {
+    expect(
+      isGameCommand({
+        id: "select-menu-1",
+        type: "gameplay.select-recipe",
+        payload: { recipeId: "" },
+      }),
+    ).toBe(false);
+    expect(
+      isGameCommand({
+        id: "auto-repeat-off",
+        type: "gameplay.set-auto-repeat",
+        payload: { enabled: "no" },
+      }),
+    ).toBe(false);
+  });
+
   it("rejects malformed IPC payloads", () => {
     expect(
       isGameCommand({

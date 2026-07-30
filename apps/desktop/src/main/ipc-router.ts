@@ -7,10 +7,12 @@ import {
   type AppSettingsSnapshot,
   type CommandResult,
   type GameSnapshot,
+  type SaveDiagnosticsSnapshot,
 } from "@airship-restaurant/contracts";
 import type { GameRuntime } from "@airship-restaurant/core";
 import { ipcMain, type IpcMainInvokeEvent } from "electron";
 import type { DisplayService } from "./display-service";
+import type { GameSaveService } from "./game-save-service";
 import type { SettingsStore } from "./settings-store";
 import type { WindowManager } from "./window-manager";
 
@@ -21,6 +23,8 @@ export class IpcRouter {
   readonly #runtime: GameRuntime;
   readonly #settingsStore: SettingsStore;
   readonly #displayService: DisplayService;
+  readonly #gameSaveService: GameSaveService;
+  #unsubscribeSaveDiagnostics: (() => void) | null = null;
   #unsubscribeRuntime: (() => void) | null = null;
   #unsubscribeSettings: (() => void) | null = null;
   #isStarted = false;
@@ -30,11 +34,13 @@ export class IpcRouter {
     runtime: GameRuntime,
     settingsStore: SettingsStore,
     displayService: DisplayService,
+    gameSaveService: GameSaveService,
   ) {
     this.#windowManager = windowManager;
     this.#runtime = runtime;
     this.#settingsStore = settingsStore;
     this.#displayService = displayService;
+    this.#gameSaveService = gameSaveService;
   }
 
   start(): void {
@@ -136,6 +142,14 @@ export class IpcRouter {
       return this.#displayService.listDisplays();
     });
 
+    ipcMain.handle(
+      IPC_CHANNELS.saveGetDiagnostics,
+      (event): SaveDiagnosticsSnapshot => {
+        this.#assertTrustedSender(event, ["management"]);
+        return this.#gameSaveService.getDiagnostics();
+      },
+    );
+
     this.#unsubscribeRuntime = this.#runtime.subscribe((snapshot) => {
       for (const webContents of this.#windowManager.getRendererWebContents()) {
         webContents.send(IPC_CHANNELS.runtimeSnapshotChanged, snapshot);
@@ -147,6 +161,12 @@ export class IpcRouter {
         webContents.send(IPC_CHANNELS.settingsChanged, snapshot);
       }
     });
+    this.#unsubscribeSaveDiagnostics =
+      this.#gameSaveService.subscribe((snapshot) => {
+        for (const webContents of this.#windowManager.getRendererWebContents()) {
+          webContents.send(IPC_CHANNELS.saveDiagnosticsChanged, snapshot);
+        }
+      });
   }
 
   syncRuntimeSettings(): void {
@@ -163,6 +183,8 @@ export class IpcRouter {
     this.#unsubscribeRuntime = null;
     this.#unsubscribeSettings?.();
     this.#unsubscribeSettings = null;
+    this.#unsubscribeSaveDiagnostics?.();
+    this.#unsubscribeSaveDiagnostics = null;
 
     ipcMain.removeHandler(IPC_CHANNELS.runtimeGetSnapshot);
     ipcMain.removeHandler(IPC_CHANNELS.runtimeDispatchCommand);
@@ -171,6 +193,7 @@ export class IpcRouter {
     ipcMain.removeHandler(IPC_CHANNELS.settingsGetSnapshot);
     ipcMain.removeHandler(IPC_CHANNELS.settingsUpdate);
     ipcMain.removeHandler(IPC_CHANNELS.settingsListDisplays);
+    ipcMain.removeHandler(IPC_CHANNELS.saveGetDiagnostics);
   }
 
   #syncRuntimeQuietMode(settings: AppSettingsSnapshot): void {

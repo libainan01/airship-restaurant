@@ -1,6 +1,7 @@
 import type {
   AppSettingsSnapshot,
   GameSnapshot,
+  GameplaySnapshot,
   PresentationMode,
 } from "@airship-restaurant/contracts";
 import Phaser from "phaser";
@@ -56,6 +57,17 @@ const COLORS = {
 const FONT_FAMILY =
   '"Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif';
 
+const RECIPE_NAMES: Readonly<Record<string, string>> = {
+  "recipe.hearth_flatbread": "炉火云麦饼",
+  "recipe.windroot_soup": "风根浓汤",
+  "recipe.homecoming_stew": "归航炖锅",
+};
+
+const getRecipeName = (recipeId: string | null): string =>
+  recipeId === null
+    ? "未选择食谱"
+    : (RECIPE_NAMES[recipeId] ?? recipeId);
+
 export class DesktopWorldScene extends Phaser.Scene {
   readonly #hitMap = new SemanticHitMap();
 
@@ -97,6 +109,7 @@ export class DesktopWorldScene extends Phaser.Scene {
   #quietMode = false;
   #presentationMode: PresentationMode = "normal";
   #runtimePhase = "正在连接主进程";
+  #gameplaySnapshot: GameplaySnapshot | null = null;
   #unsubscribeSnapshot: (() => void) | null = null;
   #unsubscribeCursor: (() => void) | null = null;
   #unsubscribeSettings: (() => void) | null = null;
@@ -904,13 +917,54 @@ export class DesktopWorldScene extends Phaser.Scene {
     time: number,
     motionScale: number,
   ): void {
-    const cycle = time * 0.00042 * motionScale;
-    const cycleAngle = cycle * Math.PI * 2;
-    const rawProgress = (Math.cos(cycleAngle) + 1) / 2;
-    const progress = rawProgress;
+    const logistics = this.#gameplaySnapshot?.logistics;
+    let progress: number;
+    let isDescending: boolean;
+    if (logistics === undefined) {
+      const cycle = time * 0.00042 * motionScale;
+      const cycleAngle = cycle * Math.PI * 2;
+      progress = (Math.cos(cycleAngle) + 1) / 2;
+      isDescending = Math.sin(cycleAngle) < 0;
+    } else {
+      const nowUtcMs = Date.now();
+      switch (logistics.phase) {
+        case "outbound": {
+          const departure = logistics.departedAtUtcMs ?? nowUtcMs;
+          const arrival = logistics.arriveAtUtcMs ?? departure;
+          progress = Phaser.Math.Clamp(
+            (nowUtcMs - departure) / Math.max(1, arrival - departure),
+            0,
+            1,
+          );
+          isDescending = true;
+          break;
+        }
+        case "waiting-unload":
+          progress = 1;
+          isDescending = true;
+          break;
+        case "returning": {
+          const departure =
+            logistics.returnStartedAtUtcMs ?? nowUtcMs;
+          const arrival = logistics.returnAtUtcMs ?? departure;
+          progress =
+            1 -
+            Phaser.Math.Clamp(
+              (nowUtcMs - departure) / Math.max(1, arrival - departure),
+              0,
+              1,
+            );
+          isDescending = false;
+          break;
+        }
+        case "idle":
+          progress = 0;
+          isDescending = false;
+          break;
+      }
+    }
     const cablePoint = sampleCableRoute(route, progress);
     const tangent = sampleCableTangent(route, progress);
-    const isDescending = Math.sin(cycleAngle) < 0;
     const wheelSpacing = 19;
     const firstWheel = {
       x: cablePoint.x - tangent.x * wheelSpacing,
@@ -1001,13 +1055,34 @@ export class DesktopWorldScene extends Phaser.Scene {
       cabinY + 2,
     );
 
-    let status = isDescending
-      ? "下行 · 热餐配送"
-      : "上行 · 回收空箱";
-    if (rawProgress > 0.985) {
-      status = "地面站 · 正在卸货";
-    } else if (rawProgress < 0.015) {
-      status = "空中站 · 正在装货";
+    let status: string;
+    if (logistics === undefined) {
+      status = isDescending
+        ? "下行 · 热餐配送"
+        : "上行 · 回收空箱";
+      if (progress > 0.985) {
+        status = "地面站 · 正在卸货";
+      } else if (progress < 0.015) {
+        status = "空中站 · 正在装货";
+      }
+    } else {
+      switch (logistics.phase) {
+        case "outbound":
+          status = `配送中 · ${logistics.cargoQuantity}/6 份`;
+          break;
+        case "waiting-unload":
+          status = `等待卸货 · ${logistics.cargoQuantity}/6 份`;
+          break;
+        case "returning":
+          status = "空箱返航";
+          break;
+        case "idle":
+          status =
+            logistics.kitchenWaitingQuantity > 0
+              ? `空中集货 · ${logistics.kitchenWaitingQuantity} 份`
+              : "空中站 · 待命";
+          break;
+      }
     }
     this.#cableStatusText
       .setPosition(
@@ -1308,9 +1383,12 @@ export class DesktopWorldScene extends Phaser.Scene {
 
   #applySnapshot(snapshot: GameSnapshot): void {
     this.#quietMode = snapshot.settings.quietMode;
+    this.#gameplaySnapshot = snapshot.gameplay;
     this.#runtimePhase =
       snapshot.phase === "ready"
-        ? `世界在线 · 修订 ${snapshot.revision}`
+        ? `世界在线 · 经营修订 ${
+            snapshot.gameplay?.revision ?? snapshot.revision
+          }`
         : "世界正在启动";
     this.#runtimeStatusText.setText(this.#runtimePhase);
     this.#refreshLabels();
@@ -1352,8 +1430,28 @@ export class DesktopWorldScene extends Phaser.Scene {
   }
 
   #refreshLabels(): void {
+    const gameplay = this.#gameplaySnapshot;
     if (this.#hoveredZoneId === "airship") {
       this.#airshipStatusText.setText("点击进入厨房、仓库与工程管理");
+    } else if (gameplay !== null) {
+      const cooking = gameplay.cooking;
+      if (cooking.activeJob?.status === "waiting-output") {
+        this.#airshipStatusText.setText(
+          `${getRecipeName(cooking.activeJob.recipeId)} · 等待缆车取餐`,
+        );
+      } else if (cooking.activeJob !== null) {
+        this.#airshipStatusText.setText(
+          `${getRecipeName(cooking.activeJob.recipeId)} · 已完成 ${
+            cooking.completedBatches
+          } 批`,
+        );
+      } else if (
+        cooking.blockedReason === "insufficient-ingredients"
+      ) {
+        this.#airshipStatusText.setText("原料不足 · 等待公会补给");
+      } else {
+        this.#airshipStatusText.setText("厨房待命");
+      }
     } else {
       this.#airshipStatusText.setText(
         this.#quietMode
@@ -1365,6 +1463,16 @@ export class DesktopWorldScene extends Phaser.Scene {
     if (this.#hoveredZoneId === "restaurant") {
       this.#restaurantStatusText.setText(
         "餐厅已选中 · 点击打开经营管理",
+      );
+    } else if (gameplay !== null) {
+      const stock =
+        gameplay.inventory.restaurantStorage.totalQuantity;
+      const { copperBalance, totalSoldQuantity } =
+        gameplay.restaurant;
+      this.#restaurantStatusText.setText(
+        `库存 ${stock} 份 · 累计售出 ${totalSoldQuantity} 份 · ${
+          copperBalance
+        } 铜币`,
       );
     } else {
       this.#restaurantStatusText.setText(

@@ -7,6 +7,9 @@ export default defineConfig({
       "@airship-restaurant/contracts": fileURLToPath(
         new URL("./packages/contracts/src/index.ts", import.meta.url),
       ),
+      "@airship-restaurant/core": fileURLToPath(
+        new URL("./packages/core/src/index.ts", import.meta.url),
+      ),
       "@airship-restaurant/persistence": fileURLToPath(
         new URL("./packages/persistence/src/index.ts", import.meta.url),
       ),

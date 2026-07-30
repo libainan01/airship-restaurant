@@ -1,5 +1,36 @@
 import { describe, expect, it, vi } from "vitest";
-import { GameRuntime, createInitialRuntimeState } from "../src";
+import {
+  GameRuntime,
+  M2Simulation,
+  NarrativeSystem,
+  createInitialRuntimeState,
+} from "../src";
+
+function createSimulation(): M2Simulation {
+  return new M2Simulation({
+    startUtcMs: 0,
+    randomSeed: 123,
+    ingredients: [{ id: "ingredient.test", capacity: 100 }],
+    recipes: [
+      {
+        id: "recipe.test",
+        durationMs: 1_000,
+        outputItemId: "dish.test",
+        outputQuantity: 2,
+        unitPriceCopper: 1,
+        ingredients: [
+          { itemId: "ingredient.test", quantity: 1 },
+        ],
+      },
+    ],
+    initialIngredients: [{ itemId: "ingredient.test", quantity: 50 }],
+    supply: {
+      intervalMs: 60_000,
+      items: [{ itemId: "ingredient.test", quantity: 1 }],
+    },
+    defaultRecipeId: "recipe.test",
+  });
+}
 
 describe("createInitialRuntimeState", () => {
   it("creates a deterministic boot state", () => {
@@ -68,6 +99,105 @@ describe("GameRuntime", () => {
       commandId: "quiet-on",
       code: "DUPLICATE_COMMAND",
       snapshot: { revision: 2 },
+    });
+  });
+
+  it("observes only sales that occur after the online runtime starts", () => {
+    const simulation = createSimulation();
+    simulation.advanceTo(180_000);
+    const offlineSold =
+      simulation.getSnapshot().restaurant.totalSoldQuantity;
+    expect(offlineSold).toBeGreaterThan(0);
+
+    let nowUtcMs = 180_000;
+    const narrative = new NarrativeSystem([
+      {
+        id: "story.first_online_sale",
+        priority: 1,
+        prerequisiteEventIds: [],
+        conditions: [
+          {
+            type: "online-dish-sales",
+            dishItemId: "dish.test",
+            quantity: 1,
+          },
+        ],
+      },
+    ]);
+    const runtime = new GameRuntime(
+      { nowUtcMs: () => nowUtcMs },
+      simulation,
+      null,
+      narrative,
+    );
+    runtime.markReady();
+
+    runtime.tick();
+    expect(runtime.getSnapshot().narrative).toMatchObject({
+      availableEventIds: [],
+      unreadEventIds: [],
+    });
+
+    nowUtcMs = 300_000;
+    runtime.tick();
+    expect(runtime.getSnapshot().narrative).toMatchObject({
+      availableEventIds: ["story.first_online_sale"],
+      unreadEventIds: ["story.first_online_sale"],
+    });
+  });
+
+  it("dispatches narrative viewed and completion commands", () => {
+    const simulation = createSimulation();
+    let nowUtcMs = 0;
+    const narrative = new NarrativeSystem([
+      {
+        id: "story.first_online_sale",
+        priority: 1,
+        prerequisiteEventIds: [],
+        conditions: [
+          {
+            type: "online-dish-sales",
+            dishItemId: "dish.test",
+            quantity: 1,
+          },
+        ],
+      },
+    ]);
+    const runtime = new GameRuntime(
+      { nowUtcMs: () => nowUtcMs },
+      simulation,
+      null,
+      narrative,
+    );
+    runtime.markReady();
+    nowUtcMs = 120_000;
+    runtime.tick();
+
+    expect(
+      runtime.dispatch({
+        id: "view-first-sale",
+        type: "narrative.mark-viewed",
+        payload: { eventId: "story.first_online_sale" },
+      }),
+    ).toMatchObject({
+      accepted: true,
+      snapshot: { narrative: { unreadEventIds: [] } },
+    });
+    expect(
+      runtime.dispatch({
+        id: "complete-first-sale",
+        type: "narrative.complete",
+        payload: { eventId: "story.first_online_sale" },
+      }),
+    ).toMatchObject({
+      accepted: true,
+      snapshot: {
+        narrative: {
+          events: [
+            expect.objectContaining({ status: "completed" }),
+          ],
+        },
+      },
     });
   });
 });

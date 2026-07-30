@@ -20,6 +20,12 @@ export interface WindowManagerOptions {
   readonly rendererBaseUrl: string | null;
 }
 
+export interface WindowStabilityDiagnostics {
+  readonly rendererExitCount: number;
+  readonly mainFrameLoadFailureCount: number;
+  readonly desktopRecoveryCount: number;
+}
+
 function rectanglesAreEqual(
   left: Readonly<Rectangle>,
   right: Readonly<Rectangle>,
@@ -45,6 +51,9 @@ export class WindowManager {
   #desktopCursorTimer: NodeJS.Timeout | null = null;
   #unsubscribeSettings: (() => void) | null = null;
   #isShuttingDown = false;
+  #rendererExitCount = 0;
+  #mainFrameLoadFailureCount = 0;
+  #desktopRecoveryCount = 0;
 
   constructor(
     displayService: DisplayService,
@@ -318,6 +327,14 @@ export class WindowManager {
     return renderers;
   }
 
+  getStabilityDiagnostics(): WindowStabilityDiagnostics {
+    return Object.freeze({
+      rendererExitCount: this.#rendererExitCount,
+      mainFrameLoadFailureCount: this.#mainFrameLoadFailureCount,
+      desktopRecoveryCount: this.#desktopRecoveryCount,
+    });
+  }
+
   #attachSharedWindowGuards(
     window: BrowserWindow,
     page: RendererPage,
@@ -325,6 +342,7 @@ export class WindowManager {
     window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
 
     window.webContents.on("render-process-gone", (_event, details) => {
+      this.#rendererExitCount += 1;
       console.error(
         `[WindowManager] ${page} renderer exited: ${details.reason}`,
       );
@@ -347,6 +365,7 @@ export class WindowManager {
           return;
         }
 
+        this.#mainFrameLoadFailureCount += 1;
         console.error(
           `[WindowManager] Failed to load ${page} renderer`,
           { errorCode, errorDescription, validatedUrl },
@@ -367,6 +386,7 @@ export class WindowManager {
 
     this.#desktopRecoveryTimer = setTimeout(() => {
       this.#desktopRecoveryTimer = null;
+      this.#desktopRecoveryCount += 1;
       this.ensureDesktopWindow();
     }, 250);
   }

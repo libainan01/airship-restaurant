@@ -227,6 +227,19 @@ export class InventorySystem {
     });
   }
 
+  canDeposit(
+    containerId: string,
+    stacks: readonly ItemStack[],
+  ): boolean {
+    const container = this.#containers.get(containerId);
+    const normalized = normalizeStacks(stacks);
+    return (
+      container !== undefined &&
+      normalized !== null &&
+      this.#validateAddition(container, normalized) === null
+    );
+  }
+
   deposit(
     operationId: string,
     containerId: string,
@@ -415,6 +428,69 @@ export class InventorySystem {
       containerId,
       items: preparation.items,
     });
+    return this.#accept(operationId);
+  }
+
+  consumeReservationAndDeposit(
+    operationId: string,
+    reservationId: string,
+    targetContainerId: string,
+    outputStacks: readonly ItemStack[],
+  ): InventoryOperationResult {
+    const preparation = this.#prepareOperation(
+      operationId,
+      outputStacks,
+    );
+    if (!preparation.accepted) {
+      return preparation.result;
+    }
+
+    const reservation = this.#reservations.get(reservationId);
+    if (reservation === undefined) {
+      return this.#reject(
+        operationId,
+        "UNKNOWN_RESERVATION",
+        `Unknown reservation: ${reservationId}`,
+      );
+    }
+    const source = this.#containers.get(reservation.containerId);
+    const target = this.#containers.get(targetContainerId);
+    if (source === undefined || target === undefined) {
+      return this.#reject(
+        operationId,
+        "UNKNOWN_CONTAINER",
+        "Reservation source or output target container is unknown.",
+      );
+    }
+    if (source === target) {
+      return this.#reject(
+        operationId,
+        "INVALID_REQUEST",
+        "Cooking input and output containers must be different.",
+      );
+    }
+
+    const additionRejection = this.#validateAddition(
+      target,
+      preparation.items,
+    );
+    if (additionRejection !== null) {
+      return this.#reject(
+        operationId,
+        additionRejection.code,
+        additionRejection.message,
+      );
+    }
+
+    this.#subtractItems(source, reservation.items);
+    this.#subtractReservedItems(source, reservation.items);
+    for (const [itemId, quantity] of preparation.items) {
+      target.quantities.set(
+        itemId,
+        (target.quantities.get(itemId) ?? 0) + quantity,
+      );
+    }
+    this.#reservations.delete(reservationId);
     return this.#accept(operationId);
   }
 

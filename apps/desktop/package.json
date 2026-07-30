@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.electron.json --noEmit && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@airship-restaurant/content": "0.1.0",
     "@airship-restaurant/contracts": "0.1.0",
     "@airship-restaurant/core": "0.1.0",
     "@airship-restaurant/persistence": "0.1.0",

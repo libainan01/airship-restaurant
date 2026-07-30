@@ -16,6 +16,8 @@ export const IPC_CHANNELS = {
   settingsUpdate: "settings:update",
   settingsChanged: "settings:changed",
   settingsListDisplays: "settings:list-displays",
+  saveGetDiagnostics: "save:get-diagnostics",
+  saveDiagnosticsChanged: "save:diagnostics-changed",
 } as const;
 
 export type RuntimePhase = "booting" | "ready";
@@ -24,11 +26,148 @@ export interface RuntimeSettingsSnapshot {
   readonly quietMode: boolean;
 }
 
+export interface GameplayInventoryEntrySnapshot {
+  readonly itemId: string;
+  readonly quantity: number;
+  readonly reservedQuantity: number;
+  readonly availableQuantity: number;
+}
+
+export interface GameplayInventoryContainerSnapshot {
+  readonly id: string;
+  readonly capacity: number;
+  readonly totalQuantity: number;
+  readonly availableCapacity: number;
+  readonly entries: readonly GameplayInventoryEntrySnapshot[];
+}
+
+export interface GameplayCookingJobSnapshot {
+  readonly id: string;
+  readonly recipeId: string;
+  readonly status: "cooking" | "waiting-output";
+  readonly startedAtUtcMs: number;
+  readonly finishAtUtcMs: number;
+}
+
+export interface GameplayCookingSnapshot {
+  readonly selectedRecipeId: string | null;
+  readonly autoRepeat: boolean;
+  readonly activeJob: GameplayCookingJobSnapshot | null;
+  readonly blockedReason:
+    | "insufficient-ingredients"
+    | "output-capacity"
+    | null;
+  readonly completedBatches: number;
+  readonly nextTransitionUtcMs: number | null;
+}
+
+export interface GameplayLogisticsSnapshot {
+  readonly phase:
+    | "idle"
+    | "outbound"
+    | "waiting-unload"
+    | "returning";
+  readonly shipmentId: string | null;
+  readonly departedAtUtcMs: number | null;
+  readonly arriveAtUtcMs: number | null;
+  readonly returnStartedAtUtcMs: number | null;
+  readonly returnAtUtcMs: number | null;
+  readonly kitchenWaitingSinceUtcMs: number | null;
+  readonly kitchenWaitingQuantity: number;
+  readonly cargoQuantity: number;
+  readonly totalDeliveredQuantity: number;
+  readonly nextTransitionUtcMs: number | null;
+}
+
+export interface GameplayRestaurantCustomerSnapshot {
+  readonly id: string;
+  readonly recipeId: string;
+  readonly dishItemId: string;
+  readonly arrivedAtUtcMs: number;
+  readonly leaveAtUtcMs: number;
+}
+
+export interface GameplayRestaurantSaleSnapshot {
+  readonly customerId: string;
+  readonly recipeId: string;
+  readonly dishItemId: string;
+  readonly quantity: 1;
+  readonly copperEarned: number;
+  readonly soldAtUtcMs: number;
+}
+
+export interface GameplayRestaurantSnapshot {
+  readonly selectedRecipeId: string | null;
+  readonly activeCustomer: GameplayRestaurantCustomerSnapshot | null;
+  readonly nextCustomerAtUtcMs: number | null;
+  readonly totalSoldQuantity: number;
+  readonly totalCustomersLeft: number;
+  readonly copperBalance: number;
+  readonly soldByDish: readonly {
+    readonly dishItemId: string;
+    readonly quantity: number;
+  }[];
+  readonly recentSales: readonly GameplayRestaurantSaleSnapshot[];
+  readonly nextTransitionUtcMs: number | null;
+}
+
+export interface GameplaySnapshot {
+  readonly revision: number;
+  readonly currentUtcMs: number;
+  readonly nextSupplyAtUtcMs: number;
+  readonly supplyBoxesReceived: number;
+  readonly inventory: {
+    readonly kitchenIngredients: GameplayInventoryContainerSnapshot;
+    readonly kitchenOutput: GameplayInventoryContainerSnapshot;
+    readonly cableCargo: GameplayInventoryContainerSnapshot;
+    readonly restaurantStorage: GameplayInventoryContainerSnapshot;
+  };
+  readonly cooking: GameplayCookingSnapshot;
+  readonly logistics: GameplayLogisticsSnapshot;
+  readonly restaurant: GameplayRestaurantSnapshot;
+}
+
+export interface OfflineEarningsSummary {
+  readonly elapsedMs: number;
+  readonly supplyBoxesReceived: number;
+  readonly cookingBatchesCompleted: number;
+  readonly deliveredQuantity: number;
+  readonly soldQuantity: number;
+  readonly customersLeft: number;
+  readonly copperEarned: number;
+}
+
+export interface NarrativeConditionProgressSnapshot {
+  readonly type: "online-dish-sales";
+  readonly current: number;
+  readonly required: number;
+}
+
+export interface NarrativeEventSnapshot {
+  readonly eventId: string;
+  readonly status: "locked" | "available" | "completed";
+  readonly unread: boolean;
+  readonly unlockedAtUtcMs: number | null;
+  readonly viewedAtUtcMs: number | null;
+  readonly completedAtUtcMs: number | null;
+  readonly conditions: readonly NarrativeConditionProgressSnapshot[];
+}
+
+export interface NarrativeSnapshot {
+  readonly revision: number;
+  readonly availableEventIds: readonly string[];
+  readonly unreadEventIds: readonly string[];
+  readonly events: readonly NarrativeEventSnapshot[];
+}
+
 export interface GameSnapshot {
   readonly revision: number;
   readonly phase: RuntimePhase;
   readonly runtimeStartedAtUtcMs: number;
   readonly settings: RuntimeSettingsSnapshot;
+  readonly gameplay: GameplaySnapshot | null;
+  readonly narrative: NarrativeSnapshot | null;
+  readonly offlineEarnings: OfflineEarningsSummary | null;
 }
 
 export interface SetQuietModeCommand {
@@ -39,12 +178,51 @@ export interface SetQuietModeCommand {
   };
 }
 
-export type GameCommand = SetQuietModeCommand;
+export interface SelectGameplayRecipeCommand {
+  readonly id: string;
+  readonly type: "gameplay.select-recipe";
+  readonly payload: {
+    readonly recipeId: string;
+  };
+}
+
+export interface SetGameplayAutoRepeatCommand {
+  readonly id: string;
+  readonly type: "gameplay.set-auto-repeat";
+  readonly payload: {
+    readonly enabled: boolean;
+  };
+}
+
+export interface MarkNarrativeViewedCommand {
+  readonly id: string;
+  readonly type: "narrative.mark-viewed";
+  readonly payload: {
+    readonly eventId: string;
+  };
+}
+
+export interface CompleteNarrativeEventCommand {
+  readonly id: string;
+  readonly type: "narrative.complete";
+  readonly payload: {
+    readonly eventId: string;
+  };
+}
+
+export type GameCommand =
+  | SetQuietModeCommand
+  | SelectGameplayRecipeCommand
+  | SetGameplayAutoRepeatCommand
+  | MarkNarrativeViewedCommand
+  | CompleteNarrativeEventCommand;
 
 export type CommandRejectionCode =
   | "INVALID_COMMAND"
   | "DUPLICATE_COMMAND"
-  | "RUNTIME_NOT_READY";
+  | "RUNTIME_NOT_READY"
+  | "GAMEPLAY_REJECTED"
+  | "NARRATIVE_REJECTED";
 
 export interface AcceptedCommandResult {
   readonly accepted: true;
@@ -147,7 +325,39 @@ export interface DesktopBridge extends RuntimeBridge, SettingsReadBridge {
   onCursorPosition(listener: DesktopCursorListener): () => void;
 }
 
-export interface ManagementBridge extends RuntimeBridge, SettingsWriteBridge {}
+
+export type SaveLoadSource =
+  | "loading"
+  | "new"
+  | "primary"
+  | "backup"
+  | "reset-corrupt";
+
+export interface SaveDiagnosticsSnapshot {
+  readonly revision: number;
+  readonly status: "loading" | "ready" | "saving" | "error";
+  readonly loadSource: SaveLoadSource;
+  readonly lastSavedAtUtcMs: number | null;
+  readonly lastError: string | null;
+  readonly fileName: "save.json";
+  readonly backupFileName: "save.json.bak";
+}
+
+export type SaveDiagnosticsListener = (
+  snapshot: SaveDiagnosticsSnapshot,
+) => void;
+
+export interface SaveDiagnosticsBridge {
+  getSaveDiagnostics(): Promise<SaveDiagnosticsSnapshot>;
+  onSaveDiagnosticsChanged(
+    listener: SaveDiagnosticsListener,
+  ): () => void;
+}
+
+export interface ManagementBridge
+  extends RuntimeBridge,
+    SettingsWriteBridge,
+    SaveDiagnosticsBridge {}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -173,13 +383,27 @@ export function isGameCommand(value: unknown): value is GameCommand {
   if (
     !isRecord(value) ||
     !isCommandId(value.id) ||
-    value.type !== "settings.set-quiet-mode" ||
     !isRecord(value.payload)
   ) {
     return false;
   }
 
-  return typeof value.payload.enabled === "boolean";
+  switch (value.type) {
+    case "settings.set-quiet-mode":
+    case "gameplay.set-auto-repeat":
+      return typeof value.payload.enabled === "boolean";
+    case "gameplay.select-recipe":
+      return (
+        typeof value.payload.recipeId === "string" &&
+        value.payload.recipeId.length > 0 &&
+        value.payload.recipeId.length <= 128
+      );
+    case "narrative.mark-viewed":
+    case "narrative.complete":
+      return isCommandId(value.payload.eventId);
+    default:
+      return false;
+  }
 }
 
 export function isDesktopInteractionRequest(

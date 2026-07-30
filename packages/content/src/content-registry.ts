@@ -1,10 +1,15 @@
 import type {
+  CharacterDefinition,
   ContentDefinitions,
   ContentQuantity,
+  CustomerDefinition,
   IngredientDefinition,
+  RecipeJournalDefinition,
   RecipeDefinition,
+  StoryEventDefinition,
   SupplyBundleDefinition,
 } from "./definitions";
+import { NarrativeContentRegistry } from "./narrative-content-registry";
 
 const CONTENT_ID_PATTERN = /^[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+$/;
 
@@ -100,6 +105,7 @@ export class ContentRegistry {
   readonly #ingredients: ReadonlyMap<string, IngredientDefinition>;
   readonly #recipes: ReadonlyMap<string, RecipeDefinition>;
   readonly #supplyBundles: ReadonlyMap<string, SupplyBundleDefinition>;
+  readonly #narrative: NarrativeContentRegistry;
 
   constructor(definitions: ContentDefinitions) {
     const issues: string[] = [];
@@ -126,6 +132,7 @@ export class ContentRegistry {
     }
 
     const recipeIds = new Set<string>();
+    const dishIds = new Set<string>();
     for (const recipe of definitions.recipes) {
       validateContentId(recipe.id, "recipe", "Recipe", issues);
       if (recipeIds.has(recipe.id)) {
@@ -135,6 +142,13 @@ export class ContentRegistry {
       if (recipe.name.trim().length === 0) {
         issues.push(`Recipe "${recipe.id}" must have a name.`);
       }
+      validateContentId(
+        recipe.outputItemId,
+        "dish",
+        `Recipe "${recipe.id}" output`,
+        issues,
+      );
+      dishIds.add(recipe.outputItemId);
       if (
         !isPositiveInteger(recipe.durationMs) ||
         !isPositiveInteger(recipe.outputQuantity) ||
@@ -179,6 +193,13 @@ export class ContentRegistry {
         issues,
       );
     }
+
+    this.#narrative = new NarrativeContentRegistry(
+      definitions,
+      recipeIds,
+      dishIds,
+      issues,
+    );
 
     if (issues.length > 0) {
       throw new ContentValidationError(issues);
@@ -226,5 +247,41 @@ export class ContentRegistry {
 
   getSupplyBundle(id: string): SupplyBundleDefinition | undefined {
     return this.#supplyBundles.get(id);
+  }
+
+  listCharacters(): readonly CharacterDefinition[] {
+    return this.#narrative.listCharacters();
+  }
+
+  listCustomers(): readonly CustomerDefinition[] {
+    return this.#narrative.listCustomers();
+  }
+
+  listStoryEvents(): readonly StoryEventDefinition[] {
+    return this.#narrative.listStoryEvents();
+  }
+
+  listRecipeJournals(): readonly RecipeJournalDefinition[] {
+    return this.#narrative.listRecipeJournals();
+  }
+
+  getCharacter(id: string): CharacterDefinition | undefined {
+    return this.#narrative.getCharacter(id);
+  }
+
+  getCustomer(id: string): CustomerDefinition | undefined {
+    return this.#narrative.getCustomer(id);
+  }
+
+  getStoryEvent(id: string): StoryEventDefinition | undefined {
+    return this.#narrative.getStoryEvent(id);
+  }
+
+  getRecipeJournal(id: string): RecipeJournalDefinition | undefined {
+    return this.#narrative.getRecipeJournal(id);
+  }
+
+  getLocalizedText(key: string): string | undefined {
+    return this.#narrative.getLocalizedText(key);
   }
 }

@@ -1,5 +1,6 @@
 import type {
   GameSnapshot,
+  SaveDiagnosticsSnapshot,
   WorkspaceBridgeInfo,
 } from "@airship-restaurant/contracts";
 import type { WebContents } from "electron";
@@ -11,6 +12,7 @@ export interface RendererBridgeSmokeResult {
   readonly renderer: RendererKind;
   readonly workspace: WorkspaceBridgeInfo;
   readonly snapshot: GameSnapshot;
+  readonly saveDiagnostics: SaveDiagnosticsSnapshot | null;
 }
 
 const BRIDGE_GLOBALS: Readonly<Record<RendererKind, string>> = {
@@ -96,9 +98,15 @@ function createBridgeProbeScript(bridgeGlobal: string): string {
         return null;
       }
 
+      const saveDiagnostics =
+        typeof bridge.getSaveDiagnostics === "function"
+          ? await bridge.getSaveDiagnostics()
+          : null;
+
       return {
         workspace: bridge.getWorkspaceInfo(),
         snapshot: await bridge.getSnapshot(),
+        saveDiagnostics,
       };
     })()
   `;
@@ -114,6 +122,7 @@ function parseSmokeResult(
 
   const workspace = value.workspace;
   const snapshot = value.snapshot;
+  const saveDiagnostics = value.saveDiagnostics;
 
   if (
     !isRecord(workspace) ||
@@ -121,8 +130,26 @@ function parseSmokeResult(
     typeof workspace.version !== "string" ||
     !isRecord(snapshot) ||
     snapshot.phase !== "ready" ||
-    typeof snapshot.revision !== "number"
+    typeof snapshot.revision !== "number" ||
+    !isRecord(snapshot.gameplay) ||
+    !isRecord(snapshot.gameplay.cooking) ||
+    !isRecord(snapshot.gameplay.logistics) ||
+    !isRecord(snapshot.gameplay.restaurant)
   ) {
+    return null;
+  }
+
+  if (
+    renderer === "management" &&
+    (!isRecord(saveDiagnostics) ||
+      typeof saveDiagnostics.revision !== "number" ||
+      typeof saveDiagnostics.status !== "string" ||
+      saveDiagnostics.fileName !== "save.json" ||
+      saveDiagnostics.backupFileName !== "save.json.bak")
+  ) {
+    return null;
+  }
+  if (renderer === "desktop" && saveDiagnostics !== null) {
     return null;
   }
 
@@ -130,6 +157,8 @@ function parseSmokeResult(
     renderer,
     workspace: workspace as unknown as WorkspaceBridgeInfo,
     snapshot: snapshot as unknown as GameSnapshot,
+    saveDiagnostics:
+      saveDiagnostics as SaveDiagnosticsSnapshot | null,
   };
 }
 
