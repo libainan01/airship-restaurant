@@ -73,9 +73,34 @@ node scripts/run-resident-stability.mjs `
 - M1 平台回归基线：`Document/M1平台回归基线-v0.1.md`
 - M2 经营规则草案：`Document/M2最小经营闭环规则草案-v0.1.md`
 - M3 食谱叙事系统基线：`Document/M3食谱叙事系统基线-v0.1.md`
+- 餐厅布局实例系统：`Document/餐厅布局实例系统-v0.1.md`
 - M3 剧情方向决策：`Document/M3剧情方向决策记录-v0.1.md`
 - M3 普通客人日常对话 Demo：`Document/M3普通客人日常对话Demo-v0.1.md`
+- M3 对话内容结构说明：`Document/M3对话内容结构说明-v0.1.md`
 - M3 首次 15—30 分钟体验脚本：`Document/M3首次15-30分钟体验脚本-v0.1.md`
+
+## 对话内容工具
+
+对白以 `packages/content/data/dialogues/chapters/*.json` 为唯一内容来源。交互式新增：
+
+```powershell
+npm run dialogue:new
+```
+
+其他命令：
+
+```powershell
+npm run dialogue:new-chapter
+npm run dialogue:new-speaker
+npm run dialogue:new-location
+npm run dialogue:validate
+npm run dialogue:generate
+npm run dialogue:check
+```
+
+章节 JSON 可以直接编辑；修改后运行 `npm run dialogue:generate`。完整检查、内容包
+类型检查和构建会验证 JSON 与生成文件是否同步。生成文件
+`packages/content/src/m3-dialogue/generated-dialogue-source.ts` 禁止手动编辑。
 
 ## 技术验证工程
 
@@ -131,7 +156,14 @@ M3 食谱叙事基础现已接入正式内容：ContentRegistry 能定义并校�
 白夜城、奥托、贝尔夫妇、《贝尔家的炉火炖菜》、21 组普通闲聊及 7 组关键剧情对白
 已经进入内容层。AmbientDialogueSystem 已接入 GameRuntime，会按营业上下文、熟悉度、
 故事前置、权重、冷却、安静模式和单次会话次数选取普通闲聊。桌面端会把当前对白
-解析为说话人姓名与文本，绘制在对应餐厅客人头顶；气泡不注册新的点击热区。
+解析为说话人姓名与文本。餐厅表现层在当前在线会话内维护带稳定 ID、位置、目标、座位和行为状态的
+持久 NPC 实例；客人自然经历进店、入座、等餐、用餐和离店。立柱、窗户、桌子、柜台和
+吊灯已经成为带稳定 ID、资源键、变换、尺寸与能力标签的布局物件实例；入口、出口、普通
+座位、对话编队和奥托工作点成为可查询或可预订的功能位置实例。绘制与 NPC 导演共享同一个
+布局运行时，因此移动家具或替换素材后不需要在状态机里同步修改坐标。对白先让参与者步行到
+相邻位置，全部到位后才显示气泡，台词切换不换人、不换座；单人台词由奥托完成当前
+任务后前往倾听。真实货物送达会进入奥托的取餐、送餐、返回任务队列。NPC、布局物件、
+关系标识和气泡都不注册新的点击热区。
 
 下一批优先推进内容：
 

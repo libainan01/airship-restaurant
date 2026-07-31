@@ -95,7 +95,7 @@ describe("dialogue bubble presenter", () => {
     ).toBeNull();
   });
 
-  it("resolves localized text and centers a single speaker", () => {
+  it("resolves localized text and a single participant", () => {
     const dialogue = createDialogue(["speaker.one"]);
     const lookup = createLookup(
       dialogue,
@@ -117,11 +117,17 @@ describe("dialogue bubble presenter", () => {
       speakerId: "speaker.one",
       speakerName: "送信员",
       text: "先来碗热汤。",
-      restaurantSeatIndex: 1,
+      participantIndex: 0,
+      participants: [
+        {
+          speakerId: "speaker.one",
+          speakerName: "送信员",
+        },
+      ],
     });
   });
 
-  it("keeps two speakers on opposite restaurant seats", () => {
+  it("keeps stable participant identities while lines alternate", () => {
     const dialogue = createDialogue([
       "speaker.left",
       "speaker.right",
@@ -146,19 +152,31 @@ describe("dialogue bubble presenter", () => {
       resolveDialogueBubblePresentation(
         createSnapshot(dialogue.id, 0),
         lookup,
-      )?.restaurantSeatIndex,
-    ).toBe(0);
+      ),
+    ).toMatchObject({
+      participantIndex: 0,
+      participants: [
+        {
+          speakerId: "speaker.left",
+          speakerName: "巡线员",
+        },
+        {
+          speakerId: "speaker.right",
+          speakerName: "送信员",
+        },
+      ],
+    });
     expect(
       resolveDialogueBubblePresentation(
         createSnapshot(dialogue.id, 1),
         lookup,
-      )?.restaurantSeatIndex,
-    ).toBe(2);
+      )?.participantIndex,
+    ).toBe(1);
     expect(
       resolveDialogueBubblePresentation(
         createSnapshot(dialogue.id, 2),
         lookup,
-      )?.restaurantSeatIndex,
+      )?.participantIndex,
     ).toBe(0);
   });
 

@@ -1,0 +1,137 @@
+{
+  "$schema": "./schemas/dialogue-catalog.schema.json",
+  "schemaVersion": 1,
+  "locations": [
+    {
+      "id": "location.greyfeather_beacon",
+      "name": "灰羽航标塔"
+    }
+  ],
+  "speakers": [
+    {
+      "id": "speaker.baiyecheng",
+      "name": "白夜城",
+      "characterId": "character.baiyecheng"
+    },
+    {
+      "id": "speaker.otto",
+      "name": "奥托",
+      "characterId": "character.otto"
+    },
+    {
+      "id": "speaker.martha_bell",
+      "name": "玛莎·贝尔",
+      "characterId": "character.martha_bell"
+    },
+    {
+      "id": "speaker.thomas_bell",
+      "name": "托马斯·贝尔",
+      "characterId": "character.thomas_bell"
+    },
+    {
+      "id": "speaker.courier",
+      "name": "送信员",
+      "characterId": null
+    },
+    {
+      "id": "speaker.mechanic",
+      "name": "修理工",
+      "characterId": null
+    },
+    {
+      "id": "speaker.linesman",
+      "name": "巡线员",
+      "characterId": null
+    },
+    {
+      "id": "speaker.merchant",
+      "name": "商贩",
+      "characterId": null
+    },
+    {
+      "id": "speaker.traveler",
+      "name": "旅客",
+      "characterId": null
+    },
+    {
+      "id": "speaker.miner",
+      "name": "矿工",
+      "characterId": null
+    },
+    {
+      "id": "speaker.older_woman",
+      "name": "老妇人",
+      "characterId": null
+    },
+    {
+      "id": "speaker.apprentice",
+      "name": "学徒",
+      "characterId": null
+    },
+    {
+      "id": "speaker.guard",
+      "name": "守卫",
+      "characterId": null
+    },
+    {
+      "id": "speaker.mercenary",
+      "name": "佣兵",
+      "characterId": null
+    },
+    {
+      "id": "speaker.bookkeeper",
+      "name": "记账员",
+      "characterId": null
+    },
+    {
+      "id": "speaker.young_guest",
+      "name": "年轻客人",
+      "characterId": null
+    },
+    {
+      "id": "speaker.older_guest",
+      "name": "老人",
+      "characterId": null
+    },
+    {
+      "id": "speaker.crew_member",
+      "name": "乘务员",
+      "characterId": null
+    },
+    {
+      "id": "speaker.porter",
+      "name": "搬运工",
+      "characterId": null
+    },
+    {
+      "id": "speaker.regular_a",
+      "name": "熟客甲",
+      "characterId": null
+    },
+    {
+      "id": "speaker.regular_b",
+      "name": "熟客乙",
+      "characterId": null
+    },
+    {
+      "id": "speaker.regular",
+      "name": "熟客",
+      "characterId": null
+    },
+    {
+      "id": "speaker.colleague",
+      "name": "同事",
+      "characterId": null
+    },
+    {
+      "id": "speaker.mother",
+      "name": "母亲",
+      "characterId": null
+    },
+    {
+      "id": "speaker.neighbor",
+      "name": "邻居",
+      "characterId": null
+    }
+  ]
+}

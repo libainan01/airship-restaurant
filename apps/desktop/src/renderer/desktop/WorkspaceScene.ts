@@ -24,6 +24,14 @@ import {
   type DialogueBubblePresentation,
 } from "./dialogue-bubble-presenter";
 import {
+  createDefaultRestaurantLayoutRuntime,
+  type RestaurantLayoutPropInstance,
+} from "./restaurant-layout";
+import {
+  RestaurantNpcDirector,
+  type RestaurantNpcFrame,
+} from "./restaurant-npc-director";
+import {
   DEFAULT_DESKTOP_SETTINGS,
   DESKTOP_EVENTS,
   DESKTOP_REGISTRY_KEYS,
@@ -75,8 +83,15 @@ const getRecipeName = (recipeId: string | null): string =>
     ? "未选择食谱"
     : (RECIPE_NAMES[recipeId] ?? recipeId);
 
+const EMPTY_RESTAURANT_NPC_FRAME: RestaurantNpcFrame = Object.freeze({
+  actors: Object.freeze([]),
+  conversation: null,
+});
+
 export class DesktopWorldScene extends Phaser.Scene {
   readonly #hitMap = new SemanticHitMap();
+  readonly #restaurantLayout = createDefaultRestaurantLayoutRuntime();
+  readonly #npcDirector = new RestaurantNpcDirector(this.#restaurantLayout);
 
   #cableGraphics!: Phaser.GameObjects.Graphics;
   #worldGraphics!: Phaser.GameObjects.Graphics;
@@ -84,6 +99,8 @@ export class DesktopWorldScene extends Phaser.Scene {
   #dialogueBubbleGraphics!: Phaser.GameObjects.Graphics;
   #dialogueSpeakerText!: Phaser.GameObjects.Text;
   #dialogueLineText!: Phaser.GameObjects.Text;
+  #dialogueContextText!: Phaser.GameObjects.Text;
+  #ottoStatusText!: Phaser.GameObjects.Text;
   #runtimeStatusText!: Phaser.GameObjects.Text;
   #airshipTitleText!: Phaser.GameObjects.Text;
   #airshipStatusText!: Phaser.GameObjects.Text;
@@ -121,6 +138,8 @@ export class DesktopWorldScene extends Phaser.Scene {
   #runtimePhase = "正在连接主进程";
   #gameplaySnapshot: GameplaySnapshot | null = null;
   #dialogueBubble: DialogueBubblePresentation | null = null;
+  #npcFrame: RestaurantNpcFrame = EMPTY_RESTAURANT_NPC_FRAME;
+  #lastDeliveredQuantity: number | null = null;
   #unsubscribeSnapshot: (() => void) | null = null;
   #unsubscribeCursor: (() => void) | null = null;
   #unsubscribeSettings: (() => void) | null = null;
@@ -161,6 +180,31 @@ export class DesktopWorldScene extends Phaser.Scene {
       .setDepth(31)
       .setVisible(false);
 
+    this.#dialogueContextText = this.add
+      .text(0, 0, "", {
+        backgroundColor: "#654333",
+        color: "#fff1d2",
+        fontFamily: FONT_FAMILY,
+        fontSize: "10px",
+        fontStyle: "bold",
+        padding: { x: 8, y: 4 },
+      })
+      .setOrigin(0.5)
+      .setDepth(12)
+      .setVisible(false);
+
+    this.#ottoStatusText = this.add
+      .text(0, 0, "", {
+        backgroundColor: "#2f2925",
+        color: "#e4b96e",
+        fontFamily: FONT_FAMILY,
+        fontSize: "9px",
+        fontStyle: "bold",
+        padding: { x: 6, y: 3 },
+      })
+      .setOrigin(0.5)
+      .setDepth(12)
+      .setVisible(false);
     this.#runtimeStatusText = this.add
       .text(0, 0, this.#runtimePhase, {
         color: "#61564e",
@@ -711,12 +755,7 @@ export class DesktopWorldScene extends Phaser.Scene {
         index % 2 === 0 ? COLORS.copper : COLORS.creamLight,
         1,
       );
-      graphics.fillRect(
-        index * stripeWidth,
-        y,
-        stripeWidth,
-        awningHeight,
-      );
+      graphics.fillRect(index * stripeWidth, y, stripeWidth, awningHeight);
       graphics.fillTriangle(
         index * stripeWidth,
         y + awningHeight,
@@ -735,76 +774,122 @@ export class DesktopWorldScene extends Phaser.Scene {
     graphics.lineBetween(0, y, width, y);
     graphics.lineBetween(0, y + height - 2, width, y + height - 2);
 
-    const pillarXs = [
-      width * 0.2,
-      width * 0.4,
-      width * 0.6,
-      width * 0.8,
-    ];
-    for (const pillarX of pillarXs) {
-      graphics.fillStyle(COLORS.wood, 0.95);
-      graphics.fillRect(
-        pillarX - 5,
-        y + awningHeight,
-        10,
-        height - awningHeight,
-      );
+    for (const prop of this.#restaurantLayout.getProps()) {
+      if (prop.renderLayer !== "lighting") {
+        this.#drawRestaurantProp(graphics, prop);
+      }
     }
-
-    const windowY = y + height * 0.48;
-    for (const windowX of [width * 0.3, width * 0.5, width * 0.7]) {
-      graphics.fillStyle(COLORS.woodDark, 1);
-      graphics.fillRoundedRect(
-        windowX - 46,
-        windowY - 28,
-        92,
-        56,
-        8,
-      );
-      graphics.fillStyle(COLORS.glow, 0.86);
-      graphics.fillRoundedRect(
-        windowX - 39,
-        windowY - 21,
-        78,
-        42,
-        5,
-      );
-      graphics.lineStyle(2, COLORS.wood, 0.9);
-      graphics.lineBetween(windowX, windowY - 21, windowX, windowY + 21);
-    }
-
-    const tableY = y + height * 0.76;
-    for (const tableX of [width * 0.32, width * 0.5, width * 0.68]) {
-      graphics.fillStyle(COLORS.woodDark, 1);
-      graphics.fillRoundedRect(tableX - 38, tableY - 8, 76, 13, 6);
-      graphics.fillRect(tableX - 4, tableY + 4, 8, 24);
-      graphics.fillStyle(COLORS.creamLight, 1);
-      graphics.fillCircle(tableX, tableY - 12, 5);
-    }
-
-    graphics.fillStyle(COLORS.woodDark, 1);
-    graphics.fillRoundedRect(
-      width - 205,
-      y + height * 0.42,
-      154,
-      height * 0.42,
-      8,
-    );
-    graphics.fillStyle(COLORS.brassLight, 1);
-    graphics.fillRect(
-      width - 194,
-      y + height * 0.48,
-      132,
-      7,
-    );
-    graphics.fillStyle(COLORS.creamLight, 1);
-    graphics.fillCircle(width - 166, y + height * 0.58, 8);
-    graphics.fillCircle(width - 136, y + height * 0.58, 8);
 
     if (hovered) {
       graphics.lineStyle(3, COLORS.glow, 0.74);
       graphics.strokeRect(2, y + 2, width - 4, height - 4);
     }
+  }
+
+  #drawRestaurantProp(
+    graphics: Phaser.GameObjects.Graphics,
+    prop: RestaurantLayoutPropInstance,
+  ): void {
+    const bounds = this.#resolveRestaurantPropBounds(prop);
+    switch (prop.kind) {
+      case "pillar":
+        graphics.fillStyle(COLORS.wood, 0.95);
+        graphics.fillRect(bounds.left, bounds.top, bounds.width, bounds.height);
+        break;
+      case "window":
+        graphics.fillStyle(COLORS.woodDark, 1);
+        graphics.fillRoundedRect(
+          bounds.left,
+          bounds.top,
+          bounds.width,
+          bounds.height,
+          8,
+        );
+        graphics.fillStyle(COLORS.glow, 0.86);
+        graphics.fillRoundedRect(
+          bounds.left + 7,
+          bounds.top + 7,
+          Math.max(0, bounds.width - 14),
+          Math.max(0, bounds.height - 14),
+          5,
+        );
+        graphics.lineStyle(2, COLORS.wood, 0.9);
+        graphics.lineBetween(
+          bounds.x,
+          bounds.top + 7,
+          bounds.x,
+          bounds.top + bounds.height - 7,
+        );
+        break;
+      case "table":
+        graphics.fillStyle(COLORS.woodDark, 1);
+        graphics.fillRoundedRect(
+          bounds.left,
+          bounds.top,
+          bounds.width,
+          bounds.height,
+          6,
+        );
+        graphics.fillRect(bounds.x - 4, bounds.top + bounds.height - 1, 8, 24);
+        graphics.fillStyle(COLORS.creamLight, 1);
+        graphics.fillCircle(bounds.x, bounds.top - 4, 5);
+        break;
+      case "counter":
+        graphics.fillStyle(COLORS.woodDark, 1);
+        graphics.fillRoundedRect(
+          bounds.left,
+          bounds.top,
+          bounds.width,
+          bounds.height,
+          8,
+        );
+        graphics.fillStyle(COLORS.brassLight, 1);
+        graphics.fillRect(
+          bounds.left + 11,
+          bounds.top + bounds.height * 0.14,
+          Math.max(0, bounds.width - 22),
+          7,
+        );
+        graphics.fillStyle(COLORS.creamLight, 1);
+        graphics.fillCircle(bounds.x - 38, bounds.top + bounds.height * 0.38, 8);
+        graphics.fillCircle(bounds.x - 8, bounds.top + bounds.height * 0.38, 8);
+        break;
+      case "lamp":
+        break;
+    }
+  }
+
+  #resolveRestaurantPropBounds(prop: RestaurantLayoutPropInstance): {
+    readonly x: number;
+    readonly y: number;
+    readonly left: number;
+    readonly top: number;
+    readonly width: number;
+    readonly height: number;
+  } {
+    const width =
+      (prop.dimensions.widthRatio ?? 0) * this.#viewportWidth +
+      (prop.dimensions.widthPx ?? 0) +
+      (prop.dimensions.widthOffsetPx ?? 0);
+    const height =
+      (prop.dimensions.heightRatio ?? 0) * this.#restaurantHeight +
+      (prop.dimensions.heightPx ?? 0) +
+      (prop.dimensions.heightOffsetPx ?? 0);
+    const x =
+      prop.transform.xRatio * this.#viewportWidth +
+      (prop.transform.offsetXPx ?? 0);
+    const y =
+      this.#restaurantY +
+      prop.transform.yRatio * this.#restaurantHeight +
+      (prop.transform.offsetYPx ?? 0);
+    return {
+      x,
+      y,
+      left: x - width * (prop.transform.originX ?? 0.5),
+      top: y - height * (prop.transform.originY ?? 0.5),
+      width,
+      height,
+    };
   }
 
   #drawAirshipExchangeStation(
@@ -946,6 +1031,11 @@ export class DesktopWorldScene extends Phaser.Scene {
     const cableRoute = this.#drawCableInfrastructure();
     this.#drawCableCar(graphics, cableRoute, time, motionScale);
     this.#drawAirshipMotion(graphics, time, motionScale);
+    this.#npcFrame = this.#npcDirector.update({
+      timeMs: time,
+      dialogue: this.#dialogueBubble,
+      deliveryRevision: this.#lastDeliveredQuantity,
+    });
     this.#drawRestaurantMotion(graphics, time, motionScale);
     this.#drawDialogueBubble(time, motionScale);
   }
@@ -1203,47 +1293,260 @@ export class DesktopWorldScene extends Phaser.Scene {
   ): void {
     const y = this.#restaurantY;
     const height = this.#restaurantHeight;
-    const bounce = Math.sin(time * 0.003 * motionScale) * 2;
-
-    for (const [index, x] of [
-      this.#viewportWidth * 0.32,
-      this.#viewportWidth * 0.5,
-      this.#viewportWidth * 0.68,
-    ].entries()) {
-      const direction = index % 2 === 0 ? 1 : -1;
-      graphics.fillStyle(
-        index === 1 ? COLORS.copper : COLORS.teal,
-        1,
-      );
-      graphics.fillRoundedRect(
-        x - 8,
-        y + height * 0.57 + bounce * direction,
-        16,
-        24,
-        6,
-      );
-      graphics.fillStyle(COLORS.creamLight, 1);
-      graphics.fillCircle(
-        x,
-        y + height * 0.52 + bounce * direction,
-        7,
-      );
-    }
+    const bubble = this.#dialogueBubble;
+    const conversation = this.#npcFrame.conversation;
 
     const lampAlpha = 0.66 + Math.sin(time * 0.002) * 0.08;
-    for (const lampX of [
-      this.#viewportWidth * 0.25,
-      this.#viewportWidth * 0.75,
-    ]) {
+    for (const lamp of this.#restaurantLayout.getProps("lamp")) {
+      const bounds = this.#resolveRestaurantPropBounds(lamp);
       graphics.lineStyle(2, COLORS.woodDark, 1);
-      graphics.lineBetween(
-        lampX,
-        y + 28,
-        lampX,
-        y + height * 0.34,
-      );
+      graphics.lineBetween(bounds.x, y + 28, bounds.x, bounds.y - 7);
       graphics.fillStyle(COLORS.glow, lampAlpha);
-      graphics.fillCircle(lampX, y + height * 0.38, 10);
+      graphics.fillCircle(bounds.x, bounds.y, Math.max(6, bounds.width / 2));
+    }
+
+    if (conversation === null || bubble === null) {
+      this.#dialogueContextText.setVisible(false);
+    } else {
+      const participantPoints = conversation.participantActorIds
+        .map((actorId) => {
+          const actor = this.#npcFrame.actors.find(
+            (candidate) => candidate.instanceId === actorId,
+          );
+          return actor === undefined
+            ? null
+            : {
+                x: actor.xRatio * this.#viewportWidth,
+                y:
+                  this.#restaurantY +
+                  actor.yRatio * this.#restaurantHeight -
+                  38,
+              };
+        })
+        .filter(
+          (point): point is { readonly x: number; readonly y: number } =>
+            point !== null,
+        );
+      if (participantPoints.length >= 2) {
+        this.#drawConversationLink(graphics, participantPoints, time);
+      }
+
+      const participantNames = bubble.participants
+        .map((participant) => participant.speakerName)
+        .join(" ↔ ");
+      const includesOtto = bubble.participants.length === 1;
+      const relationship = includesOtto
+        ? `${participantNames} ↔ 奥托`
+        : participantNames;
+      this.#dialogueContextText
+        .setText(
+          `${relationship} · ${
+            conversation.ready ? "交谈中" : "正在靠近桌边"
+          }`,
+        )
+        .setPosition(this.#viewportWidth * 0.5, y + height * 0.9)
+        .setVisible(true);
+    }
+
+    const bodyColors = [COLORS.teal, COLORS.copper, COLORS.brass] as const;
+    let ottoStatus = "";
+    let ottoX = 0;
+    let ottoFeetY =
+      y + height * this.#restaurantLayout.requireAnchor("otto-home").yRatio;
+    for (const actor of this.#npcFrame.actors) {
+      if (!actor.visible) {
+        continue;
+      }
+      const x = actor.xRatio * this.#viewportWidth;
+      const feetY = y + actor.yRatio * height;
+      const actorTime =
+        time * Math.max(0.35, motionScale) +
+        actor.instanceId.length * 137;
+      if (actor.kind === "guest") {
+        const guestIndex = Number(actor.instanceId.split(".").at(-1)) || 0;
+        const guestAction =
+          actor.action === "walking" ||
+          actor.action === "waiting" ||
+          actor.action === "talking"
+            ? actor.action
+            : "eating";
+        this.#drawRestaurantGuest(
+          graphics,
+          x,
+          feetY,
+          actor.facing,
+          bodyColors[guestIndex % bodyColors.length] ?? COLORS.teal,
+          guestAction,
+          actorTime,
+          actor.activeSpeaker,
+        );
+      } else {
+        this.#drawOttoActor(
+          graphics,
+          x,
+          feetY,
+          actor.facing,
+          actor.trayVisible,
+          actorTime,
+        );
+        ottoX = x;
+        ottoFeetY = feetY;
+        if (actor.trayVisible || actor.action === "serving") {
+          ottoStatus = "奥托 · 送餐中";
+        } else if (actor.conversationParticipant) {
+          ottoStatus =
+            actor.action === "listening"
+              ? "奥托 · 在听"
+              : "奥托 · 走向客人";
+        }
+      }
+    }
+    this.#ottoStatusText
+      .setText(ottoStatus)
+      .setPosition(ottoX, ottoFeetY - 58)
+      .setVisible(ottoStatus.length > 0);
+  }
+
+  #drawConversationLink(
+    graphics: Phaser.GameObjects.Graphics,
+    actorPoints: readonly { readonly x: number; readonly y: number }[],
+    time: number,
+  ): void {
+    const sorted = [...actorPoints].sort((left, right) => left.x - right.x);
+    const first = sorted[0];
+    const last = sorted.at(-1);
+    if (first === undefined || last === undefined) {
+      return;
+    }
+
+    const linkY =
+      sorted.reduce((sum, point) => sum + point.y, 0) / sorted.length;
+    graphics.lineStyle(2, COLORS.copper, 0.48);
+    graphics.lineBetween(first.x + 11, linkY, last.x - 11, linkY);
+    const pulse = 0.68 + Math.sin(time * 0.008) * 0.2;
+    for (let index = 1; index <= 3; index += 1) {
+      const progress = index / 4;
+      graphics.fillStyle(COLORS.copperLight, pulse);
+      graphics.fillCircle(
+        first.x + (last.x - first.x) * progress,
+        linkY,
+        2.5,
+      );
+    }
+  }
+
+  #drawRestaurantGuest(
+    graphics: Phaser.GameObjects.Graphics,
+    x: number,
+    feetY: number,
+    facing: -1 | 1,
+    bodyColor: number,
+    action: "walking" | "waiting" | "eating" | "talking",
+    time: number,
+    activeSpeaker: boolean,
+  ): void {
+    const walking = action === "walking";
+    const step = walking ? Math.sin(time * 0.015) * 4 : 0;
+    const bob = walking
+      ? Math.abs(Math.sin(time * 0.015)) * 2
+      : Math.sin(time * 0.005) * 1.2;
+    const actorFeetY = feetY - bob;
+    const headY = actorFeetY - 38;
+
+    graphics.fillStyle(COLORS.ink, 0.16);
+    graphics.fillEllipse(x, feetY + 2, 24, 7);
+    if (activeSpeaker) {
+      const halo = 0.48 + Math.sin(time * 0.01) * 0.18;
+      graphics.lineStyle(3, COLORS.glow, halo);
+      graphics.strokeCircle(x, headY, 13);
+    }
+
+    graphics.lineStyle(4, COLORS.woodDark, 1);
+    graphics.lineBetween(x - 4, actorFeetY - 8, x - 5 + step, actorFeetY);
+    graphics.lineBetween(x + 4, actorFeetY - 8, x + 5 - step, actorFeetY);
+    graphics.fillStyle(bodyColor, 1);
+    graphics.fillRoundedRect(x - 9, actorFeetY - 31, 18, 24, 6);
+    graphics.fillStyle(COLORS.woodDark, 1);
+    graphics.fillCircle(x, headY - 2, 8.5);
+    graphics.fillStyle(COLORS.creamLight, 1);
+    graphics.fillCircle(x, headY, 7);
+    graphics.fillStyle(COLORS.ink, 1);
+    graphics.fillCircle(x + facing * 3, headY - 1, 1.2);
+
+    graphics.lineStyle(3, COLORS.creamLight, 1);
+    if (action === "talking" && activeSpeaker) {
+      const gesture = 3 + Math.sin(time * 0.012) * 3;
+      graphics.lineBetween(
+        x + facing * 5,
+        actorFeetY - 25,
+        x + facing * (13 + gesture),
+        actorFeetY - 29,
+      );
+    } else if (action === "eating") {
+      graphics.lineBetween(x - 5, actorFeetY - 23, x - 1, actorFeetY - 17);
+      graphics.lineBetween(x + 5, actorFeetY - 23, x + 1, actorFeetY - 17);
+      graphics.fillStyle(COLORS.creamLight, 1);
+      graphics.fillEllipse(x, actorFeetY - 15, 14, 5);
+      graphics.lineStyle(2, COLORS.brass, 1);
+      graphics.lineBetween(
+        x + 3,
+        actorFeetY - 17,
+        x + 8,
+        actorFeetY - 26 - Math.sin(time * 0.008) * 3,
+      );
+    } else {
+      graphics.lineBetween(x - 5, actorFeetY - 24, x - 8 - step, actorFeetY - 15);
+      graphics.lineBetween(x + 5, actorFeetY - 24, x + 8 + step, actorFeetY - 15);
+    }
+  }
+
+  #drawOttoActor(
+    graphics: Phaser.GameObjects.Graphics,
+    x: number,
+    feetY: number,
+    facing: -1 | 1,
+    trayVisible: boolean,
+    time: number,
+  ): void {
+    const bob = Math.abs(Math.sin(time * 0.012)) * 1.5;
+    const actorFeetY = feetY - bob;
+    const headY = actorFeetY - 37;
+
+    graphics.fillStyle(COLORS.ink, 0.18);
+    graphics.fillEllipse(x, feetY + 2, 27, 7);
+    graphics.lineStyle(4, COLORS.woodDark, 1);
+    graphics.lineBetween(x - 5, actorFeetY - 8, x - 7, actorFeetY);
+    graphics.lineBetween(x + 5, actorFeetY - 8, x + 7, actorFeetY);
+    graphics.fillStyle(COLORS.brass, 1);
+    graphics.fillRoundedRect(x - 10, actorFeetY - 31, 20, 25, 5);
+    graphics.lineStyle(2, COLORS.woodDark, 1);
+    graphics.strokeRoundedRect(x - 10, actorFeetY - 31, 20, 25, 5);
+    graphics.fillStyle(COLORS.woodDark, 1);
+    graphics.fillRoundedRect(x - 10, headY - 8, 20, 16, 5);
+    graphics.lineStyle(2, COLORS.brassLight, 1);
+    graphics.strokeRoundedRect(x - 10, headY - 8, 20, 16, 5);
+    graphics.fillStyle(COLORS.tealLight, 1);
+    graphics.fillCircle(x + facing * 4, headY - 1, 2.2);
+    graphics.lineStyle(2, COLORS.brass, 1);
+    graphics.lineBetween(x, headY - 8, x, headY - 14);
+    graphics.fillStyle(COLORS.glow, 0.9);
+    graphics.fillCircle(x, headY - 16, 2.4);
+
+    if (trayVisible) {
+      const trayX = x + facing * 18;
+      const trayY = actorFeetY - 23;
+      graphics.lineStyle(3, COLORS.brassLight, 1);
+      graphics.lineBetween(x + facing * 7, actorFeetY - 24, trayX, trayY);
+      graphics.lineStyle(3, COLORS.woodDark, 1);
+      graphics.lineBetween(trayX - 12, trayY, trayX + 12, trayY);
+      graphics.fillStyle(COLORS.creamLight, 1);
+      graphics.fillEllipse(trayX, trayY - 3, 15, 6);
+      graphics.fillStyle(COLORS.copperLight, 1);
+      graphics.fillCircle(trayX, trayY - 6, 3);
+    } else {
+      graphics.lineStyle(3, COLORS.brassLight, 1);
+      graphics.lineBetween(x - 7, actorFeetY - 24, x - 12, actorFeetY - 15);
+      graphics.lineBetween(x + 7, actorFeetY - 24, x + 12, actorFeetY - 15);
     }
   }
 
@@ -1255,7 +1558,17 @@ export class DesktopWorldScene extends Phaser.Scene {
     graphics.clear();
 
     const bubble = this.#dialogueBubble;
-    if (bubble === null) {
+    const conversation = this.#npcFrame.conversation;
+    const speakerActor = this.#npcFrame.actors.find(
+      (actor) =>
+        actor.instanceId === conversation?.activeSpeakerActorId,
+    );
+    if (
+      bubble === null ||
+      conversation === null ||
+      !conversation.ready ||
+      speakerActor === undefined
+    ) {
       this.#dialogueSpeakerText.setVisible(false);
       this.#dialogueLineText.setVisible(false);
       return;
@@ -1282,19 +1595,16 @@ export class DesktopWorldScene extends Phaser.Scene {
         this.#dialogueLineText.height +
         11,
     );
-    const seatXs = [
-      this.#viewportWidth * 0.32,
-      this.#viewportWidth * 0.5,
-      this.#viewportWidth * 0.68,
-    ] as const;
-    const seatX =
-      seatXs[bubble.restaurantSeatIndex] ?? seatXs[1];
-    const direction =
-      bubble.restaurantSeatIndex % 2 === 0 ? 1 : -1;
-    const bounce =
-      Math.sin(time * 0.003 * motionScale) * 2 * direction;
+    const seatX = speakerActor.xRatio * this.#viewportWidth;
+    const actorTime =
+      time * Math.max(0.35, motionScale) +
+      speakerActor.instanceId.length * 137;
+    const bounce = Math.sin(actorTime * 0.005) * 1.2;
     const speakerHeadY =
-      this.#restaurantY + this.#restaurantHeight * 0.52 + bounce;
+      this.#restaurantY +
+      this.#restaurantHeight * speakerActor.yRatio -
+      bounce -
+      38;
     const bubbleLeft = Phaser.Math.Clamp(
       seatX - bubbleWidth / 2,
       12,
@@ -1525,6 +1835,8 @@ export class DesktopWorldScene extends Phaser.Scene {
   }
 
   #applySnapshot(snapshot: GameSnapshot): void {
+    this.#lastDeliveredQuantity =
+      snapshot.gameplay?.logistics.totalDeliveredQuantity ?? null;
     this.#quietMode = snapshot.settings.quietMode;
     this.#gameplaySnapshot = snapshot.gameplay;
     this.#dialogueBubble = resolveDialogueBubblePresentation(

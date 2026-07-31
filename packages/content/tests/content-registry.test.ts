@@ -5,6 +5,12 @@ import {
   M2_INITIAL_INGREDIENTS,
   createM2ContentRegistry,
 } from "../src";
+import {
+  M3_AMBIENT_DIALOGUES,
+  M3_DIALOGUES,
+  M3_DIALOGUE_LOCALIZATIONS,
+  M3_STORY_DIALOGUES,
+} from "../src/m3-dialogue-content";
 
 describe("M2 content", () => {
   it("loads M2 gameplay and the formal M3 dialogue slice", () => {
@@ -53,6 +59,24 @@ describe("M2 content", () => {
             firstAmbientLine.localizationKey,
           ),
     ).toBe("先来碗热汤。风快把耳朵刮走了。");
+  });
+
+  it("aggregates the split ambient and story dialogue modules", () => {
+    expect(M3_AMBIENT_DIALOGUES).toHaveLength(21);
+    expect(M3_STORY_DIALOGUES).toHaveLength(7);
+    expect(M3_DIALOGUES).toEqual([
+      ...M3_AMBIENT_DIALOGUES,
+      ...M3_STORY_DIALOGUES,
+    ]);
+
+    for (const dialogue of M3_DIALOGUES) {
+      for (const line of dialogue.lines) {
+        expect(
+          M3_DIALOGUE_LOCALIZATIONS[line.localizationKey],
+          `${dialogue.id} is missing ${line.localizationKey}`,
+        ).toBeTypeOf("string");
+      }
+    }
   });
 
   it("provides exactly two basic supply bundles as initial stock", () => {

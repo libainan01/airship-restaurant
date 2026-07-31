@@ -12,13 +12,19 @@ export interface DialogueBubbleContentLookup {
   getLocalizedText(key: string): string | undefined;
 }
 
+export interface DialogueParticipantPresentation {
+  readonly speakerId: string;
+  readonly speakerName: string;
+}
+
 export interface DialogueBubblePresentation {
   readonly dialogueId: string;
   readonly lineIndex: number;
   readonly speakerId: string;
   readonly speakerName: string;
   readonly text: string;
-  readonly restaurantSeatIndex: 0 | 1 | 2;
+  readonly participantIndex: number;
+  readonly participants: readonly DialogueParticipantPresentation[];
 }
 
 function uniqueSpeakerIds(
@@ -27,23 +33,6 @@ function uniqueSpeakerIds(
   return [
     ...new Set(dialogue.lines.map((line) => line.speakerId)),
   ];
-}
-
-function restaurantSeatIndex(
-  speakerId: string,
-  dialogue: DialogueDefinition,
-): 0 | 1 | 2 {
-  const speakerIds = uniqueSpeakerIds(dialogue);
-  if (speakerIds.length === 1) {
-    return 1;
-  }
-
-  const speakerIndex = Math.max(0, speakerIds.indexOf(speakerId));
-  if (speakerIds.length === 2) {
-    return speakerIndex === 0 ? 0 : 2;
-  }
-
-  return Math.min(2, speakerIndex) as 0 | 1 | 2;
 }
 
 export function resolveDialogueBubblePresentation(
@@ -67,6 +56,32 @@ export function resolveDialogueBubblePresentation(
     return null;
   }
 
+  const participants = uniqueSpeakerIds(dialogue)
+    .map((speakerId): DialogueParticipantPresentation | null => {
+      const participant = content.getDialogueSpeaker(speakerId);
+      if (participant === undefined) {
+        return null;
+      }
+      return Object.freeze({
+        speakerId: participant.id,
+        speakerName:
+          content.getLocalizedText(participant.localizationKey) ??
+          participant.name,
+      });
+    })
+    .filter(
+      (
+        participant,
+      ): participant is DialogueParticipantPresentation =>
+        participant !== null,
+    );
+  const participantIndex = participants.findIndex(
+    (participant) => participant.speakerId === speaker.id,
+  );
+  if (participantIndex < 0) {
+    return null;
+  }
+
   return Object.freeze({
     dialogueId: active.dialogueId,
     lineIndex: active.lineIndex,
@@ -74,9 +89,7 @@ export function resolveDialogueBubblePresentation(
     speakerName:
       content.getLocalizedText(speaker.localizationKey) ?? speaker.name,
     text,
-    restaurantSeatIndex: restaurantSeatIndex(
-      speaker.id,
-      dialogue,
-    ),
+    participantIndex,
+    participants: Object.freeze(participants),
   });
 }
