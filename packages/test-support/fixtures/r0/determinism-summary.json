@@ -1,0 +1,18 @@
+{
+  "fixtureVersion": 1,
+  "startUtcMs": 1767225600000,
+  "targetUtcMs": 1767254400000,
+  "randomState": 2331482684,
+  "supplyBoxesReceived": 240,
+  "cookingBatches": 234,
+  "deliveredQuantity": 452,
+  "soldQuantity": 434,
+  "customersLeft": 0,
+  "copperBalance": 1736,
+  "inventory": {
+    "kitchenIngredients": 150,
+    "kitchenOutput": 12,
+    "cableCargo": 4,
+    "restaurantStorage": 18
+  }
+}

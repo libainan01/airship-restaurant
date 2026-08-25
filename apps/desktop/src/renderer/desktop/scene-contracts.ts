@@ -21,6 +21,7 @@ export const DESKTOP_REGISTRY_KEYS = {
 export const DESKTOP_EVENTS = {
   settingsChanged: "desktop:settings-changed",
   debugSnapshotChanged: "desktop:debug-snapshot-changed",
+
 } as const;
 
 export interface DesktopDebugSnapshot {

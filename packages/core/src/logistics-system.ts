@@ -156,8 +156,8 @@ export class LogisticsSystem {
   readonly #cargoCapacity: number;
   readonly #dispatchThreshold: number;
   readonly #maximumWaitMs: number;
-  readonly #outboundDurationMs: number;
-  readonly #returnDurationMs: number;
+  #outboundDurationMs: number;
+  #returnDurationMs: number;
   #phase: LogisticsPhase = "idle";
   #activeShipment: ActiveShipment | null = null;
   #kitchenWaitingSinceUtcMs: number | null = null;
@@ -212,6 +212,13 @@ export class LogisticsSystem {
     }
   }
 
+  setTravelDurationMs(outboundDurationMs: number, returnDurationMs: number): void {
+    if (!isPositiveInteger(outboundDurationMs) || !isPositiveInteger(returnDurationMs)) {
+      throw new RangeError("Logistics travel durations must be positive integers.");
+    }
+    this.#outboundDurationMs = outboundDurationMs;
+    this.#returnDurationMs = returnDurationMs;
+  }
   getSnapshot(): LogisticsSnapshot {
     const kitchen = this.#inventory.getContainerSnapshot(
       this.#kitchenOutputContainerId,

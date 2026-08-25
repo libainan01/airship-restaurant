@@ -1,5 +1,12 @@
-const OPERATION_HISTORY_LIMIT = 1_024;
+import {
+  InventoryModule,
+  StaticInventoryStorageDefinitions,
+  type InventoryItemCategory,
+  type InventoryModuleOperationResult,
+} from "./modules";
+
 const IDENTIFIER_MAX_LENGTH = 128;
+const COMPATIBILITY_ITEM_ID = "compatibility.placeholder";
 
 export interface ItemStack {
   readonly itemId: string;
@@ -61,19 +68,11 @@ export type InventoryOperationResult =
   | AcceptedInventoryOperation
   | RejectedInventoryOperation;
 
-interface ContainerState {
+interface NormalizedContainerDefinition {
   readonly id: string;
   readonly capacity: number;
   readonly acceptedItemIds: ReadonlySet<string> | null;
   readonly itemCapacities: ReadonlyMap<string, number>;
-  readonly quantities: Map<string, number>;
-  readonly reservedQuantities: Map<string, number>;
-}
-
-interface ReservationState {
-  readonly id: string;
-  readonly containerId: string;
-  readonly items: ReadonlyMap<string, number>;
 }
 
 function isValidIdentifier(value: string): boolean {
@@ -88,54 +87,38 @@ function isPositiveInteger(value: number): boolean {
   return Number.isSafeInteger(value) && value > 0;
 }
 
-function sumQuantities(items: ReadonlyMap<string, number>): number {
-  let total = 0;
-  for (const quantity of items.values()) {
-    total += quantity;
-  }
-  return total;
-}
-
 function normalizeStacks(
   stacks: readonly ItemStack[],
-): ReadonlyMap<string, number> | null {
-  if (stacks.length === 0) {
-    return null;
-  }
-
-  const normalized = new Map<string, number>();
+): readonly ItemStack[] | null {
+  if (stacks.length === 0) return null;
+  const itemIds = new Set<string>();
+  const normalized: ItemStack[] = [];
   for (const stack of stacks) {
     if (
       !isValidIdentifier(stack.itemId) ||
       !isPositiveInteger(stack.quantity) ||
-      normalized.has(stack.itemId)
+      itemIds.has(stack.itemId)
     ) {
       return null;
     }
-    normalized.set(stack.itemId, stack.quantity);
+    itemIds.add(stack.itemId);
+    normalized.push(Object.freeze({ ...stack }));
   }
-  return normalized;
+  return Object.freeze(normalized);
 }
 
-function getTotalQuantity(container: ContainerState): number {
-  return sumQuantities(container.quantities);
-}
-
-function getAvailableQuantity(
-  container: ContainerState,
-  itemId: string,
-): number {
-  return (
-    (container.quantities.get(itemId) ?? 0) -
-    (container.reservedQuantities.get(itemId) ?? 0)
-  );
+function inferCategory(itemId: string): InventoryItemCategory {
+  if (itemId.startsWith("ingredient.")) return "ingredient";
+  if (itemId.startsWith("dishware.")) return "dishware";
+  if (itemId.startsWith("dish.") || itemId.startsWith("meal.")) return "meal";
+  return "intermediate";
 }
 
 export class InventorySystem {
-  readonly #containers = new Map<string, ContainerState>();
-  readonly #reservations = new Map<string, ReservationState>();
-  readonly #processedOperationIds = new Set<string>();
-  readonly #operationHistory: string[] = [];
+  readonly #definitions = new Map<string, NormalizedContainerDefinition>();
+  readonly #module: InventoryModule;
+  readonly #snapshotCache = new Map<string, InventoryContainerSnapshot>();
+  #snapshotCacheRevision = -1;
 
   constructor(
     definitions: readonly InventoryContainerDefinition[],
@@ -145,99 +128,146 @@ export class InventorySystem {
       throw new Error("At least one inventory container is required.");
     }
 
+    const itemIds = new Set<string>();
     for (const definition of definitions) {
-      this.#registerContainer(definition);
+      const normalized = this.#normalizeDefinition(definition);
+      if (this.#definitions.has(normalized.id)) {
+        throw new Error(`Invalid inventory container: ${definition.id}`);
+      }
+      this.#definitions.set(normalized.id, normalized);
+      for (const itemId of normalized.acceptedItemIds ?? []) itemIds.add(itemId);
+      for (const itemId of normalized.itemCapacities.keys()) itemIds.add(itemId);
     }
-
     for (const [containerId, stacks] of Object.entries(initialContents)) {
-      const container = this.#containers.get(containerId);
-      if (container === undefined) {
+      if (!this.#definitions.has(containerId)) {
         throw new Error(
           `Initial inventory references unknown container: ${containerId}`,
         );
       }
       const normalized = normalizeStacks(stacks);
       if (normalized === null) {
-        throw new Error(
-          `Initial inventory for ${containerId} is invalid.`,
-        );
+        throw new Error(`Initial inventory for ${containerId} is invalid.`);
       }
-      const rejection = this.#validateAddition(container, normalized);
+      for (const stack of normalized) itemIds.add(stack.itemId);
+    }
+    if (itemIds.size === 0) itemIds.add(COMPATIBILITY_ITEM_ID);
+
+    const storage = new StaticInventoryStorageDefinitions(
+      [...this.#definitions.values()].map((definition) => ({
+        id: definition.id,
+        compartments: [{
+          id: `${definition.id}.compatibility-capacity`,
+          capacity: definition.capacity,
+          acceptedCategories: [
+            "ingredient",
+            "dishware",
+            "intermediate",
+            "meal",
+          ],
+          ...(definition.acceptedItemIds === null
+            ? {}
+            : { acceptedItemIds: [...definition.acceptedItemIds] }),
+        }],
+      })),
+    );
+    const initialStacks = Object.entries(initialContents).flatMap(
+      ([locationId, stacks]) =>
+        stacks.map((stack) => Object.freeze({ ...stack, locationId })),
+    );
+    for (const [containerId, stacks] of Object.entries(initialContents)) {
+      const rejection = this.#validateAdditionAgainst(
+        containerId,
+        normalizeStacks(stacks) ?? [],
+        initialStacks.filter((stack) => stack.locationId !== containerId),
+      );
       if (rejection !== null) {
         throw new Error(
           `Initial inventory for ${containerId} is invalid: ${rejection.message}`,
         );
       }
-      for (const [itemId, quantity] of normalized) {
-        container.quantities.set(itemId, quantity);
-      }
     }
+    this.#module = new InventoryModule(
+      [...itemIds].map((id) => ({
+        id,
+        category: inferCategory(id),
+        storageMode: "stack" as const,
+      })),
+      storage,
+      {
+        schemaVersion: 1,
+        revision: 0,
+        stacks: Object.freeze(initialStacks),
+        instances: Object.freeze([]),
+        stackCargo: Object.freeze([]),
+        reservations: Object.freeze([]),
+        capacityReservations: Object.freeze([]),
+        processedOperationIds: Object.freeze([]),
+      },
+    );
+  }
+
+  get inventoryModule(): InventoryModule {
+    return this.#module;
   }
 
   getContainerSnapshot(containerId: string): InventoryContainerSnapshot {
-    const container = this.#containers.get(containerId);
-    if (container === undefined) {
+    if (this.#snapshotCacheRevision !== this.#module.revision) {
+      this.#snapshotCache.clear();
+      this.#snapshotCacheRevision = this.#module.revision;
+    }
+    const cached = this.#snapshotCache.get(containerId);
+    if (cached !== undefined) return cached;
+    const definition = this.#definitions.get(containerId);
+    const location = this.#module.getLocationSnapshot(containerId);
+    if (definition === undefined || location === null) {
       throw new Error(`Unknown inventory container: ${containerId}`);
     }
-
-    const itemIds = new Set([
-      ...container.quantities.keys(),
-      ...container.reservedQuantities.keys(),
-    ]);
-    const entries = [...itemIds]
-      .sort()
-      .map((itemId): InventoryEntrySnapshot => {
-        const quantity = container.quantities.get(itemId) ?? 0;
-        const reservedQuantity =
-          container.reservedQuantities.get(itemId) ?? 0;
-        return Object.freeze({
-          itemId,
-          quantity,
-          reservedQuantity,
-          availableQuantity: quantity - reservedQuantity,
-        });
-      });
-    const totalQuantity = getTotalQuantity(container);
-
-    return Object.freeze({
-      id: container.id,
-      capacity: container.capacity,
+    const entries = location.stacks
+      .map((entry) => Object.freeze({
+        itemId: entry.itemId,
+        quantity: entry.quantity,
+        reservedQuantity: entry.reservedQuantity,
+        availableQuantity: entry.availableQuantity,
+      }))
+      .sort((left, right) => left.itemId.localeCompare(right.itemId));
+    const totalQuantity = entries.reduce(
+      (sum, entry) => sum + entry.quantity,
+      0,
+    );
+    const snapshot = Object.freeze({
+      id: containerId,
+      capacity: definition.capacity,
       totalQuantity,
-      availableCapacity: container.capacity - totalQuantity,
+      availableCapacity: definition.capacity - totalQuantity,
       entries: Object.freeze(entries),
     });
+    this.#snapshotCache.set(containerId, snapshot);
+    return snapshot;
   }
 
   getReservationSnapshot(
     reservationId: string,
   ): InventoryReservationSnapshot | null {
-    const reservation = this.#reservations.get(reservationId);
-    if (reservation === undefined) {
+    const reservation = this.#module.getReservation(reservationId);
+    if (reservation === null || reservation.stackAllocations.length === 0) {
       return null;
     }
-
+    const containerId = reservation.stackAllocations[0]!.locationId;
     return Object.freeze({
       id: reservation.id,
-      containerId: reservation.containerId,
+      containerId,
       items: Object.freeze(
-        [...reservation.items].map(([itemId, quantity]) =>
-          Object.freeze({ itemId, quantity }),
+        reservation.stackAllocations.map((entry) =>
+          Object.freeze({ itemId: entry.itemId, quantity: entry.quantity }),
         ),
       ),
     });
   }
 
-  canDeposit(
-    containerId: string,
-    stacks: readonly ItemStack[],
-  ): boolean {
-    const container = this.#containers.get(containerId);
+  canDeposit(containerId: string, stacks: readonly ItemStack[]): boolean {
     const normalized = normalizeStacks(stacks);
-    return (
-      container !== undefined &&
-      normalized !== null &&
-      this.#validateAddition(container, normalized) === null
-    );
+    return normalized !== null &&
+      this.#validateAddition(containerId, normalized) === null;
   }
 
   deposit(
@@ -245,35 +275,19 @@ export class InventorySystem {
     containerId: string,
     stacks: readonly ItemStack[],
   ): InventoryOperationResult {
-    const preparation = this.#prepareOperation(operationId, stacks);
-    if (!preparation.accepted) {
-      return preparation.result;
-    }
-
-    const container = this.#containers.get(containerId);
-    if (container === undefined) {
-      return this.#reject(
+    const prepared = this.#prepare(operationId, stacks);
+    if (!prepared.accepted) return prepared.result;
+    const rejection = this.#validateAddition(containerId, prepared.items);
+    if (rejection !== null) return rejection;
+    return this.#result(
+      operationId,
+      this.#module.depositStack(
         operationId,
-        "UNKNOWN_CONTAINER",
-        `Unknown target container: ${containerId}`,
-      );
-    }
-
-    const rejection = this.#validateAddition(
-      container,
-      preparation.items,
+        containerId,
+        prepared.items,
+        0,
+      ),
     );
-    if (rejection !== null) {
-      return this.#reject(operationId, rejection.code, rejection.message);
-    }
-
-    for (const [itemId, quantity] of preparation.items) {
-      container.quantities.set(
-        itemId,
-        (container.quantities.get(itemId) ?? 0) + quantity,
-      );
-    }
-    return this.#accept(operationId);
   }
 
   withdraw(
@@ -281,34 +295,14 @@ export class InventorySystem {
     containerId: string,
     stacks: readonly ItemStack[],
   ): InventoryOperationResult {
-    const preparation = this.#prepareOperation(operationId, stacks);
-    if (!preparation.accepted) {
-      return preparation.result;
-    }
-
-    const container = this.#containers.get(containerId);
-    if (container === undefined) {
-      return this.#reject(
-        operationId,
-        "UNKNOWN_CONTAINER",
-        `Unknown source container: ${containerId}`,
-      );
-    }
-
-    const availabilityRejection = this.#validateAvailability(
-      container,
-      preparation.items,
+    const prepared = this.#prepare(operationId, stacks);
+    if (!prepared.accepted) return prepared.result;
+    const rejection = this.#validateAvailability(containerId, prepared.items);
+    if (rejection !== null) return rejection;
+    return this.#result(
+      operationId,
+      this.#module.withdrawStack(operationId, containerId, prepared.items, 0),
     );
-    if (availabilityRejection !== null) {
-      return this.#reject(
-        operationId,
-        availabilityRejection.code,
-        availabilityRejection.message,
-      );
-    }
-
-    this.#subtractItems(container, preparation.items);
-    return this.#accept(operationId);
   }
 
   transfer(
@@ -317,59 +311,32 @@ export class InventorySystem {
     targetContainerId: string,
     stacks: readonly ItemStack[],
   ): InventoryOperationResult {
-    const preparation = this.#prepareOperation(operationId, stacks);
-    if (!preparation.accepted) {
-      return preparation.result;
-    }
-
-    const source = this.#containers.get(sourceContainerId);
-    const target = this.#containers.get(targetContainerId);
-    if (source === undefined || target === undefined) {
-      return this.#reject(
-        operationId,
-        "UNKNOWN_CONTAINER",
-        "Source or target inventory container is unknown.",
-      );
-    }
-    if (source === target) {
+    const prepared = this.#prepare(operationId, stacks);
+    if (!prepared.accepted) return prepared.result;
+    if (sourceContainerId === targetContainerId) {
       return this.#reject(
         operationId,
         "INVALID_REQUEST",
         "Source and target containers must be different.",
       );
     }
-
-    const availabilityRejection = this.#validateAvailability(
-      source,
-      preparation.items,
+    const availability = this.#validateAvailability(
+      sourceContainerId,
+      prepared.items,
     );
-    if (availabilityRejection !== null) {
-      return this.#reject(
+    if (availability !== null) return availability;
+    const addition = this.#validateAddition(targetContainerId, prepared.items);
+    if (addition !== null) return addition;
+    return this.#result(
+      operationId,
+      this.#module.transferStack(
         operationId,
-        availabilityRejection.code,
-        availabilityRejection.message,
-      );
-    }
-    const additionRejection = this.#validateAddition(
-      target,
-      preparation.items,
+        sourceContainerId,
+        targetContainerId,
+        prepared.items,
+        0,
+      ),
     );
-    if (additionRejection !== null) {
-      return this.#reject(
-        operationId,
-        additionRejection.code,
-        additionRejection.message,
-      );
-    }
-
-    this.#subtractItems(source, preparation.items);
-    for (const [itemId, quantity] of preparation.items) {
-      target.quantities.set(
-        itemId,
-        (target.quantities.get(itemId) ?? 0) + quantity,
-      );
-    }
-    return this.#accept(operationId);
   }
 
   createReservation(
@@ -378,57 +345,33 @@ export class InventorySystem {
     containerId: string,
     stacks: readonly ItemStack[],
   ): InventoryOperationResult {
-    const preparation = this.#prepareOperation(operationId, stacks);
-    if (!preparation.accepted) {
-      return preparation.result;
-    }
+    const prepared = this.#prepare(operationId, stacks);
+    if (!prepared.accepted) return prepared.result;
     if (!isValidIdentifier(reservationId)) {
-      return this.#reject(
-        operationId,
-        "INVALID_REQUEST",
-        "Reservation id is invalid.",
-      );
+      return this.#reject(operationId, "INVALID_REQUEST", "Reservation id is invalid.");
     }
-    if (this.#reservations.has(reservationId)) {
+    if (this.getReservationSnapshot(reservationId) !== null) {
       return this.#reject(
         operationId,
         "DUPLICATE_RESERVATION",
         `Reservation already exists: ${reservationId}`,
       );
     }
-
-    const container = this.#containers.get(containerId);
-    if (container === undefined) {
-      return this.#reject(
-        operationId,
-        "UNKNOWN_CONTAINER",
-        `Unknown reservation container: ${containerId}`,
-      );
-    }
-    const availabilityRejection = this.#validateAvailability(
-      container,
-      preparation.items,
+    const availability = this.#validateAvailability(containerId, prepared.items);
+    if (availability !== null) return availability;
+    return this.#result(
+      operationId,
+      this.#module.createReservation(operationId, {
+        reservationId,
+        ownerType: "compatibility.inventory-system",
+        ownerId: reservationId,
+        stacks: prepared.items.map((item) => ({
+          ...item,
+          locationId: containerId,
+        })),
+        createdAtUtcMs: 0,
+      }),
     );
-    if (availabilityRejection !== null) {
-      return this.#reject(
-        operationId,
-        availabilityRejection.code,
-        availabilityRejection.message,
-      );
-    }
-
-    for (const [itemId, quantity] of preparation.items) {
-      container.reservedQuantities.set(
-        itemId,
-        (container.reservedQuantities.get(itemId) ?? 0) + quantity,
-      );
-    }
-    this.#reservations.set(reservationId, {
-      id: reservationId,
-      containerId,
-      items: preparation.items,
-    });
-    return this.#accept(operationId);
   }
 
   consumeReservationAndDeposit(
@@ -437,145 +380,96 @@ export class InventorySystem {
     targetContainerId: string,
     outputStacks: readonly ItemStack[],
   ): InventoryOperationResult {
-    const preparation = this.#prepareOperation(
-      operationId,
-      outputStacks,
-    );
-    if (!preparation.accepted) {
-      return preparation.result;
-    }
-
-    const reservation = this.#reservations.get(reservationId);
-    if (reservation === undefined) {
+    const prepared = this.#prepare(operationId, outputStacks, true);
+    if (!prepared.accepted) return prepared.result;
+    const reservation = this.getReservationSnapshot(reservationId);
+    if (reservation === null) {
       return this.#reject(
         operationId,
         "UNKNOWN_RESERVATION",
         `Unknown reservation: ${reservationId}`,
       );
     }
-    const source = this.#containers.get(reservation.containerId);
-    const target = this.#containers.get(targetContainerId);
-    if (source === undefined || target === undefined) {
-      return this.#reject(
-        operationId,
-        "UNKNOWN_CONTAINER",
-        "Reservation source or output target container is unknown.",
-      );
-    }
-    if (source === target) {
+    if (reservation.containerId === targetContainerId) {
       return this.#reject(
         operationId,
         "INVALID_REQUEST",
         "Cooking input and output containers must be different.",
       );
     }
+    const addition = this.#validateAddition(targetContainerId, prepared.items);
+    if (addition !== null) return addition;
 
-    const additionRejection = this.#validateAddition(
-      target,
-      preparation.items,
-    );
-    if (additionRejection !== null) {
-      return this.#reject(
-        operationId,
-        additionRejection.code,
-        additionRejection.message,
+    const session = this.#module.beginTransaction();
+    try {
+      const consumed = this.#module.consumeReservation(
+        `${operationId}:consume`,
+        reservationId,
+        0,
       );
-    }
-
-    this.#subtractItems(source, reservation.items);
-    this.#subtractReservedItems(source, reservation.items);
-    for (const [itemId, quantity] of preparation.items) {
-      target.quantities.set(
-        itemId,
-        (target.quantities.get(itemId) ?? 0) + quantity,
+      if (!consumed.accepted) {
+        session.rollbackTransaction();
+        return this.#result(operationId, consumed);
+      }
+      const deposited = this.#module.depositStack(
+        `${operationId}:deposit`,
+        targetContainerId,
+        prepared.items,
+        0,
       );
+      if (!deposited.accepted) {
+        session.rollbackTransaction();
+        return this.#result(operationId, deposited);
+      }
+      session.validateTransaction();
+      session.commitTransaction();
+      return this.#accept(operationId);
+    } catch (error: unknown) {
+      session.rollbackTransaction();
+      throw error;
     }
-    this.#reservations.delete(reservationId);
-    return this.#accept(operationId);
   }
 
   consumeReservation(
     operationId: string,
     reservationId: string,
   ): InventoryOperationResult {
-    const preparation = this.#prepareOperation(operationId);
-    if (!preparation.accepted) {
-      return preparation.result;
-    }
-
-    const reservation = this.#reservations.get(reservationId);
-    if (reservation === undefined) {
-      return this.#reject(
-        operationId,
-        "UNKNOWN_RESERVATION",
-        `Unknown reservation: ${reservationId}`,
-      );
-    }
-    const container = this.#containers.get(reservation.containerId);
-    if (container === undefined) {
-      throw new Error(
-        `Reservation references missing container: ${reservation.containerId}`,
-      );
-    }
-
-    this.#subtractItems(container, reservation.items);
-    this.#subtractReservedItems(container, reservation.items);
-    this.#reservations.delete(reservationId);
-    return this.#accept(operationId);
+    const prepared = this.#prepare(operationId);
+    if (!prepared.accepted) return prepared.result;
+    return this.#result(
+      operationId,
+      this.#module.consumeReservation(operationId, reservationId, 0),
+    );
   }
 
   releaseReservation(
     operationId: string,
     reservationId: string,
   ): InventoryOperationResult {
-    const preparation = this.#prepareOperation(operationId);
-    if (!preparation.accepted) {
-      return preparation.result;
-    }
-
-    const reservation = this.#reservations.get(reservationId);
-    if (reservation === undefined) {
-      return this.#reject(
-        operationId,
-        "UNKNOWN_RESERVATION",
-        `Unknown reservation: ${reservationId}`,
-      );
-    }
-    const container = this.#containers.get(reservation.containerId);
-    if (container === undefined) {
-      throw new Error(
-        `Reservation references missing container: ${reservation.containerId}`,
-      );
-    }
-
-    this.#subtractReservedItems(container, reservation.items);
-    this.#reservations.delete(reservationId);
-    return this.#accept(operationId);
+    const prepared = this.#prepare(operationId);
+    if (!prepared.accepted) return prepared.result;
+    return this.#result(
+      operationId,
+      this.#module.releaseReservation(operationId, reservationId, 0),
+    );
   }
 
-  #registerContainer(definition: InventoryContainerDefinition): void {
-    if (
-      !isValidIdentifier(definition.id) ||
-      !isNonNegativeInteger(definition.capacity) ||
-      this.#containers.has(definition.id)
-    ) {
+  #normalizeDefinition(
+    definition: InventoryContainerDefinition,
+  ): NormalizedContainerDefinition {
+    if (!isValidIdentifier(definition.id) || !isNonNegativeInteger(definition.capacity)) {
       throw new Error(`Invalid inventory container: ${definition.id}`);
     }
-
-    const acceptedItemIds =
-      definition.acceptedItemIds === undefined
-        ? null
-        : new Set(definition.acceptedItemIds);
+    const acceptedItemIds = definition.acceptedItemIds === undefined
+      ? null
+      : new Set(definition.acceptedItemIds);
     if (
       acceptedItemIds !== null &&
       (acceptedItemIds.size !== definition.acceptedItemIds?.length ||
         [...acceptedItemIds].some((itemId) => !isValidIdentifier(itemId)))
     ) {
-      throw new Error(
-        `Invalid accepted items for container: ${definition.id}`,
-      );
+      throw new Error(`Invalid accepted items for container: ${definition.id}`);
     }
-
     const itemCapacities = new Map<string, number>();
     for (const [itemId, capacity] of Object.entries(
       definition.itemCapacities ?? {},
@@ -585,85 +479,84 @@ export class InventorySystem {
         !isNonNegativeInteger(capacity) ||
         capacity > definition.capacity
       ) {
-        throw new Error(
-          `Invalid item capacity for ${definition.id}: ${itemId}`,
-        );
+        throw new Error(`Invalid item capacity for ${definition.id}: ${itemId}`);
       }
       itemCapacities.set(itemId, capacity);
     }
-
-    this.#containers.set(definition.id, {
+    return Object.freeze({
       id: definition.id,
       capacity: definition.capacity,
       acceptedItemIds,
       itemCapacities,
-      quantities: new Map(),
-      reservedQuantities: new Map(),
     });
   }
 
-  #prepareOperation(
+  #prepare(
     operationId: string,
     stacks?: readonly ItemStack[],
+    compound = false,
   ):
-    | {
-        readonly accepted: true;
-        readonly items: ReadonlyMap<string, number>;
-      }
-    | {
-        readonly accepted: false;
-        readonly result: RejectedInventoryOperation;
-      } {
+    | { readonly accepted: true; readonly items: readonly ItemStack[] }
+    | { readonly accepted: false; readonly result: RejectedInventoryOperation } {
     if (!isValidIdentifier(operationId)) {
       return {
         accepted: false,
-        result: this.#rejectWithoutRemembering(
+        result: this.#reject(
           operationId,
           "INVALID_OPERATION_ID",
           "Operation id is invalid.",
         ),
       };
     }
-    if (this.#processedOperationIds.has(operationId)) {
+    if (
+      this.#module.hasProcessedOperation(operationId) ||
+      (compound && this.#module.hasProcessedOperation(`${operationId}:consume`))
+    ) {
       return {
         accepted: false,
-        result: this.#rejectWithoutRemembering(
+        result: this.#reject(
           operationId,
           "DUPLICATE_OPERATION",
           `Operation was already processed: ${operationId}`,
         ),
       };
     }
-
-    this.#rememberOperation(operationId);
-    if (stacks === undefined) {
-      return { accepted: true, items: new Map() };
-    }
-
-    const normalized = normalizeStacks(stacks);
-    if (normalized === null) {
+    if (stacks === undefined) return { accepted: true, items: [] };
+    const items = normalizeStacks(stacks);
+    if (items === null) {
       return {
         accepted: false,
-        result: this.#rejectWithoutRemembering(
+        result: this.#reject(
           operationId,
           "INVALID_REQUEST",
           "Item stacks must be unique positive integer quantities.",
         ),
       };
     }
-    return { accepted: true, items: normalized };
+    return { accepted: true, items };
   }
 
   #validateAvailability(
-    container: ContainerState,
-    items: ReadonlyMap<string, number>,
+    containerId: string,
+    items: readonly ItemStack[],
   ): RejectedInventoryOperation | null {
-    for (const [itemId, quantity] of items) {
-      if (getAvailableQuantity(container, itemId) < quantity) {
-        return this.#rejectWithoutRemembering(
+    if (!this.#definitions.has(containerId)) {
+      return this.#reject(
+        "",
+        "UNKNOWN_CONTAINER",
+        `Unknown source container: ${containerId}`,
+      );
+    }
+    const snapshot = this.getContainerSnapshot(containerId);
+    for (const item of items) {
+      const available = snapshot.entries.find(
+        (entry) => entry.itemId === item.itemId,
+      )?.availableQuantity ?? 0;
+      if (available < item.quantity) {
+        return this.#reject(
           "",
           "INSUFFICIENT_AVAILABLE",
-          `Insufficient available quantity for item: ${itemId}`,
+          `Insufficient available quantity for item: ${item.itemId}`,
         );
       }
     }
@@ -671,88 +564,121 @@ export class InventorySystem {
   }
 
   #validateAddition(
-    container: ContainerState,
-    items: ReadonlyMap<string, number>,
+    containerId: string,
+    items: readonly ItemStack[],
   ): RejectedInventoryOperation | null {
-    for (const [itemId, quantity] of items) {
-      if (
-        container.acceptedItemIds !== null &&
-        !container.acceptedItemIds.has(itemId)
-      ) {
-        return this.#rejectWithoutRemembering(
-          "",
-          "ITEM_NOT_ACCEPTED",
-          `Container ${container.id} does not accept item: ${itemId}`,
-        );
-      }
-      const itemCapacity = container.itemCapacities.get(itemId);
-      if (
-        itemCapacity !== undefined &&
-        (container.quantities.get(itemId) ?? 0) + quantity >
-          itemCapacity
-      ) {
-        return this.#rejectWithoutRemembering(
-          "",
-          "TARGET_CAPACITY_EXCEEDED",
-          `Item capacity exceeded for ${itemId} in ${container.id}`,
-        );
-      }
-    }
-
-    if (
-      getTotalQuantity(container) + sumQuantities(items) >
-      container.capacity
-    ) {
-      return this.#rejectWithoutRemembering(
+    const definition = this.#definitions.get(containerId);
+    if (definition === undefined) {
+      return this.#reject(
         "",
-        "TARGET_CAPACITY_EXCEEDED",
-        `Container capacity exceeded: ${container.id}`,
+        "UNKNOWN_CONTAINER",
+        `Unknown target container: ${containerId}`,
       );
     }
-    return null;
-  }
-
-  #subtractItems(
-    container: ContainerState,
-    items: ReadonlyMap<string, number>,
-  ): void {
-    for (const [itemId, quantity] of items) {
-      const nextQuantity =
-        (container.quantities.get(itemId) ?? 0) - quantity;
-      if (nextQuantity === 0) {
-        container.quantities.delete(itemId);
-      } else {
-        container.quantities.set(itemId, nextQuantity);
+    let total = this.#module.getLocationStackQuantity(containerId);
+    for (const item of items) {
+      if (
+        definition.acceptedItemIds !== null &&
+        !definition.acceptedItemIds.has(item.itemId)
+      ) {
+        return this.#reject(
+          "",
+          "ITEM_NOT_ACCEPTED",
+          `Container ${containerId} does not accept item: ${item.itemId}`,
+        );
       }
-    }
-  }
-
-  #subtractReservedItems(
-    container: ContainerState,
-    items: ReadonlyMap<string, number>,
-  ): void {
-    for (const [itemId, quantity] of items) {
-      const nextQuantity =
-        (container.reservedQuantities.get(itemId) ?? 0) - quantity;
-      if (nextQuantity === 0) {
-        container.reservedQuantities.delete(itemId);
-      } else {
-        container.reservedQuantities.set(itemId, nextQuantity);
+      const itemCapacity = definition.itemCapacities.get(item.itemId);
+      if (
+        itemCapacity !== undefined &&
+        this.#module.getStackQuantity(containerId, item.itemId) + item.quantity > itemCapacity
+      ) {
+        return this.#reject(
+          "",
+          "TARGET_CAPACITY_EXCEEDED",
+          `Item capacity exceeded for ${item.itemId} in ${containerId}`,
+        );
       }
+      total += item.quantity;
     }
+    return total > definition.capacity
+      ? this.#reject(
+          "",
+          "TARGET_CAPACITY_EXCEEDED",
+          `Container capacity exceeded: ${containerId}`,
+        )
+      : null;
   }
 
-  #rememberOperation(operationId: string): void {
-    this.#processedOperationIds.add(operationId);
-    this.#operationHistory.push(operationId);
-    if (this.#operationHistory.length <= OPERATION_HISTORY_LIMIT) {
-      return;
+  #validateAdditionAgainst(
+    containerId: string,
+    items: readonly ItemStack[],
+    stacks: readonly { readonly locationId: string; readonly itemId: string; readonly quantity: number }[],
+  ): RejectedInventoryOperation | null {
+    const definition = this.#definitions.get(containerId);
+    if (definition === undefined) {
+      return this.#reject(
+        "",
+        "UNKNOWN_CONTAINER",
+        `Unknown target container: ${containerId}`,
+      );
     }
+    let total = stacks
+      .filter((stack) => stack.locationId === containerId)
+      .reduce((sum, stack) => sum + stack.quantity, 0);
+    for (const item of items) {
+      if (
+        definition.acceptedItemIds !== null &&
+        !definition.acceptedItemIds.has(item.itemId)
+      ) {
+        return this.#reject(
+          "",
+          "ITEM_NOT_ACCEPTED",
+          `Container ${containerId} does not accept item: ${item.itemId}`,
+        );
+      }
+      const current = stacks
+        .filter((stack) =>
+          stack.locationId === containerId && stack.itemId === item.itemId)
+        .reduce((sum, stack) => sum + stack.quantity, 0);
+      const itemCapacity = definition.itemCapacities.get(item.itemId);
+      if (itemCapacity !== undefined && current + item.quantity > itemCapacity) {
+        return this.#reject(
+          "",
+          "TARGET_CAPACITY_EXCEEDED",
+          `Item capacity exceeded for ${item.itemId} in ${containerId}`,
+        );
+      }
+      total += item.quantity;
+    }
+    return total > definition.capacity
+      ? this.#reject(
+          "",
+          "TARGET_CAPACITY_EXCEEDED",
+          `Container capacity exceeded: ${containerId}`,
+        )
+      : null;
+  }
 
-    const oldestOperationId = this.#operationHistory.shift();
-    if (oldestOperationId !== undefined) {
-      this.#processedOperationIds.delete(oldestOperationId);
-    }
+  #result(
+    operationId: string,
+    result: InventoryModuleOperationResult<unknown>,
+  ): InventoryOperationResult {
+    if (result.accepted) return this.#accept(operationId);
+    const code: InventoryRejectionCode = (() => {
+      switch (result.code) {
+        case "DUPLICATE_OPERATION": return "DUPLICATE_OPERATION";
+        case "UNKNOWN_LOCATION": return "UNKNOWN_CONTAINER";
+        case "UNKNOWN_RESERVATION": return "UNKNOWN_RESERVATION";
+        case "DUPLICATE_RESERVATION": return "DUPLICATE_RESERVATION";
+        case "ITEM_NOT_ACCEPTED":
+        case "UNKNOWN_ITEM":
+        case "WRONG_STORAGE_MODE": return "ITEM_NOT_ACCEPTED";
+        case "INSUFFICIENT_AVAILABLE": return "INSUFFICIENT_AVAILABLE";
+        case "CAPACITY_EXCEEDED": return "TARGET_CAPACITY_EXCEEDED";
+        default: return "INVALID_REQUEST";
+      }
+    })();
+    return this.#reject(operationId, code, result.message);
   }
 
   #accept(operationId: string): AcceptedInventoryOperation {
@@ -764,19 +690,6 @@ export class InventorySystem {
     code: InventoryRejectionCode,
     message: string,
   ): RejectedInventoryOperation {
-    return this.#rejectWithoutRemembering(operationId, code, message);
-  }
-
-  #rejectWithoutRemembering(
-    operationId: string,
-    code: InventoryRejectionCode,
-    message: string,
-  ): RejectedInventoryOperation {
-    return Object.freeze({
-      accepted: false,
-      operationId,
-      code,
-      message,
-    });
+    return Object.freeze({ accepted: false, operationId, code, message });
   }
 }

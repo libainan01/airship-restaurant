@@ -1,8 +1,15 @@
 import { ContentRegistry } from "./content-registry";
-import type {
-  ContentDefinitions,
-  ContentQuantity,
-} from "./definitions";
+import type { ContentDefinitions, ContentQuantity } from "./definitions";
+import {
+  BUILDING_CONTENT,
+  CHARACTER_CONTENT,
+  GAMEPLAY_CONTENT,
+  ITEM_CONTENT,
+  PROGRESSION_CONTENT,
+  ROUTE_CONTENT,
+  STORY_CONTENT,
+  TECHNOLOGY_CONTENT,
+} from "./generated/content-data";
 import {
   M3_DIALOGUE_LOCALIZATIONS,
   M3_DIALOGUE_SPEAKERS,
@@ -11,192 +18,52 @@ import {
 } from "./m3-dialogue-content";
 
 export const M2_CONTENT_DEFINITIONS: ContentDefinitions = {
-  ingredients: [
-    {
-      id: "ingredient.cloud_wheat",
-      name: "云穗麦粉",
-      capacity: 30,
-    },
-    {
-      id: "ingredient.kettle_milk",
-      name: "铜壶奶",
-      capacity: 30,
-    },
-    {
-      id: "ingredient.wind_root",
-      name: "风根菜",
-      capacity: 30,
-    },
-    {
-      id: "ingredient.smoked_meat",
-      name: "烟熏肉",
-      capacity: 30,
-    },
-    {
-      id: "ingredient.moon_herb",
-      name: "月露香草",
-      capacity: 30,
-    },
-  ],
-  recipes: [
-    {
-      id: "recipe.hearth_flatbread",
-      name: "炉火云麦饼",
-      durationMs: 45_000,
-      outputItemId: "dish.hearth_flatbread",
-      outputQuantity: 2,
-      unitPriceCopper: 4,
-      ingredients: [
-        { itemId: "ingredient.cloud_wheat", quantity: 2 },
-        { itemId: "ingredient.kettle_milk", quantity: 1 },
-      ],
-    },
-    {
-      id: "recipe.windroot_soup",
-      name: "风根浓汤",
-      durationMs: 90_000,
-      outputItemId: "dish.windroot_soup",
-      outputQuantity: 3,
-      unitPriceCopper: 7,
-      ingredients: [
-        { itemId: "ingredient.wind_root", quantity: 2 },
-        { itemId: "ingredient.kettle_milk", quantity: 1 },
-        { itemId: "ingredient.moon_herb", quantity: 1 },
-      ],
-    },
-    {
-      id: "recipe.homecoming_stew",
-      name: "贝尔家的炉火炖菜",
-      durationMs: 180_000,
-      outputItemId: "dish.homecoming_stew",
-      outputQuantity: 4,
-      unitPriceCopper: 12,
-      ingredients: [
-        { itemId: "ingredient.wind_root", quantity: 2 },
-        { itemId: "ingredient.smoked_meat", quantity: 1 },
-        { itemId: "ingredient.moon_herb", quantity: 1 },
-      ],
-    },
-  ],
-  supplyBundles: [
-    {
-      id: "supply.guild_basic",
-      name: "航行者公会基础补给箱",
-      intervalMs: 120_000,
-      items: [
-        { itemId: "ingredient.cloud_wheat", quantity: 6 },
-        { itemId: "ingredient.kettle_milk", quantity: 3 },
-        { itemId: "ingredient.wind_root", quantity: 4 },
-        { itemId: "ingredient.smoked_meat", quantity: 2 },
-        { itemId: "ingredient.moon_herb", quantity: 2 },
-      ],
-    },
-  ],
-  characters: [
-    {
-      id: "character.baiyecheng",
-      name: "白夜城",
-      localizationKey:
-        "localization.character.baiyecheng.name",
-    },
-    {
-      id: "character.otto",
-      name: "奥托",
-      localizationKey:
-        "localization.character.otto.name",
-    },
-    {
-      id: "character.martha_bell",
-      name: "玛莎·贝尔",
-      localizationKey:
-        "localization.character.martha_bell.name",
-    },
-    {
-      id: "character.thomas_bell",
-      name: "托马斯·贝尔",
-      localizationKey:
-        "localization.character.thomas_bell.name",
-    },
-  ],
-  customers: [
-    {
-      id: "customer.martha_bell",
-      name: "玛莎·贝尔",
-      localizationKey:
-        "localization.customer.martha_bell.name",
-      characterId: "character.martha_bell",
-    },
-    {
-      id: "customer.thomas_bell",
-      name: "托马斯·贝尔",
-      localizationKey:
-        "localization.customer.thomas_bell.name",
-      characterId: "character.thomas_bell",
-    },
-  ],
+  ingredients: ITEM_CONTENT.ingredients,
+  recipes: GAMEPLAY_CONTENT.recipes,
+  supplyBundles: GAMEPLAY_CONTENT.supplyBundles,
+  buildings: BUILDING_CONTENT.buildings,
+  technologies: TECHNOLOGY_CONTENT.nodes,
+  progression: PROGRESSION_CONTENT.contents,
+  characters: CHARACTER_CONTENT.characters,
+  talents: CHARACTER_CONTENT.talents,
+  customers: CHARACTER_CONTENT.customers,
   locations: M3_LOCATIONS,
   dialogueSpeakers: M3_DIALOGUE_SPEAKERS,
   dialogues: M3_DIALOGUES,
-  storyEvents: [
-    {
-      id: "story.bell_stew_first_service",
-      title: "贝尔家的炉火炖菜·第一次上桌",
-      localizationKey:
-        "localization.story.bell_stew_first_service.body",
-      presentation: "recipe-log",
-      priority: 100,
-      characterIds: [
-        "character.baiyecheng",
-        "character.otto",
-        "character.martha_bell",
-        "character.thomas_bell",
-      ],
-      recipeId: "recipe.homecoming_stew",
-      prerequisiteEventIds: [],
-      conditions: [
-        {
-          type: "online-dish-sales",
-          dishItemId: "dish.homecoming_stew",
-          quantity: 1,
-        },
-      ],
-      dialogueId: "dialogue.story.bell_stew_first_service",
-    },
-  ],
-  recipeJournals: [
-    {
-      id: "journal.bell_hearth_stew",
-      recipeId: "recipe.homecoming_stew",
-      sourceCharacterId: "character.martha_bell",
-      localizationKey:
-        "localization.journal.bell_hearth_stew.summary",
-      storyEventIds: ["story.bell_stew_first_service"],
-    },
-  ],
+  storyEvents: STORY_CONTENT.storyEvents,
+  storySequences: STORY_CONTENT.sequences,
+  recipeJournals: STORY_CONTENT.recipeJournals,
+  storyCharacters: STORY_CONTENT.storyCharacters,
+  storyRosterNodes: STORY_CONTENT.storyRosterNodes,
+  mealAffinityQualityTiers: STORY_CONTENT.mealAffinityQualityTiers,
   localizations: {
     ...M3_DIALOGUE_LOCALIZATIONS,
-    "localization.character.baiyecheng.name": "白夜城",
-    "localization.character.otto.name": "奥托",
-    "localization.character.martha_bell.name": "玛莎·贝尔",
-    "localization.character.thomas_bell.name": "托马斯·贝尔",
-    "localization.customer.martha_bell.name": "玛莎·贝尔",
-    "localization.customer.thomas_bell.name": "托马斯·贝尔",
-    "localization.story.bell_stew_first_service.body":
-      "玛莎想要的原本只是一顿安稳的热饭。后来，托马斯把这顿饭做了很多年。",
-    "localization.journal.bell_hearth_stew.summary":
-      "玛莎想要的原本只是一顿安稳的热饭。后来，托马斯把这顿饭做了很多年。",
+    ...CHARACTER_CONTENT.localizations,
+    ...STORY_CONTENT.localizations,
   },
 };
 
-export const M2_INITIAL_INGREDIENTS: readonly ContentQuantity[] =
-  Object.freeze(
-    M2_CONTENT_DEFINITIONS.supplyBundles[0]?.items.map((item) =>
-      Object.freeze({
-        itemId: item.itemId,
-        quantity: item.quantity * 2,
-      }),
-    ) ?? [],
-  );
+export const M2_BUILDING_DEFINITIONS = BUILDING_CONTENT.buildings;
+export const M2_TECHNOLOGY_DEFINITIONS = TECHNOLOGY_CONTENT.nodes;
+export const M2_PROGRESSION_DEFINITIONS = PROGRESSION_CONTENT.contents;
+export const M2_STORY_SEQUENCES = STORY_CONTENT.sequences;
+export const M2_STORY_CHARACTERS = STORY_CONTENT.storyCharacters;
+export const M2_STORY_ROSTER_NODES = STORY_CONTENT.storyRosterNodes;
+export const M2_MEAL_AFFINITY_QUALITY_TIERS = STORY_CONTENT.mealAffinityQualityTiers;
+export const M2_PROCUREMENT_REGIONS = ROUTE_CONTENT.procurementRegions;
+export const M2_LOCAL_PROCUREMENT_SUPPLIERS = ROUTE_CONTENT.localSuppliers;
+export const M2_LOCAL_PROCUREMENT_CARTS = ROUTE_CONTENT.localProcurementCarts;
+export const M2_REMOTE_PROCUREMENT_ROUTES = ROUTE_CONTENT.remoteProcurementRoutes;
+export const M2_PROCUREMENT_AIRSHIPS = ROUTE_CONTENT.procurementAirships;
+export const M2_INITIAL_PROCUREMENT_AIRSHIPS = ROUTE_CONTENT.initialProcurementAirships;
+export const M2_RECRUITMENT_DEFINITION = CHARACTER_CONTENT.recruitment;
+
+export const M2_INITIAL_INGREDIENTS: readonly ContentQuantity[] = Object.freeze(
+  GAMEPLAY_CONTENT.supplyBundles[0]?.items.map((item) => Object.freeze({
+    itemId: item.itemId,
+    quantity: item.quantity * GAMEPLAY_CONTENT.initialIngredientMultiplier,
+  })) ?? [],
+);
 
 export function createM2ContentRegistry(): ContentRegistry {
   return new ContentRegistry(M2_CONTENT_DEFINITIONS);

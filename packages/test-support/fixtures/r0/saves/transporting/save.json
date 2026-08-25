@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "savedAtUtcMs": 81000,
+  "payload": {
+    "version": 1,
+    "revision": 1,
+    "currentUtcMs": 80000,
+    "nextSupplyAtUtcMs": 121000,
+    "supplyBoxesReceived": 1,
+    "randomState": 1831565936,
+    "kitchenActivated": true,
+    "upgrades": {
+      "kitchen": 0,
+      "transport": 0,
+      "restaurant": 0,
+      "procurement": 0
+    },
+    "inventory": {
+      "kitchenIngredients": [],
+      "kitchenOutput": [
+        {
+          "itemId": "dish.test",
+          "quantity": 9
+        }
+      ],
+      "cableCargo": [
+        {
+          "itemId": "dish.test",
+          "quantity": 2
+        }
+      ],
+      "restaurantStorage": []
+    },
+    "cooking": {
+      "selectedRecipeId": "recipe.test",
+      "autoRepeat": true,
+      "activeJob": null,
+      "blockedReason": "insufficient-ingredients",
+      "completedBatches": 11,
+      "jobSequence": 11,
+      "automaticAttemptSequence": 11
+    },
+    "logistics": {
+      "phase": "outbound",
+      "activeShipment": {
+        "id": "shipment-1",
+        "departedAtUtcMs": 69245,
+        "arriveAtUtcMs": 89245,
+        "returnStartedAtUtcMs": null,
+        "returnAtUtcMs": null,
+        "unloadAttempt": 0
+      },
+      "kitchenWaitingSinceUtcMs": 70245,
+      "shipmentSequence": 1,
+      "totalDeliveredQuantity": 0,
+      "capacityBlockAnnounced": false
+    },
+    "restaurant": {
+      "selectedRecipeId": "recipe.test",
+      "activeCustomer": {
+        "id": "customer-1",
+        "recipeId": "recipe.test",
+        "dishItemId": "dish.test",
+        "arrivedAtUtcMs": 36745,
+        "leaveAtUtcMs": 396745,
+        "fulfillmentAttempt": 1,
+        "phase": "waiting-meal",
+        "phaseEndsAtUtcMs": null,
+        "notificationChannelId": "fixed-delay-placeholder"
+      },
+      "diningCustomers": [],
+      "nextCustomerAtUtcMs": null,
+      "customerSequence": 1,
+      "totalSoldQuantity": 0,
+      "totalCustomersLeft": 0,
+      "copperBalance": 0,
+      "totalCopperSpent": 0,
+      "soldByDish": [],
+      "recentSales": []
+    },
+    "procurement": {
+      "version": 1,
+      "revision": 0,
+      "arrivalRevision": 0,
+      "nextOrderSequence": 1,
+      "orders": [],
+      "automationReserveCopper": 0,
+      "automationPolicies": []
+    }
+  }
+}

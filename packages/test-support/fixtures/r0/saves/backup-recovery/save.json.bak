@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "savedAtUtcMs": 2000,
+  "payload": {
+    "version": 1,
+    "revision": 0,
+    "currentUtcMs": 1000,
+    "nextSupplyAtUtcMs": 61000,
+    "supplyBoxesReceived": 0,
+    "randomState": 1831565936,
+    "kitchenActivated": false,
+    "upgrades": {
+      "kitchen": 0,
+      "transport": 0,
+      "restaurant": 0,
+      "procurement": 0
+    },
+    "inventory": {
+      "kitchenIngredients": [
+        {
+          "itemId": "ingredient.test",
+          "quantity": 10
+        }
+      ],
+      "kitchenOutput": [],
+      "cableCargo": [],
+      "restaurantStorage": []
+    },
+    "cooking": {
+      "selectedRecipeId": "recipe.test",
+      "autoRepeat": true,
+      "activeJob": null,
+      "blockedReason": null,
+      "completedBatches": 0,
+      "jobSequence": 0,
+      "automaticAttemptSequence": 0
+    },
+    "logistics": {
+      "phase": "idle",
+      "activeShipment": null,
+      "kitchenWaitingSinceUtcMs": null,
+      "shipmentSequence": 0,
+      "totalDeliveredQuantity": 0,
+      "capacityBlockAnnounced": false
+    },
+    "restaurant": {
+      "selectedRecipeId": "recipe.test",
+      "activeCustomer": null,
+      "diningCustomers": [],
+      "nextCustomerAtUtcMs": 36745,
+      "customerSequence": 0,
+      "totalSoldQuantity": 0,
+      "totalCustomersLeft": 0,
+      "copperBalance": 0,
+      "totalCopperSpent": 0,
+      "soldByDish": [],
+      "recentSales": []
+    },
+    "procurement": {
+      "version": 1,
+      "revision": 0,
+      "arrivalRevision": 0,
+      "nextOrderSequence": 1,
+      "orders": [],
+      "automationReserveCopper": 0,
+      "automationPolicies": []
+    }
+  }
+}

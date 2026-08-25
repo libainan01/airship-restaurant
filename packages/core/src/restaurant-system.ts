@@ -4,6 +4,13 @@ import type { RandomSource } from "./random-source";
 const OPERATION_HISTORY_LIMIT = 512;
 const RECENT_SALES_LIMIT = 20;
 const IDENTIFIER_MAX_LENGTH = 128;
+const DEFAULT_SEATED_IDLE_DURATION_MS = 8_000;
+const DEFAULT_OTTO_APPROACH_DURATION_MS = 3_200;
+const DEFAULT_ORDER_CONFIRMATION_DURATION_MS = 1_800;
+const DEFAULT_KITCHEN_NOTIFICATION_DURATION_MS = 1_500;
+const DEFAULT_MINIMUM_PREPARATION_DURATION_MS = 5_000;
+const DEFAULT_SEAT_CAPACITY = 3;
+const DEFAULT_DINING_DURATION_MS = 12_000;
 
 export interface RestaurantMenuItem {
   readonly recipeId: string;
@@ -11,12 +18,75 @@ export interface RestaurantMenuItem {
   readonly unitPriceCopper: number;
 }
 
+export type RestaurantCustomerPhase =
+  | "seated-idle"
+  | "awaiting-order-confirmation"
+  | "confirming-order"
+  | "notifying-kitchen"
+  | "waiting-meal";
+
 export interface RestaurantCustomerSnapshot {
   readonly id: string;
   readonly recipeId: string;
   readonly dishItemId: string;
   readonly arrivedAtUtcMs: number;
   readonly leaveAtUtcMs: number;
+  readonly phase: RestaurantCustomerPhase;
+  readonly phaseEndsAtUtcMs: number | null;
+}
+
+export interface RestaurantDiningCustomerSnapshot {
+  readonly id: string;
+  readonly recipeId: string;
+  readonly dishItemId: string;
+  readonly diningStartedAtUtcMs: number;
+  readonly departAtUtcMs: number;
+}
+
+export interface RestaurantOrderSnapshot {
+  readonly customerId: string;
+  readonly recipeId: string;
+  readonly dishItemId: string;
+}
+
+export interface KitchenOrderNotificationPlan {
+  readonly channelId: string;
+  readonly sentAtUtcMs: number;
+  readonly receivedAtUtcMs: number;
+}
+
+export interface KitchenOrderNotificationChannel {
+  createNotification(
+    order: RestaurantOrderSnapshot,
+    sentAtUtcMs: number,
+  ): KitchenOrderNotificationPlan;
+}
+
+export class FixedDelayKitchenOrderNotificationChannel
+implements KitchenOrderNotificationChannel {
+  readonly #delayMs: number;
+
+  constructor(delayMs = DEFAULT_KITCHEN_NOTIFICATION_DURATION_MS) {
+    if (!isPositiveInteger(delayMs)) {
+      throw new Error("Kitchen notification delay must be a positive integer.");
+    }
+    this.#delayMs = delayMs;
+  }
+
+  createNotification(
+    _order: RestaurantOrderSnapshot,
+    sentAtUtcMs: number,
+  ): KitchenOrderNotificationPlan {
+    return Object.freeze({
+      channelId: "fixed-delay-placeholder",
+      sentAtUtcMs,
+      receivedAtUtcMs: safeAdd(
+        sentAtUtcMs,
+        this.#delayMs,
+        "Kitchen notification receipt time",
+      ),
+    });
+  }
 }
 
 export interface RestaurantSaleSnapshot {
@@ -36,10 +106,13 @@ export interface DishSalesSnapshot {
 export interface RestaurantSnapshot {
   readonly selectedRecipeId: string | null;
   readonly activeCustomer: RestaurantCustomerSnapshot | null;
+  readonly diningCustomers: readonly RestaurantDiningCustomerSnapshot[];
+  readonly seatCapacity: number;
   readonly nextCustomerAtUtcMs: number | null;
   readonly totalSoldQuantity: number;
   readonly totalCustomersLeft: number;
   readonly copperBalance: number;
+  readonly totalCopperSpent: number;
   readonly soldByDish: readonly DishSalesSnapshot[];
   readonly recentSales: readonly RestaurantSaleSnapshot[];
   readonly nextTransitionUtcMs: number | null;
@@ -51,15 +124,48 @@ export type RestaurantEvent =
       readonly customer: RestaurantCustomerSnapshot;
     }
   | {
+      readonly type: "order.requested";
+      readonly order: RestaurantOrderSnapshot;
+      readonly requestedAtUtcMs: number;
+    }
+  | {
+      readonly type: "order.confirmation-started";
+      readonly order: RestaurantOrderSnapshot;
+      readonly startedAtUtcMs: number;
+    }
+  | {
+      readonly type: "order.confirmed";
+      readonly order: RestaurantOrderSnapshot;
+      readonly confirmedAtUtcMs: number;
+    }
+  | {
+      readonly type: "kitchen.notification-sent";
+      readonly order: RestaurantOrderSnapshot;
+      readonly channelId: string;
+      readonly sentAtUtcMs: number;
+      readonly expectedReceiptAtUtcMs: number;
+    }
+  | {
+      readonly type: "kitchen.order-received";
+      readonly order: RestaurantOrderSnapshot;
+      readonly channelId: string;
+      readonly receivedAtUtcMs: number;
+    }
+  | {
       readonly type: "order.fulfilled";
       readonly sale: RestaurantSaleSnapshot;
+    }
+  | {
+      readonly type: "customer.dining-completed";
+      readonly customer: RestaurantDiningCustomerSnapshot;
+      readonly completedAtUtcMs: number;
     }
   | {
       readonly type: "customer.left";
       readonly customerId: string;
       readonly recipeId: string;
       readonly leftAtUtcMs: number;
-      readonly reason: "out-of-stock";
+      readonly reason: "out-of-stock" | "wait-timeout";
     }
   | {
       readonly type: "currency.changed";
@@ -101,16 +207,28 @@ export interface RestaurantSystemState {
     readonly arrivedAtUtcMs: number;
     readonly leaveAtUtcMs: number;
     readonly fulfillmentAttempt: number;
+    readonly phase?: RestaurantCustomerPhase;
+    readonly phaseEndsAtUtcMs?: number | null;
+    readonly notificationChannelId?: string | null;
   } | null;
+  readonly diningCustomers?: readonly RestaurantDiningCustomerSnapshot[];
   readonly nextCustomerAtUtcMs: number | null;
   readonly customerSequence: number;
   readonly totalSoldQuantity: number;
   readonly totalCustomersLeft: number;
   readonly copperBalance: number;
+  readonly totalCopperSpent?: number;
   readonly soldByDish: readonly DishSalesSnapshot[];
   readonly recentSales: readonly RestaurantSaleSnapshot[];
 }
 
+export interface RestaurantFinancePort {
+  getSnapshot(): {
+    readonly balanceCopper: number;
+    readonly totalCopperSpent: number;
+  };
+  recordSale(sale: RestaurantSaleSnapshot): void;
+}
 export interface RestaurantSystemOptions {
   readonly inventory: InventorySystem;
   readonly restaurantContainerId: string;
@@ -119,6 +237,14 @@ export interface RestaurantSystemOptions {
   readonly minimumArrivalIntervalMs: number;
   readonly maximumArrivalIntervalMs: number;
   readonly maximumWaitMs: number;
+  readonly seatedIdleDurationMs?: number;
+  readonly ottoApproachDurationMs?: number;
+  readonly orderConfirmationDurationMs?: number;
+  readonly minimumPreparationDurationMs?: number;
+  readonly seatCapacity?: number;
+  readonly diningDurationMs?: number;
+  readonly kitchenNotificationChannel?: KitchenOrderNotificationChannel;
+  readonly finance?: RestaurantFinancePort;
   readonly initialCopper?: number;
   readonly initialState?: RestaurantSystemState;
 }
@@ -130,6 +256,9 @@ interface ActiveCustomer {
   readonly arrivedAtUtcMs: number;
   readonly leaveAtUtcMs: number;
   readonly fulfillmentAttempt: number;
+  readonly phase: RestaurantCustomerPhase;
+  readonly phaseEndsAtUtcMs: number | null;
+  readonly notificationChannelId: string | null;
 }
 
 function isValidIdentifier(value: string): boolean {
@@ -169,17 +298,28 @@ export class RestaurantSystem {
   readonly #minimumArrivalIntervalMs: number;
   readonly #maximumArrivalIntervalMs: number;
   readonly #maximumWaitMs: number;
+  readonly #seatedIdleDurationMs: number;
+  readonly #ottoApproachDurationMs: number;
+  readonly #orderConfirmationDurationMs: number;
+  readonly #minimumPreparationDurationMs: number;
+  #seatCapacity: number;
+  #customerArrivalIntervalRateBasisPoints = 10_000;
+  readonly #diningDurationMs: number;
+  readonly #kitchenNotificationChannel: KitchenOrderNotificationChannel;
+  readonly #finance: RestaurantFinancePort | null;
   readonly #processedOperationIds = new Set<string>();
   readonly #operationHistory: string[] = [];
   readonly #soldByDish = new Map<string, number>();
   readonly #recentSales: RestaurantSaleSnapshot[] = [];
   #selectedRecipeId: string | null = null;
   #activeCustomer: ActiveCustomer | null = null;
+  readonly #diningCustomers: RestaurantDiningCustomerSnapshot[] = [];
   #nextCustomerAtUtcMs: number | null = null;
   #customerSequence = 0;
   #totalSoldQuantity = 0;
   #totalCustomersLeft = 0;
   #copperBalance: number;
+  #totalCopperSpent = 0;
   #lastFulfillmentAttemptSignature: string | null = null;
 
   constructor(options: RestaurantSystemOptions) {
@@ -190,6 +330,12 @@ export class RestaurantSystem {
       options.maximumArrivalIntervalMs <
         options.minimumArrivalIntervalMs ||
       !isPositiveInteger(options.maximumWaitMs) ||
+      !isPositiveInteger(options.seatedIdleDurationMs ?? DEFAULT_SEATED_IDLE_DURATION_MS) ||
+      !isPositiveInteger(options.ottoApproachDurationMs ?? DEFAULT_OTTO_APPROACH_DURATION_MS) ||
+      !isPositiveInteger(options.orderConfirmationDurationMs ?? DEFAULT_ORDER_CONFIRMATION_DURATION_MS) ||
+      !isPositiveInteger(options.minimumPreparationDurationMs ?? DEFAULT_MINIMUM_PREPARATION_DURATION_MS) ||
+      !isPositiveInteger(options.seatCapacity ?? DEFAULT_SEAT_CAPACITY) ||
+      !isPositiveInteger(options.diningDurationMs ?? DEFAULT_DINING_DURATION_MS) ||
       !isNonNegativeInteger(options.initialCopper ?? 0)
     ) {
       throw new Error("RestaurantSystem options are invalid.");
@@ -203,6 +349,15 @@ export class RestaurantSystem {
     this.#maximumArrivalIntervalMs =
       options.maximumArrivalIntervalMs;
     this.#maximumWaitMs = options.maximumWaitMs;
+    this.#seatedIdleDurationMs = options.seatedIdleDurationMs ?? DEFAULT_SEATED_IDLE_DURATION_MS;
+    this.#ottoApproachDurationMs = options.ottoApproachDurationMs ?? DEFAULT_OTTO_APPROACH_DURATION_MS;
+    this.#orderConfirmationDurationMs = options.orderConfirmationDurationMs ?? DEFAULT_ORDER_CONFIRMATION_DURATION_MS;
+    this.#minimumPreparationDurationMs = options.minimumPreparationDurationMs ?? DEFAULT_MINIMUM_PREPARATION_DURATION_MS;
+    this.#seatCapacity = options.seatCapacity ?? DEFAULT_SEAT_CAPACITY;
+    this.#diningDurationMs = options.diningDurationMs ?? DEFAULT_DINING_DURATION_MS;
+    this.#kitchenNotificationChannel = options.kitchenNotificationChannel ??
+      new FixedDelayKitchenOrderNotificationChannel();
+    this.#finance = options.finance ?? null;
     this.#copperBalance = options.initialCopper ?? 0;
 
     this.#inventory.getContainerSnapshot(
@@ -230,6 +385,30 @@ export class RestaurantSystem {
     }
   }
 
+  setSeatCapacity(seatCapacity: number): void {
+    if (!isPositiveInteger(seatCapacity) || seatCapacity < this.#diningCustomers.length) {
+      throw new RangeError("Restaurant seat capacity is invalid.");
+    }
+    this.#seatCapacity = seatCapacity;
+  }
+
+  setCustomerArrivalIntervalRateBasisPoints(rateBasisPoints: number): boolean {
+    if (!isPositiveInteger(rateBasisPoints) || rateBasisPoints > 10_000) {
+      throw new RangeError("Restaurant customer arrival interval rate is invalid.");
+    }
+    if (this.#customerArrivalIntervalRateBasisPoints === rateBasisPoints) {
+      return false;
+    }
+    this.#customerArrivalIntervalRateBasisPoints = rateBasisPoints;
+    return true;
+  }
+
+  #getCopperSnapshot(): { readonly balanceCopper: number; readonly totalCopperSpent: number } {
+    return this.#finance?.getSnapshot() ?? Object.freeze({
+      balanceCopper: this.#copperBalance,
+      totalCopperSpent: this.#totalCopperSpent,
+    });
+  }
   getSnapshot(): RestaurantSnapshot {
     const activeCustomer =
       this.#activeCustomer === null
@@ -240,40 +419,67 @@ export class RestaurantSystem {
             dishItemId: this.#activeCustomer.dishItemId,
             arrivedAtUtcMs: this.#activeCustomer.arrivedAtUtcMs,
             leaveAtUtcMs: this.#activeCustomer.leaveAtUtcMs,
+            phase: this.#activeCustomer.phase,
+            phaseEndsAtUtcMs: this.#activeCustomer.phaseEndsAtUtcMs,
           });
+    const diningCustomers = Object.freeze(
+      this.#diningCustomers.map((customer) => Object.freeze({ ...customer })),
+    );
     const soldByDish = [...this.#soldByDish]
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([dishItemId, quantity]) =>
         Object.freeze({ dishItemId, quantity }),
       );
 
+    const copper = this.#getCopperSnapshot();
     return Object.freeze({
       selectedRecipeId: this.#selectedRecipeId,
       activeCustomer,
+      diningCustomers,
+      seatCapacity: this.#seatCapacity,
       nextCustomerAtUtcMs: this.#nextCustomerAtUtcMs,
       totalSoldQuantity: this.#totalSoldQuantity,
       totalCustomersLeft: this.#totalCustomersLeft,
-      copperBalance: this.#copperBalance,
+      copperBalance: copper.balanceCopper,
+      totalCopperSpent: copper.totalCopperSpent,
       soldByDish: Object.freeze(soldByDish),
       recentSales: Object.freeze([...this.#recentSales]),
-      nextTransitionUtcMs:
-        activeCustomer?.leaveAtUtcMs ??
+      nextTransitionUtcMs: [
         this.#nextCustomerAtUtcMs,
+        activeCustomer === null
+          ? null
+          : Math.min(
+              activeCustomer.leaveAtUtcMs,
+              activeCustomer.phaseEndsAtUtcMs ?? activeCustomer.leaveAtUtcMs,
+            ),
+        ...diningCustomers.map((customer) => customer.departAtUtcMs),
+      ].reduce<number | null>(
+        (minimum, value) =>
+          value !== null && (minimum === null || value < minimum)
+            ? value
+            : minimum,
+        null,
+      ),
     });
   }
 
   exportState(): RestaurantSystemState {
+    const copper = this.#getCopperSnapshot();
     return Object.freeze({
       selectedRecipeId: this.#selectedRecipeId,
       activeCustomer:
         this.#activeCustomer === null
           ? null
           : Object.freeze({ ...this.#activeCustomer }),
+      diningCustomers: Object.freeze(
+        this.#diningCustomers.map((customer) => Object.freeze({ ...customer })),
+      ),
       nextCustomerAtUtcMs: this.#nextCustomerAtUtcMs,
       customerSequence: this.#customerSequence,
       totalSoldQuantity: this.#totalSoldQuantity,
       totalCustomersLeft: this.#totalCustomersLeft,
-      copperBalance: this.#copperBalance,
+      copperBalance: copper.balanceCopper,
+      totalCopperSpent: copper.totalCopperSpent,
       soldByDish: Object.freeze(
         [...this.#soldByDish].map(([dishItemId, quantity]) =>
           Object.freeze({ dishItemId, quantity }),
@@ -316,13 +522,10 @@ export class RestaurantSystem {
   advanceTo(nowUtcMs: number): RestaurantAdvanceResult {
     assertUtcMs(nowUtcMs);
     const events: RestaurantEvent[] = [];
+    this.#completeDiningCustomers(nowUtcMs, events);
 
     if (this.#activeCustomer !== null) {
-      if (nowUtcMs >= this.#activeCustomer.leaveAtUtcMs) {
-        this.#leaveActiveCustomer(events);
-      } else {
-        this.#tryFulfillActiveCustomer(nowUtcMs, events);
-      }
+      this.#advanceActiveCustomer(nowUtcMs, events);
       return Object.freeze({
         snapshot: this.getSnapshot(),
         events: Object.freeze(events),
@@ -334,6 +537,16 @@ export class RestaurantSystem {
       this.#nextCustomerAtUtcMs === null ||
       nowUtcMs < this.#nextCustomerAtUtcMs
     ) {
+      return Object.freeze({
+        snapshot: this.getSnapshot(),
+        events: Object.freeze(events),
+      });
+    }
+
+    if (this.#diningCustomers.length >= this.#seatCapacity) {
+      this.#nextCustomerAtUtcMs = Math.min(
+        ...this.#diningCustomers.map((customer) => customer.departAtUtcMs),
+      );
       return Object.freeze({
         snapshot: this.getSnapshot(),
         events: Object.freeze(events),
@@ -357,6 +570,13 @@ export class RestaurantSystem {
         "Customer leave time",
       ),
       fulfillmentAttempt: 0,
+      phase: "seated-idle",
+      phaseEndsAtUtcMs: safeAdd(
+        arrivedAtUtcMs,
+        this.#seatedIdleDurationMs,
+        "Customer order decision time",
+      ),
+      notificationChannelId: null,
     };
     this.#lastFulfillmentAttemptSignature = null;
     this.#nextCustomerAtUtcMs = null;
@@ -365,7 +585,6 @@ export class RestaurantSystem {
       customer: this.getSnapshot()
         .activeCustomer as RestaurantCustomerSnapshot,
     }));
-    this.#tryFulfillActiveCustomer(arrivedAtUtcMs, events);
 
     return Object.freeze({
       snapshot: this.getSnapshot(),
@@ -373,6 +592,141 @@ export class RestaurantSystem {
     });
   }
 
+  #advanceActiveCustomer(
+    nowUtcMs: number,
+    events: RestaurantEvent[],
+  ): void {
+    while (this.#activeCustomer !== null) {
+      const customer = this.#activeCustomer;
+      const phaseTransitionAtUtcMs = customer.phaseEndsAtUtcMs;
+      const nextTransitionAtUtcMs = Math.min(
+        customer.leaveAtUtcMs,
+        phaseTransitionAtUtcMs ?? customer.leaveAtUtcMs,
+      );
+      if (nowUtcMs < nextTransitionAtUtcMs) {
+        break;
+      }
+      if (nextTransitionAtUtcMs === customer.leaveAtUtcMs) {
+        this.#leaveActiveCustomer(events);
+        return;
+      }
+      this.#advanceActiveCustomerPhase(nextTransitionAtUtcMs, events);
+    }
+
+    if (
+      this.#activeCustomer?.phase === "waiting-meal" &&
+      this.#activeCustomer.phaseEndsAtUtcMs === null
+    ) {
+      this.#tryFulfillActiveCustomer(nowUtcMs, events);
+    }
+  }
+
+  #advanceActiveCustomerPhase(
+    atUtcMs: number,
+    events: RestaurantEvent[],
+  ): void {
+    const customer = this.#activeCustomer;
+    if (customer === null) return;
+    const order = this.#createOrderSnapshot(customer);
+
+    switch (customer.phase) {
+      case "seated-idle":
+        this.#activeCustomer = {
+          ...customer,
+          phase: "awaiting-order-confirmation",
+          phaseEndsAtUtcMs: safeAdd(
+            atUtcMs,
+            this.#ottoApproachDurationMs,
+            "Order confirmation approach time",
+          ),
+        };
+        events.push(Object.freeze({
+          type: "order.requested",
+          order,
+          requestedAtUtcMs: atUtcMs,
+        }));
+        break;
+      case "awaiting-order-confirmation":
+        this.#activeCustomer = {
+          ...customer,
+          phase: "confirming-order",
+          phaseEndsAtUtcMs: safeAdd(
+            atUtcMs,
+            this.#orderConfirmationDurationMs,
+            "Order confirmation finish time",
+          ),
+        };
+        events.push(Object.freeze({
+          type: "order.confirmation-started",
+          order,
+          startedAtUtcMs: atUtcMs,
+        }));
+        break;
+      case "confirming-order": {
+        const notification = this.#kitchenNotificationChannel
+          .createNotification(order, atUtcMs);
+        if (
+          !isValidIdentifier(notification.channelId) ||
+          notification.sentAtUtcMs !== atUtcMs ||
+          !isNonNegativeInteger(notification.receivedAtUtcMs) ||
+          notification.receivedAtUtcMs <= atUtcMs
+        ) {
+          throw new Error("Kitchen notification channel returned an invalid plan.");
+        }
+        this.#activeCustomer = {
+          ...customer,
+          phase: "notifying-kitchen",
+          phaseEndsAtUtcMs: notification.receivedAtUtcMs,
+          notificationChannelId: notification.channelId,
+        };
+        events.push(Object.freeze({
+          type: "order.confirmed",
+          order,
+          confirmedAtUtcMs: atUtcMs,
+        }));
+        events.push(Object.freeze({
+          type: "kitchen.notification-sent",
+          order,
+          channelId: notification.channelId,
+          sentAtUtcMs: notification.sentAtUtcMs,
+          expectedReceiptAtUtcMs: notification.receivedAtUtcMs,
+        }));
+        break;
+      }
+      case "notifying-kitchen":
+        this.#activeCustomer = {
+          ...customer,
+          phase: "waiting-meal",
+          phaseEndsAtUtcMs: safeAdd(
+            atUtcMs,
+            this.#minimumPreparationDurationMs,
+            "Minimum order preparation time",
+          ),
+        };
+        events.push(Object.freeze({
+          type: "kitchen.order-received",
+          order,
+          channelId: customer.notificationChannelId ?? "unknown",
+          receivedAtUtcMs: atUtcMs,
+        }));
+        break;
+      case "waiting-meal":
+        this.#activeCustomer = {
+          ...customer,
+          phaseEndsAtUtcMs: null,
+        };
+        this.#tryFulfillActiveCustomer(atUtcMs, events);
+        break;
+    }
+  }
+
+  #createOrderSnapshot(customer: ActiveCustomer): RestaurantOrderSnapshot {
+    return Object.freeze({
+      customerId: customer.id,
+      recipeId: customer.recipeId,
+      dishItemId: customer.dishItemId,
+    });
+  }
   #tryFulfillActiveCustomer(
     soldAtUtcMs: number,
     events: RestaurantEvent[],
@@ -412,11 +766,13 @@ export class RestaurantSystem {
       1,
       "Total sold quantity",
     );
-    this.#copperBalance = safeAdd(
-      this.#copperBalance,
-      menuItem.unitPriceCopper,
-      "Copper balance",
-    );
+    if (this.#finance === null) {
+      this.#copperBalance = safeAdd(
+        this.#copperBalance,
+        menuItem.unitPriceCopper,
+        "Copper balance",
+      );
+    }
     this.#soldByDish.set(
       customer.dishItemId,
       safeAdd(
@@ -434,7 +790,19 @@ export class RestaurantSystem {
       copperEarned: menuItem.unitPriceCopper,
       soldAtUtcMs,
     });
+    this.#finance?.recordSale(sale);
     this.#recentSales.push(sale);
+    this.#diningCustomers.push(Object.freeze({
+      id: customer.id,
+      recipeId: customer.recipeId,
+      dishItemId: customer.dishItemId,
+      diningStartedAtUtcMs: soldAtUtcMs,
+      departAtUtcMs: safeAdd(
+        soldAtUtcMs,
+        this.#diningDurationMs,
+        "Customer dining completion time",
+      ),
+    }));
     if (this.#recentSales.length > RECENT_SALES_LIMIT) {
       this.#recentSales.shift();
     }
@@ -447,10 +815,26 @@ export class RestaurantSystem {
     events.push(Object.freeze({
       type: "currency.changed",
       deltaCopper: menuItem.unitPriceCopper,
-      copperBalance: this.#copperBalance,
+      copperBalance: this.#getCopperSnapshot().balanceCopper,
       atUtcMs: soldAtUtcMs,
     }));
     this.#scheduleNextCustomer(soldAtUtcMs);
+  }
+
+  #completeDiningCustomers(
+    nowUtcMs: number,
+    events: RestaurantEvent[],
+  ): void {
+    for (let index = this.#diningCustomers.length - 1; index >= 0; index -= 1) {
+      const customer = this.#diningCustomers[index];
+      if (customer === undefined || nowUtcMs < customer.departAtUtcMs) continue;
+      this.#diningCustomers.splice(index, 1);
+      events.push(Object.freeze({
+        type: "customer.dining-completed",
+        customer,
+        completedAtUtcMs: customer.departAtUtcMs,
+      }));
+    }
   }
 
   #leaveActiveCustomer(events: RestaurantEvent[]): void {
@@ -471,7 +855,7 @@ export class RestaurantSystem {
       customerId: customer.id,
       recipeId: customer.recipeId,
       leftAtUtcMs: customer.leaveAtUtcMs,
-      reason: "out-of-stock",
+      reason: customer.phase === "waiting-meal" ? "out-of-stock" : "wait-timeout",
     }));
     this.#scheduleNextCustomer(customer.leaveAtUtcMs);
   }
@@ -490,9 +874,15 @@ export class RestaurantSystem {
     const range =
       this.#maximumArrivalIntervalMs -
       this.#minimumArrivalIntervalMs;
-    const intervalMs =
+    const baseIntervalMs =
       this.#minimumArrivalIntervalMs +
       Math.floor(randomValue * (range + 1));
+    const intervalMs = Math.max(
+      1,
+      Math.round(
+        baseIntervalMs * this.#customerArrivalIntervalRateBasisPoints / 10_000,
+      ),
+    );
     this.#nextCustomerAtUtcMs = safeAdd(
       fromUtcMs,
       intervalMs,
@@ -509,8 +899,11 @@ export class RestaurantSystem {
       !isNonNegativeInteger(state.customerSequence) ||
       !isNonNegativeInteger(state.totalSoldQuantity) ||
       !isNonNegativeInteger(state.totalCustomersLeft) ||
-      !isNonNegativeInteger(state.copperBalance) ||
-      state.recentSales.length > RECENT_SALES_LIMIT
+      !Number.isSafeInteger(state.copperBalance) ||
+      !isNonNegativeInteger(state.totalCopperSpent ?? 0) ||
+      state.recentSales.length > RECENT_SALES_LIMIT ||
+      (state.diningCustomers !== undefined &&
+        state.diningCustomers.length > this.#seatCapacity)
     ) {
       throw new Error("Restaurant restore state is invalid.");
     }
@@ -555,7 +948,8 @@ export class RestaurantSystem {
     }
     if (
       soldQuantity !== state.totalSoldQuantity ||
-      expectedCopper !== state.copperBalance
+      (this.#finance === null &&
+        expectedCopper !== state.copperBalance + (state.totalCopperSpent ?? 0))
     ) {
       throw new Error(
         "Restaurant sales totals do not match their breakdown.",
@@ -575,12 +969,52 @@ export class RestaurantSystem {
         activeCustomer.leaveAtUtcMs <
           activeCustomer.arrivedAtUtcMs ||
         !isNonNegativeInteger(activeCustomer.fulfillmentAttempt) ||
+        (activeCustomer.phase !== undefined &&
+          ![
+            "seated-idle",
+            "awaiting-order-confirmation",
+            "confirming-order",
+            "notifying-kitchen",
+            "waiting-meal",
+          ].includes(activeCustomer.phase)) ||
+        (activeCustomer.phaseEndsAtUtcMs !== undefined &&
+          activeCustomer.phaseEndsAtUtcMs !== null &&
+          (!isNonNegativeInteger(activeCustomer.phaseEndsAtUtcMs) ||
+            activeCustomer.phaseEndsAtUtcMs < activeCustomer.arrivedAtUtcMs)) ||
+        (activeCustomer.notificationChannelId !== undefined &&
+          activeCustomer.notificationChannelId !== null &&
+          !isValidIdentifier(activeCustomer.notificationChannelId)) ||
         state.customerSequence === 0
       ) {
         throw new Error(
           "Active restaurant customer state is invalid.",
         );
       }
+    }
+
+    const diningCustomers = (state.diningCustomers ?? []).map((customer) => {
+      const menuItem = this.#menuItems.get(customer.recipeId);
+      if (
+        menuItem === undefined ||
+        menuItem.dishItemId !== customer.dishItemId ||
+        !isValidIdentifier(customer.id) ||
+        !isNonNegativeInteger(customer.diningStartedAtUtcMs) ||
+        !isNonNegativeInteger(customer.departAtUtcMs) ||
+        customer.departAtUtcMs <= customer.diningStartedAtUtcMs
+      ) {
+        throw new Error("Restaurant dining customer state is invalid.");
+      }
+      return Object.freeze({ ...customer });
+    });
+
+    const restoredCustomerIds = new Set(
+      diningCustomers.map((customer) => customer.id),
+    );
+    if (
+      restoredCustomerIds.size !== diningCustomers.length ||
+      (activeCustomer !== null && restoredCustomerIds.has(activeCustomer.id))
+    ) {
+      throw new Error("Restaurant customer identities are inconsistent.");
     }
 
     const recentSales = state.recentSales.map((sale) => {
@@ -601,18 +1035,29 @@ export class RestaurantSystem {
 
     this.#selectedRecipeId = state.selectedRecipeId;
     this.#activeCustomer =
-      activeCustomer === null ? null : { ...activeCustomer };
-    if (activeCustomer !== null) {
+      activeCustomer === null
+        ? null
+        : {
+            ...activeCustomer,
+            phase: activeCustomer.phase ?? "waiting-meal",
+            phaseEndsAtUtcMs: activeCustomer.phaseEndsAtUtcMs ?? null,
+            notificationChannelId: activeCustomer.notificationChannelId ?? null,
+          };
+    if (this.#activeCustomer?.phase === "waiting-meal") {
       this.#lastFulfillmentAttemptSignature =
         this.#createFulfillmentAttemptSignature(
-          activeCustomer.dishItemId,
+          this.#activeCustomer.dishItemId,
         );
     }
+    this.#diningCustomers.push(...diningCustomers);
     this.#nextCustomerAtUtcMs = state.nextCustomerAtUtcMs;
     this.#customerSequence = state.customerSequence;
     this.#totalSoldQuantity = state.totalSoldQuantity;
     this.#totalCustomersLeft = state.totalCustomersLeft;
-    this.#copperBalance = state.copperBalance;
+    if (this.#finance === null) {
+      this.#copperBalance = state.copperBalance;
+      this.#totalCopperSpent = state.totalCopperSpent ?? 0;
+    }
     for (const [dishItemId, quantity] of soldByDish) {
       this.#soldByDish.set(dishItemId, quantity);
     }

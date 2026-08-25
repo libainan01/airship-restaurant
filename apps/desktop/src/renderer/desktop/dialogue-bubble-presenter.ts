@@ -1,4 +1,5 @@
 import type {
+  AmbientDialogueContext,
   DialogueDefinition,
   DialogueSpeakerDefinition,
 } from "@airship-restaurant/content";
@@ -19,6 +20,8 @@ export interface DialogueParticipantPresentation {
 
 export interface DialogueBubblePresentation {
   readonly dialogueId: string;
+  readonly kind: DialogueDefinition["kind"];
+  readonly contexts: readonly AmbientDialogueContext[];
   readonly lineIndex: number;
   readonly speakerId: string;
   readonly speakerName: string;
@@ -84,6 +87,10 @@ export function resolveDialogueBubblePresentation(
 
   return Object.freeze({
     dialogueId: active.dialogueId,
+    kind: dialogue.kind,
+    contexts: Object.freeze(
+      dialogue.kind === "ambient" ? [...dialogue.contexts] : [],
+    ),
     lineIndex: active.lineIndex,
     speakerId: speaker.id,
     speakerName:

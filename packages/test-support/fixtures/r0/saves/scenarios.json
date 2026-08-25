@@ -1,0 +1,47 @@
+{
+  "fixtureVersion": 1,
+  "scenarios": [
+    {
+      "id": "missing",
+      "directory": "missing",
+      "expectedStatus": "missing",
+      "expectedLoadSource": "new"
+    },
+    {
+      "id": "new-progress",
+      "directory": "new-progress",
+      "expectedStatus": "loaded",
+      "expectedLoadSource": "primary"
+    },
+    {
+      "id": "operating",
+      "directory": "operating",
+      "expectedStatus": "loaded",
+      "expectedLoadSource": "primary"
+    },
+    {
+      "id": "transporting",
+      "directory": "transporting",
+      "expectedStatus": "loaded",
+      "expectedLoadSource": "primary"
+    },
+    {
+      "id": "story-active",
+      "directory": "story-active",
+      "expectedStatus": "loaded",
+      "expectedLoadSource": "primary"
+    },
+    {
+      "id": "corrupt",
+      "directory": "corrupt",
+      "expectedStatus": "corrupt",
+      "expectedLoadSource": "reset-corrupt"
+    },
+    {
+      "id": "backup-recovery",
+      "directory": "backup-recovery",
+      "expectedStatus": "recovered-backup",
+      "expectedLoadSource": "backup"
+    }
+  ]
+}

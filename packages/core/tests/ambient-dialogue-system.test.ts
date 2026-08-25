@@ -33,6 +33,7 @@ function config(
     maxPlaysPerSession: 1,
     prerequisiteEventIds: [],
     lineDurationsMs: [1_000, 2_000],
+    participantCount: 1,
     ...overrides,
   };
 }
@@ -62,6 +63,7 @@ describe("AmbientDialogueSystem", () => {
         atUtcMs: 0,
         context: "arrival",
         familiarity: "new",
+        availableSpeakerCount: 5,
         completedStoryEventIds: [],
         quietMode: false,
       }),
@@ -100,6 +102,7 @@ describe("AmbientDialogueSystem", () => {
         atUtcMs: 3_001,
         context: "arrival",
         familiarity: "regular",
+        availableSpeakerCount: 5,
         completedStoryEventIds: [],
         quietMode: false,
       }),
@@ -124,6 +127,7 @@ describe("AmbientDialogueSystem", () => {
         atUtcMs: 0,
         context: "waiting",
         familiarity: "regular",
+        availableSpeakerCount: 5,
         completedStoryEventIds: ["story.done"],
         quietMode: false,
       }).startedDialogueId,
@@ -133,6 +137,7 @@ describe("AmbientDialogueSystem", () => {
         atUtcMs: 1,
         context: "eating",
         familiarity: "returning",
+        availableSpeakerCount: 5,
         completedStoryEventIds: ["story.done"],
         quietMode: false,
       }).startedDialogueId,
@@ -142,6 +147,7 @@ describe("AmbientDialogueSystem", () => {
         atUtcMs: 2,
         context: "eating",
         familiarity: "regular",
+        availableSpeakerCount: 5,
         completedStoryEventIds: [],
         quietMode: false,
       }).startedDialogueId,
@@ -151,10 +157,36 @@ describe("AmbientDialogueSystem", () => {
         atUtcMs: 3,
         context: "eating",
         familiarity: "regular",
+        availableSpeakerCount: 5,
         completedStoryEventIds: ["story.done"],
         quietMode: false,
       }).startedDialogueId,
     ).toBe("dialogue.test.regular");
+  });
+
+  it("filters dialogue by the speakers available from the NPC opportunity", () => {
+    const system = createSystem([
+      config("dialogue.test.pair", {
+        participantCount: 2,
+        lineDurationsMs: [1_000],
+      }),
+      config("dialogue.test.solo", {
+        participantCount: 1,
+        lineDurationsMs: [1_000],
+      }),
+    ]);
+
+    expect(
+      system.requestForNpcOpportunity({
+        opportunityId: "npc-opportunity-test",
+        atUtcMs: 0,
+        context: "arrival",
+        availableSpeakerCount: 1,
+        totalSoldQuantity: 0,
+        completedStoryEventIds: [],
+        quietMode: false,
+      }).startedDialogueId,
+    ).toBe("dialogue.test.solo");
   });
 
   it("uses deterministic weighted selection", () => {
@@ -177,13 +209,14 @@ describe("AmbientDialogueSystem", () => {
         atUtcMs: 0,
         context: "arrival",
         familiarity: "new",
+        availableSpeakerCount: 5,
         completedStoryEventIds: [],
         quietMode: false,
       }).startedDialogueId,
     ).toBe("dialogue.test.heavy");
   });
 
-  it("derives customer context and applies the quiet-mode gap", () => {
+  it("applies the quiet-mode gap to NPC dialogue opportunities", () => {
     const system = createSystem(
       [
         config("dialogue.test.arrival", {
@@ -200,57 +233,39 @@ describe("AmbientDialogueSystem", () => {
     );
 
     expect(
-      system.observeOnline(
-        {
-          activeCustomerId: null,
-          totalSoldQuantity: 0,
-          totalCustomersLeft: 0,
-        },
-        {
-          activeCustomerId: "customer-1",
-          totalSoldQuantity: 0,
-          totalCustomersLeft: 0,
-        },
-        [],
-        false,
-        0,
-      ).startedDialogueId,
+      system.requestForNpcOpportunity({
+        opportunityId: "npc-opportunity-test",
+        atUtcMs: 0,
+        context: "arrival",
+        availableSpeakerCount: 1,
+        totalSoldQuantity: 0,
+        completedStoryEventIds: [],
+        quietMode: false,
+      }).startedDialogueId,
     ).toBe("dialogue.test.arrival");
 
     expect(
-      system.observeOnline(
-        {
-          activeCustomerId: "customer-1",
-          totalSoldQuantity: 0,
-          totalCustomersLeft: 0,
-        },
-        {
-          activeCustomerId: null,
-          totalSoldQuantity: 1,
-          totalCustomersLeft: 0,
-        },
-        [],
-        true,
-        100,
-      ).startedDialogueId,
+      system.requestForNpcOpportunity({
+        opportunityId: "npc-opportunity-test",
+        atUtcMs: 100,
+        context: "eating",
+        availableSpeakerCount: 1,
+        totalSoldQuantity: 1,
+        completedStoryEventIds: [],
+        quietMode: true,
+      }).startedDialogueId,
     ).toBeNull();
 
     expect(
-      system.observeOnline(
-        {
-          activeCustomerId: null,
-          totalSoldQuantity: 1,
-          totalCustomersLeft: 0,
-        },
-        {
-          activeCustomerId: null,
-          totalSoldQuantity: 2,
-          totalCustomersLeft: 0,
-        },
-        [],
-        true,
-        400,
-      ).startedDialogueId,
+      system.requestForNpcOpportunity({
+        opportunityId: "npc-opportunity-test",
+        atUtcMs: 400,
+        context: "eating",
+        availableSpeakerCount: 1,
+        totalSoldQuantity: 2,
+        completedStoryEventIds: [],
+        quietMode: true,
+      }).startedDialogueId,
     ).toBe("dialogue.test.eating");
   });
 

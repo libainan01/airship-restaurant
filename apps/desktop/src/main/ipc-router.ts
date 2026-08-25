@@ -4,12 +4,16 @@ import {
   isAppSettingsUpdate,
   isDesktopInteractionRequest,
   isGameCommand,
+  isManagementOpenRequest,
+  isRuntimeReadModelKey,
   type AppSettingsSnapshot,
   type CommandResult,
-  type GameSnapshot,
+  type GameCommand,
   type SaveDiagnosticsSnapshot,
+  type RuntimeReadModelKey,
+  type RuntimeReadModelSlice,
 } from "@airship-restaurant/contracts";
-import type { GameRuntime } from "@airship-restaurant/core";
+import type { RuntimeReadModelPort } from "@airship-restaurant/core";
 import { ipcMain, type IpcMainInvokeEvent } from "electron";
 import type { DisplayService } from "./display-service";
 import type { GameSaveService } from "./game-save-service";
@@ -18,20 +22,28 @@ import type { WindowManager } from "./window-manager";
 
 type AllowedWindow = "desktop" | "management";
 
+interface RuntimeIpcPort extends RuntimeReadModelPort {
+  dispatch(command: GameCommand): CommandResult;
+}
+
 export class IpcRouter {
   readonly #windowManager: WindowManager;
-  readonly #runtime: GameRuntime;
+  readonly #runtime: RuntimeIpcPort;
   readonly #settingsStore: SettingsStore;
   readonly #displayService: DisplayService;
   readonly #gameSaveService: GameSaveService;
   #unsubscribeSaveDiagnostics: (() => void) | null = null;
-  #unsubscribeRuntime: (() => void) | null = null;
+  readonly #unsubscribeReadModels: (() => void)[] = [];
+  readonly #readModelSubscriptionCounts = new Map<
+    number,
+    Map<RuntimeReadModelKey, number>
+  >();
   #unsubscribeSettings: (() => void) | null = null;
   #isStarted = false;
 
   constructor(
     windowManager: WindowManager,
-    runtime: GameRuntime,
+    runtime: RuntimeIpcPort,
     settingsStore: SettingsStore,
     displayService: DisplayService,
     gameSaveService: GameSaveService,
@@ -51,13 +63,48 @@ export class IpcRouter {
     this.#isStarted = true;
 
     ipcMain.handle(
-      IPC_CHANNELS.runtimeGetSnapshot,
-      (event): GameSnapshot => {
+      IPC_CHANNELS.runtimeGetReadModel,
+      (event, key: unknown): RuntimeReadModelSlice => {
         this.#assertTrustedSender(event, ["desktop", "management"]);
-        return this.#runtime.getSnapshot();
+        if (!isRuntimeReadModelKey(key)) {
+          throw new Error("Unknown runtime read model key.");
+        }
+        return this.#runtime.get(key);
       },
     );
 
+    ipcMain.handle(
+      IPC_CHANNELS.runtimeSubscribeReadModel,
+      (event, key: unknown): RuntimeReadModelSlice => {
+        this.#assertTrustedSender(event, ["desktop", "management"]);
+        if (!isRuntimeReadModelKey(key)) {
+          throw new Error("Unknown runtime read model key.");
+        }
+        const counts = this.#readModelSubscriptionCounts.get(event.sender.id) ??
+          new Map<RuntimeReadModelKey, number>();
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+        this.#readModelSubscriptionCounts.set(event.sender.id, counts);
+        return this.#runtime.get(key);
+      },
+    );
+
+    ipcMain.handle(
+      IPC_CHANNELS.runtimeUnsubscribeReadModel,
+      (event, key: unknown): void => {
+        this.#assertTrustedSender(event, ["desktop", "management"]);
+        if (!isRuntimeReadModelKey(key)) {
+          throw new Error("Unknown runtime read model key.");
+        }
+        const counts = this.#readModelSubscriptionCounts.get(event.sender.id);
+        const count = counts?.get(key) ?? 0;
+        if (counts === undefined || count === 0) return;
+        if (count === 1) counts.delete(key);
+        else counts.set(key, count - 1);
+        if (counts.size === 0) {
+          this.#readModelSubscriptionCounts.delete(event.sender.id);
+        }
+      },
+    );
     ipcMain.handle(
       IPC_CHANNELS.runtimeDispatchCommand,
       async (event, payload: unknown): Promise<CommandResult> => {
@@ -69,7 +116,6 @@ export class IpcRouter {
             commandId: getCommandId(payload),
             code: "INVALID_COMMAND",
             message: "The command payload failed runtime validation.",
-            snapshot: this.#runtime.getSnapshot(),
           };
         }
 
@@ -88,10 +134,16 @@ export class IpcRouter {
       },
     );
 
-    ipcMain.handle(IPC_CHANNELS.windowOpenManagement, (event): void => {
-      this.#assertTrustedSender(event, ["desktop", "management"]);
-      this.#windowManager.openManagementWindow();
-    });
+    ipcMain.handle(
+      IPC_CHANNELS.windowOpenManagement,
+      (event, payload: unknown): void => {
+        this.#assertTrustedSender(event, ["desktop"]);
+        if (!isManagementOpenRequest(payload)) {
+          throw new Error("Invalid management navigation request.");
+        }
+        this.#windowManager.openManagementWindow(payload.section);
+      },
+    );
 
     ipcMain.handle(
       IPC_CHANNELS.desktopSetInteraction,
@@ -150,12 +202,25 @@ export class IpcRouter {
       },
     );
 
-    this.#unsubscribeRuntime = this.#runtime.subscribe((snapshot) => {
-      for (const webContents of this.#windowManager.getRendererWebContents()) {
-        webContents.send(IPC_CHANNELS.runtimeSnapshotChanged, snapshot);
-      }
-    });
-
+    const readModelKeys: readonly RuntimeReadModelKey[] = [
+      "layout",
+      "inventory",
+      "characters",
+      "instance-upgrades",
+      "recruitment",
+      "progression",
+      "desktop-world",
+      "operations",
+      "procurement",
+      "finance",
+    ];
+    for (const key of readModelKeys) {
+      this.#unsubscribeReadModels.push(
+        this.#runtime.subscribe(key, (slice) => {
+          this.#broadcastReadModel(slice);
+        }),
+      );
+    }
     this.#unsubscribeSettings = this.#settingsStore.subscribe((snapshot) => {
       for (const webContents of this.#windowManager.getRendererWebContents()) {
         webContents.send(IPC_CHANNELS.settingsChanged, snapshot);
@@ -179,14 +244,18 @@ export class IpcRouter {
     }
 
     this.#isStarted = false;
-    this.#unsubscribeRuntime?.();
-    this.#unsubscribeRuntime = null;
+    for (const unsubscribe of this.#unsubscribeReadModels.splice(0)) {
+      unsubscribe();
+    }
+    this.#readModelSubscriptionCounts.clear();
     this.#unsubscribeSettings?.();
     this.#unsubscribeSettings = null;
     this.#unsubscribeSaveDiagnostics?.();
     this.#unsubscribeSaveDiagnostics = null;
 
-    ipcMain.removeHandler(IPC_CHANNELS.runtimeGetSnapshot);
+    ipcMain.removeHandler(IPC_CHANNELS.runtimeGetReadModel);
+    ipcMain.removeHandler(IPC_CHANNELS.runtimeSubscribeReadModel);
+    ipcMain.removeHandler(IPC_CHANNELS.runtimeUnsubscribeReadModel);
     ipcMain.removeHandler(IPC_CHANNELS.runtimeDispatchCommand);
     ipcMain.removeHandler(IPC_CHANNELS.windowOpenManagement);
     ipcMain.removeHandler(IPC_CHANNELS.desktopSetInteraction);
@@ -196,16 +265,21 @@ export class IpcRouter {
     ipcMain.removeHandler(IPC_CHANNELS.saveGetDiagnostics);
   }
 
-  #syncRuntimeQuietMode(settings: AppSettingsSnapshot): void {
-    const enabled = settings.presentationMode === "quiet";
-    if (this.#runtime.getSnapshot().settings.quietMode === enabled) {
-      return;
+  #broadcastReadModel(slice: RuntimeReadModelSlice): void {
+    for (const webContents of this.#windowManager.getRendererWebContents()) {
+      const count = this.#readModelSubscriptionCounts
+        .get(webContents.id)
+        ?.get(slice.key) ?? 0;
+      if (count > 0) {
+        webContents.send(IPC_CHANNELS.runtimeReadModelChanged, slice);
+      }
     }
-
+  }
+  #syncRuntimeQuietMode(settings: AppSettingsSnapshot): void {
     this.#runtime.dispatch({
       id: `settings-sync-${settings.revision}`,
       type: "settings.set-quiet-mode",
-      payload: { enabled },
+      payload: { enabled: settings.presentationMode === "quiet" },
     });
   }
 

@@ -1,0 +1,253 @@
+{
+  "$schema": "../schemas/character-catalog.schema.json",
+  "schemaVersion": 1,
+  "characters": [
+    {
+      "id": "character.baiyecheng",
+      "name": "白夜城",
+      "localizationKey": "localization.character.baiyecheng.name",
+      "baseSkills": {
+        "cooking": 3,
+        "charm": 1,
+        "movement": 1,
+        "repair": 1,
+        "piloting": 1
+      },
+      "talentIds": [
+        "talent.steady_hands"
+      ]
+    },
+    {
+      "id": "character.otto",
+      "name": "奥托",
+      "localizationKey": "localization.character.otto.name",
+      "baseSkills": {
+        "cooking": 1,
+        "charm": 3,
+        "movement": 2,
+        "repair": 1,
+        "piloting": 1
+      },
+      "talentIds": [
+        "talent.warm_welcome"
+      ]
+    },
+    {
+      "id": "character.martha_bell",
+      "name": "玛莎·贝尔",
+      "localizationKey": "localization.character.martha_bell.name",
+      "baseSkills": {
+        "cooking": 1,
+        "charm": 2,
+        "movement": 1,
+        "repair": 1,
+        "piloting": 1
+      },
+      "talentIds": [
+        "talent.old_recipe_memory"
+      ]
+    },
+    {
+      "id": "character.thomas_bell",
+      "name": "托马斯·贝尔",
+      "localizationKey": "localization.character.thomas_bell.name",
+      "baseSkills": {
+        "cooking": 1,
+        "charm": 1,
+        "movement": 1,
+        "repair": 2,
+        "piloting": 1
+      },
+      "talentIds": [
+        "talent.patient_worker"
+      ]
+    },
+    {
+      "id": "character.recruit_template",
+      "name": "普通求职者",
+      "localizationKey": "localization.character.recruit_template.name",
+      "baseSkills": {
+        "cooking": 1,
+        "charm": 1,
+        "movement": 1,
+        "repair": 1,
+        "piloting": 1
+      },
+      "talentIds": []
+    }
+  ],
+  "customers": [
+    {
+      "id": "customer.martha_bell",
+      "name": "玛莎·贝尔",
+      "localizationKey": "localization.customer.martha_bell.name",
+      "characterId": "character.martha_bell"
+    },
+    {
+      "id": "customer.thomas_bell",
+      "name": "托马斯·贝尔",
+      "localizationKey": "localization.customer.thomas_bell.name",
+      "characterId": "character.thomas_bell"
+    }
+  ],
+  "localizations": {
+    "localization.character.baiyecheng.name": "白夜城",
+    "localization.character.otto.name": "奥托",
+    "localization.character.martha_bell.name": "玛莎·贝尔",
+    "localization.character.thomas_bell.name": "托马斯·贝尔",
+    "localization.customer.martha_bell.name": "玛莎·贝尔",
+    "localization.customer.thomas_bell.name": "托马斯·贝尔",
+    "localization.character.recruit_template.name": "普通求职者"
+  },
+  "talents": [
+    {
+      "id": "talent.steady_hands",
+      "name": "沉稳手法",
+      "exclusiveCharacterId": "character.baiyecheng",
+      "effectKeys": [
+        "cooking.qualityStability"
+      ],
+      "qualityTier": 3
+    },
+    {
+      "id": "talent.warm_welcome",
+      "name": "亲切招呼",
+      "exclusiveCharacterId": "character.otto",
+      "effectKeys": [
+        "service.tipChance"
+      ],
+      "qualityTier": 3
+    },
+    {
+      "id": "talent.old_recipe_memory",
+      "name": "旧食谱记忆",
+      "exclusiveCharacterId": "character.martha_bell",
+      "effectKeys": [
+        "narrative.recipeInsight"
+      ],
+      "qualityTier": 3
+    },
+    {
+      "id": "talent.patient_worker",
+      "name": "耐心",
+      "exclusiveCharacterId": null,
+      "effectKeys": [
+        "task.fatigueResistance"
+      ],
+      "qualityTier": 1
+    },
+    {
+      "id": "talent.quick_learner",
+      "name": "领悟迅速",
+      "exclusiveCharacterId": null,
+      "qualityTier": 2,
+      "effectKeys": [
+        "training.experienceBonus"
+      ]
+    },
+    {
+      "id": "talent.skywise",
+      "name": "识风者",
+      "exclusiveCharacterId": null,
+      "qualityTier": 3,
+      "effectKeys": [
+        "piloting.wearReduction"
+      ]
+    }
+  ],
+  "recruitment": {
+    "templateCharacterId": "character.recruit_template",
+    "candidateNames": [
+      "艾达",
+      "诺拉",
+      "米洛",
+      "伊芙",
+      "莱恩",
+      "菲恩",
+      "露西",
+      "西奥"
+    ],
+    "candidateCount": 3,
+    "freeRefreshIntervalMs": 86400000,
+    "manualRefreshBaseCostCopper": 10,
+    "manualRefreshCostStepCopper": 10,
+    "hireBaseCostCopper": 40,
+    "jobOptions": [
+      {
+        "learnedJobIds": [
+          "job.chef"
+        ],
+        "primaryJobId": "job.chef"
+      },
+      {
+        "learnedJobIds": [
+          "job.waiter"
+        ],
+        "primaryJobId": "job.waiter"
+      },
+      {
+        "learnedJobIds": [
+          "job.waiter",
+          "job.local_procurer"
+        ],
+        "primaryJobId": "job.local_procurer"
+      },
+      {
+        "learnedJobIds": [
+          "job.captain"
+        ],
+        "primaryJobId": "job.captain"
+      }
+    ],
+    "qualityTiers": [
+      {
+        "tier": 0,
+        "minimumSkill": 1,
+        "maximumSkill": 2,
+        "maximumTalentQuality": 1,
+        "talentCountWeights": [
+          60,
+          35,
+          5,
+          0
+        ]
+      },
+      {
+        "tier": 1,
+        "minimumSkill": 1,
+        "maximumSkill": 3,
+        "maximumTalentQuality": 2,
+        "talentCountWeights": [
+          40,
+          40,
+          18,
+          2
+        ]
+      },
+      {
+        "tier": 2,
+        "minimumSkill": 2,
+        "maximumSkill": 4,
+        "maximumTalentQuality": 3,
+        "talentCountWeights": [
+          25,
+          40,
+          28,
+          7
+        ]
+      },
+      {
+        "tier": 3,
+        "minimumSkill": 2,
+        "maximumSkill": 5,
+        "maximumTalentQuality": 3,
+        "talentCountWeights": [
+          15,
+          35,
+          35,
+          15
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,375 @@
+{
+  "$schema": "../schemas/gameplay-catalog.schema.json",
+  "schemaVersion": 1,
+  "recipes": [
+    {
+      "id": "recipe.tomato_scrambled_egg",
+      "version": 1,
+      "name": "番茄炒蛋",
+      "durationMs": 51000,
+      "outputItemId": "dish.tomato_scrambled_egg",
+      "outputQuantity": 1,
+      "unitPriceCopper": 30,
+      "ingredients": [
+        { "itemId": "ingredient.egg", "quantity": 2 },
+        { "itemId": "ingredient.tomato", "quantity": 3 }
+      ],
+      "productionSteps": [
+        { "id": "step.process_tomato", "name": "处理西红柿", "durationMs": 8000, "stationTags": ["station.prep"], "attendance": "required", "prerequisiteStepIds": [] },
+        { "id": "step.whisk_egg", "name": "打散鸡蛋", "durationMs": 7000, "stationTags": ["station.prep"], "attendance": "required", "prerequisiteStepIds": [] },
+        { "id": "step.fry_tomato", "name": "炒西红柿", "durationMs": 12000, "stationTags": ["station.pan_fry"], "attendance": "required", "prerequisiteStepIds": ["step.process_tomato"] },
+        { "id": "step.fry_egg", "name": "炒鸡蛋", "durationMs": 10000, "stationTags": ["station.pan_fry"], "attendance": "required", "prerequisiteStepIds": ["step.whisk_egg"] },
+        { "id": "step.combine", "name": "合炒", "durationMs": 9000, "stationTags": ["station.pan_fry"], "attendance": "required", "prerequisiteStepIds": ["step.fry_tomato", "step.fry_egg"] },
+        { "id": "step.plate", "name": "装盘", "durationMs": 5000, "stationTags": ["station.plating"], "attendance": "required", "prerequisiteStepIds": ["step.combine"] }
+      ],
+      "detailedRecipe": {
+        "realWorldName": "家常番茄炒鸡蛋",
+        "servings": 2,
+        "ingredients": [
+          { "name": "番茄", "amount": "300 克（约 2 个中等大小）" },
+          { "name": "鸡蛋", "amount": "3 个" },
+          { "name": "食用油", "amount": "20 毫升" },
+          { "name": "盐", "amount": "2 克" },
+          { "name": "白砂糖", "amount": "3 克，可选" },
+          { "name": "葱花", "amount": "5 克，可选" }
+        ],
+        "steps": [
+          { "order": 1, "instruction": "番茄洗净去蒂，切成约 2 厘米的小块；鸡蛋打入碗中，加入约 1 克盐并充分搅散。" },
+          { "order": 2, "instruction": "炒锅以中大火烧热，加入约 10 毫升油；倒入蛋液，快速推炒至七八成熟、表面仍略湿润时立即盛出。" },
+          { "order": 3, "instruction": "锅中加入剩余油，倒入番茄，以中火翻炒 2 至 3 分钟，直至番茄变软并析出汤汁。" },
+          { "order": 4, "instruction": "加入剩余盐和可选的白砂糖调味，将炒好的鸡蛋倒回锅中，以大火翻炒 30 至 60 秒，使鸡蛋裹上番茄汁。" },
+          { "order": 5, "instruction": "关火后撒上可选的葱花，趁热装盘食用。" }
+        ],
+        "notes": [
+          "鸡蛋第一次下锅不要炒至全干，回锅后口感更嫩。",
+          "番茄酸甜度不同，可先尝味再决定是否加糖。",
+          "鸡蛋应加热至完全凝固；接触生蛋液的餐具需及时清洗。"
+        ]
+      }
+    },
+    {
+      "id": "recipe.hearth_flatbread",
+      "version": 1,
+      "name": "炉火云麦饼",
+      "durationMs": 45000,
+      "outputItemId": "dish.hearth_flatbread",
+      "outputQuantity": 2,
+      "unitPriceCopper": 4,
+      "ingredients": [
+        {
+          "itemId": "ingredient.cloud_wheat",
+          "quantity": 2
+        },
+        {
+          "itemId": "ingredient.kettle_milk",
+          "quantity": 1
+        }
+      ],
+      "productionSteps": [
+        {
+          "id": "step.mix_and_pan_fry",
+          "name": "和面并煎制",
+          "durationMs": 45000,
+          "stationTags": [
+            "station.pan_fry"
+          ],
+          "attendance": "required",
+          "prerequisiteStepIds": []
+        }
+      ],
+      "detailedRecipe": {
+        "realWorldName": "牛奶软饼",
+        "servings": 2,
+        "ingredients": [
+          {
+            "name": "中筋面粉",
+            "amount": "100 克"
+          },
+          {
+            "name": "牛奶",
+            "amount": "150 毫升"
+          },
+          {
+            "name": "鸡蛋",
+            "amount": "1 个"
+          },
+          {
+            "name": "盐",
+            "amount": "1 克"
+          },
+          {
+            "name": "食用油",
+            "amount": "适量"
+          }
+        ],
+        "steps": [
+          {
+            "order": 1,
+            "instruction": "面粉、盐、鸡蛋与牛奶搅拌至没有干粉，静置 10 分钟。"
+          },
+          {
+            "order": 2,
+            "instruction": "平底锅薄薄刷油，以中小火将面糊两面煎至金黄。"
+          }
+        ],
+        "notes": [
+          "面糊应能缓慢流动；过稠时可少量补牛奶。"
+        ]
+      }
+    },
+    {
+      "id": "recipe.windroot_soup",
+      "version": 1,
+      "name": "风根浓汤",
+      "durationMs": 90000,
+      "outputItemId": "dish.windroot_soup",
+      "outputQuantity": 3,
+      "unitPriceCopper": 7,
+      "ingredients": [
+        {
+          "itemId": "ingredient.wind_root",
+          "quantity": 2
+        },
+        {
+          "itemId": "ingredient.kettle_milk",
+          "quantity": 1
+        },
+        {
+          "itemId": "ingredient.moon_herb",
+          "quantity": 1
+        }
+      ],
+      "productionSteps": [
+        {
+          "id": "step.chop_root",
+          "name": "切配根茎菜",
+          "durationMs": 20000,
+          "stationTags": [
+            "station.prep"
+          ],
+          "attendance": "required",
+          "prerequisiteStepIds": []
+        },
+        {
+          "id": "step.simmer_soup",
+          "name": "蒸煮浓汤",
+          "durationMs": 70000,
+          "stationTags": [
+            "station.steam_boil"
+          ],
+          "attendance": "unattended",
+          "prerequisiteStepIds": [
+            "step.chop_root"
+          ]
+        }
+      ],
+      "detailedRecipe": {
+        "realWorldName": "胡萝卜奶油浓汤",
+        "servings": 3,
+        "ingredients": [
+          {
+            "name": "胡萝卜",
+            "amount": "300 克"
+          },
+          {
+            "name": "洋葱",
+            "amount": "100 克"
+          },
+          {
+            "name": "牛奶",
+            "amount": "250 毫升"
+          },
+          {
+            "name": "清水",
+            "amount": "300 毫升"
+          },
+          {
+            "name": "黄油",
+            "amount": "15 克"
+          },
+          {
+            "name": "盐与黑胡椒",
+            "amount": "适量"
+          }
+        ],
+        "steps": [
+          {
+            "order": 1,
+            "instruction": "胡萝卜与洋葱切小块，用黄油小火炒至洋葱透明。"
+          },
+          {
+            "order": 2,
+            "instruction": "加清水煮至胡萝卜软烂，打成细腻泥状。"
+          },
+          {
+            "order": 3,
+            "instruction": "加入牛奶，小火加热并以盐、黑胡椒调味，不要沸腾。"
+          }
+        ],
+        "notes": [
+          "没有料理机时可延长炖煮并用压泥器处理。"
+        ]
+      }
+    },
+    {
+      "id": "recipe.homecoming_stew",
+      "version": 1,
+      "name": "贝尔家的炉火炖菜",
+      "durationMs": 180000,
+      "outputItemId": "dish.homecoming_stew",
+      "outputQuantity": 4,
+      "unitPriceCopper": 12,
+      "ingredients": [
+        {
+          "itemId": "ingredient.wind_root",
+          "quantity": 2
+        },
+        {
+          "itemId": "ingredient.smoked_meat",
+          "quantity": 1
+        },
+        {
+          "itemId": "ingredient.moon_herb",
+          "quantity": 1
+        }
+      ],
+      "productionSteps": [
+        {
+          "id": "step.chop_vegetables",
+          "name": "切配蔬菜",
+          "durationMs": 30000,
+          "stationTags": [
+            "station.prep"
+          ],
+          "attendance": "required",
+          "prerequisiteStepIds": []
+        },
+        {
+          "id": "step.simmer_meat",
+          "name": "蒸煮肉块",
+          "durationMs": 100000,
+          "stationTags": [
+            "station.steam_boil"
+          ],
+          "attendance": "unattended",
+          "prerequisiteStepIds": []
+        },
+        {
+          "id": "step.saute_vegetables",
+          "name": "煎炒蔬菜",
+          "durationMs": 30000,
+          "stationTags": [
+            "station.pan_fry"
+          ],
+          "attendance": "required",
+          "prerequisiteStepIds": [
+            "step.chop_vegetables"
+          ]
+        },
+        {
+          "id": "step.finish_stew",
+          "name": "合炖收味",
+          "durationMs": 50000,
+          "stationTags": [
+            "station.steam_boil"
+          ],
+          "attendance": "unattended",
+          "prerequisiteStepIds": [
+            "step.simmer_meat",
+            "step.saute_vegetables"
+          ]
+        }
+      ],
+      "detailedRecipe": {
+        "realWorldName": "烟熏牛肉蔬菜炖菜",
+        "servings": 4,
+        "ingredients": [
+          {
+            "name": "牛肉",
+            "amount": "500 克"
+          },
+          {
+            "name": "胡萝卜",
+            "amount": "2 根"
+          },
+          {
+            "name": "土豆",
+            "amount": "2 个"
+          },
+          {
+            "name": "洋葱",
+            "amount": "1 个"
+          },
+          {
+            "name": "烟熏培根",
+            "amount": "80 克"
+          },
+          {
+            "name": "番茄膏",
+            "amount": "1 汤匙"
+          },
+          {
+            "name": "清水或高汤",
+            "amount": "800 毫升"
+          },
+          {
+            "name": "盐、黑胡椒与月桂叶",
+            "amount": "适量"
+          }
+        ],
+        "steps": [
+          {
+            "order": 1,
+            "instruction": "牛肉切块擦干，分批煎至表面上色后盛出。"
+          },
+          {
+            "order": 2,
+            "instruction": "原锅炒香培根、洋葱与番茄膏，加入牛肉和高汤。"
+          },
+          {
+            "order": 3,
+            "instruction": "加月桂叶，小火炖约 60 分钟，再加入胡萝卜和土豆炖至软烂。"
+          },
+          {
+            "order": 4,
+            "instruction": "以盐和黑胡椒调味，静置 5 分钟后盛出。"
+          }
+        ],
+        "notes": [
+          "牛肉分批煎制可避免锅温骤降。",
+          "现实制作时间约 90 分钟；游戏时长为节奏化数值。"
+        ]
+      }
+    }
+  ],
+  "supplyBundles": [
+    {
+      "id": "supply.guild_basic",
+      "name": "航行者公会基础补给箱",
+      "intervalMs": 120000,
+      "items": [
+        {
+          "itemId": "ingredient.cloud_wheat",
+          "quantity": 6
+        },
+        {
+          "itemId": "ingredient.kettle_milk",
+          "quantity": 3
+        },
+        {
+          "itemId": "ingredient.wind_root",
+          "quantity": 4
+        },
+        {
+          "itemId": "ingredient.smoked_meat",
+          "quantity": 2
+        },
+        {
+          "itemId": "ingredient.moon_herb",
+          "quantity": 2
+        }
+      ]
+    }
+  ],
+  "initialIngredientMultiplier": 2
+}

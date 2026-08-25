@@ -45,16 +45,28 @@ async function run() {
   await window.loadFile(
     path.join(__dirname, "..", "dist", "renderer", "desktop.html"),
   );
-  await new Promise((resolve) => setTimeout(resolve, 250));
-
-  const image = await window.webContents.capturePage();
-  const { width, height } = image.getSize();
-  const bitmap = image.toBitmap();
+  let image = null;
+  let bitmap = null;
+  let width = 0;
+  let height = 0;
+  const renderDeadline = Date.now() + 5_000;
+  do {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    image = await window.webContents.capturePage();
+    ({ width, height } = image.getSize());
+    bitmap = image.toBitmap();
+    const airshipReady = readPixel(bitmap, width, 400, 80).alpha > 0;
+    const restaurantReady = readPixel(bitmap, width, 850, 620).alpha > 0;
+    if (airshipReady && restaurantReady) break;
+  } while (Date.now() < renderDeadline);
+  if (image === null || bitmap === null) {
+    throw new Error("Desktop renderer did not produce a capturable frame.");
+  }
   const samples = {
     upperLeftEmpty: readPixel(bitmap, width, 60, 90),
-    airship: readPixel(bitmap, width, 500, 72),
+    airship: readPixel(bitmap, width, 400, 80),
     centerEmpty: readPixel(bitmap, width, 500, 350),
-    restaurant: readPixel(bitmap, width, 120, 590),
+    restaurant: readPixel(bitmap, width, 850, 620),
   };
 
   fs.mkdirSync(path.dirname(capturePath), { recursive: true });
@@ -67,6 +79,9 @@ async function run() {
   const transparent = transparentSamples.every(
     (sample) => sample.alpha === 0,
   );
+  const opaqueSamples = [samples.airship, samples.restaurant];
+  const opaque = opaqueSamples.every((sample) => sample.alpha > 0);
+  const passed = transparent && opaque;
 
   console.log(
     `TRANSPARENCY_CHECK ${JSON.stringify({
@@ -74,11 +89,13 @@ async function run() {
       size: { width, height },
       samples,
       transparent,
+      opaque,
+      passed,
     })}`,
   );
 
   window.destroy();
-  app.exit(transparent ? 0 : 1);
+  app.exit(passed ? 0 : 1);
 }
 
 void run().catch((error) => {

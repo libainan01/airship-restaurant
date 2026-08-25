@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://airship-restaurant.local/schemas/technology-catalog.schema.json",
+  "title": "technology-catalog",
+  "type": "object",
+  "required": ["schemaVersion", "nodes"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/node" }
+    }
+  },
+  "$defs": {
+    "effects": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": { "type": "number" }
+    },
+    "prerequisite": {
+      "type": "object",
+      "required": ["nodeId", "requiredLevel"],
+      "properties": {
+        "nodeId": { "type": "string", "pattern": "^technology\\.[a-z0-9_]+$" },
+        "requiredLevel": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "level": {
+      "type": "object",
+      "required": ["level", "costCopper", "effects"],
+      "properties": {
+        "level": { "type": "integer", "minimum": 1 },
+        "costCopper": { "type": "integer", "minimum": 1 },
+        "effects": { "$ref": "#/$defs/effects" }
+      },
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "name", "prerequisites", "baseEffects", "levels"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^technology\\.[a-z0-9_]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "prerequisites": { "type": "array", "items": { "$ref": "#/$defs/prerequisite" } },
+        "baseEffects": { "$ref": "#/$defs/effects" },
+        "levels": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/level" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

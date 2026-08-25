@@ -4,6 +4,7 @@ import {
   type DesktopCursorListener,
   type DesktopCursorPoint,
   type DesktopInteractionRequest,
+  type ManagementOpenRequest,
   type WorkspaceBridgeInfo,
 } from "@airship-restaurant/contracts";
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
@@ -18,8 +19,8 @@ const workspaceInfo: WorkspaceBridgeInfo = Object.freeze({
 const desktopBridge: DesktopBridge = Object.freeze({
   ...createRuntimeBridge(workspaceInfo),
   ...createSettingsReadBridge(),
-  openManagement: (): Promise<void> =>
-    ipcRenderer.invoke(IPC_CHANNELS.windowOpenManagement),
+  openManagement: (request: ManagementOpenRequest): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.windowOpenManagement, request),
   setInteraction: (
     request: DesktopInteractionRequest,
   ): Promise<void> =>

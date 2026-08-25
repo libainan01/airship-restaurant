@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  CookingSystem,
-  InventorySystem,
-  type CookingRecipe,
-} from "../src";
+import { CookingSystem, type CookingRecipe } from "../src/cooking-system";
+import { InventorySystem } from "../src/inventory-system";
 
 const WHEAT = "ingredient.cloud_wheat";
 const MILK = "ingredient.kettle_milk";

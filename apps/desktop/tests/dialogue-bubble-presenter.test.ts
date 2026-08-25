@@ -22,6 +22,7 @@ function createSnapshot(
       endsAtUtcMs: 6_000,
     },
     lastCompletedDialogueId: null,
+    lastStartedOpportunityId: null,
     nextTransitionUtcMs: 6_000,
   };
 }
@@ -88,6 +89,7 @@ describe("dialogue bubble presenter", () => {
           revision: 1,
           active: null,
           lastCompletedDialogueId: null,
+          lastStartedOpportunityId: null,
           nextTransitionUtcMs: null,
         },
         lookup,
@@ -113,6 +115,8 @@ describe("dialogue bubble presenter", () => {
       ),
     ).toEqual({
       dialogueId: dialogue.id,
+      kind: "ambient",
+      contexts: ["eating"],
       lineIndex: 0,
       speakerId: "speaker.one",
       speakerName: "送信员",

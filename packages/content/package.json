@@ -13,9 +13,9 @@
     }
   },
   "scripts": {
-    "prebuild": "node ../../scripts/dialogue-content-tool.mjs check",
+    "prebuild": "node ../../scripts/content-tool.mjs check && node ../../scripts/dialogue-content-tool.mjs check",
     "build": "tsc -p tsconfig.json",
-    "pretypecheck": "node ../../scripts/dialogue-content-tool.mjs check",
+    "pretypecheck": "node ../../scripts/content-tool.mjs check && node ../../scripts/dialogue-content-tool.mjs check",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }

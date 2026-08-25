@@ -20,6 +20,7 @@ export interface AmbientDialogueConfig {
   readonly maxPlaysPerSession: number;
   readonly prerequisiteEventIds: readonly string[];
   readonly lineDurationsMs: readonly number[];
+  readonly participantCount: number;
 }
 
 export interface AmbientDialogueSystemOptions {
@@ -32,16 +33,22 @@ export interface AmbientDialogueSystemOptions {
   readonly regularAfterSales: number;
 }
 
-export interface AmbientDialogueFacts {
-  readonly activeCustomerId: string | null;
-  readonly totalSoldQuantity: number;
-  readonly totalCustomersLeft: number;
-}
-
 export interface AmbientDialogueRequest {
   readonly atUtcMs: number;
+  readonly opportunityId?: string;
   readonly context: AmbientDialogueContext;
   readonly familiarity: DialogueFamiliarity;
+  readonly completedStoryEventIds: readonly string[];
+  readonly quietMode: boolean;
+  readonly availableSpeakerCount: number;
+}
+
+export interface AmbientDialogueNpcOpportunityRequest {
+  readonly atUtcMs: number;
+  readonly opportunityId: string;
+  readonly context: AmbientDialogueContext;
+  readonly availableSpeakerCount: number;
+  readonly totalSoldQuantity: number;
   readonly completedStoryEventIds: readonly string[];
   readonly quietMode: boolean;
 }
@@ -104,17 +111,6 @@ function cloneConfig(
   });
 }
 
-function validateFacts(facts: AmbientDialogueFacts): void {
-  if (
-    (facts.activeCustomerId !== null &&
-      facts.activeCustomerId.length === 0) ||
-    !isNonNegativeInteger(facts.totalSoldQuantity) ||
-    !isNonNegativeInteger(facts.totalCustomersLeft)
-  ) {
-    throw new Error("Ambient dialogue gameplay facts are invalid.");
-  }
-}
-
 export class AmbientDialogueSystem {
   readonly #dialogues: readonly AmbientDialogueConfig[];
   readonly #random: RandomSource;
@@ -128,6 +124,7 @@ export class AmbientDialogueSystem {
 
   #active: ActiveDialogue | null = null;
   #lastCompletedDialogueId: string | null = null;
+  #lastStartedOpportunityId: string | null = null;
   #lastCompletedAtUtcMs: number | null = null;
   #lastObservedAtUtcMs: number | null = null;
   #revision = 0;
@@ -156,6 +153,7 @@ export class AmbientDialogueSystem {
         !isPositiveInteger(dialogue.weight) ||
         !isNonNegativeInteger(dialogue.cooldownMs) ||
         !isPositiveInteger(dialogue.maxPlaysPerSession) ||
+        !isPositiveInteger(dialogue.participantCount) ||
         dialogue.lineDurationsMs.length === 0 ||
         !dialogue.lineDurationsMs.every(isPositiveInteger)
       ) {
@@ -191,6 +189,7 @@ export class AmbientDialogueSystem {
               endsAtUtcMs: this.#active.endsAtUtcMs,
             }),
       lastCompletedDialogueId: this.#lastCompletedDialogueId,
+      lastStartedOpportunityId: this.#lastStartedOpportunityId,
       nextTransitionUtcMs: this.#active?.endsAtUtcMs ?? null,
     });
   }
@@ -209,6 +208,12 @@ export class AmbientDialogueSystem {
   request(
     request: AmbientDialogueRequest,
   ): AmbientDialogueAdvanceResult {
+    if (
+      request.opportunityId !== undefined &&
+      (request.opportunityId.length === 0 || request.opportunityId.length > 128)
+    ) {
+      throw new Error("Ambient dialogue opportunity id is invalid.");
+    }
     this.#assertForwardTime(request.atUtcMs);
     const completedEventIds = new Set(
       request.completedStoryEventIds,
@@ -227,7 +232,11 @@ export class AmbientDialogueSystem {
         completedEventIds,
       );
       if (config !== null) {
-        this.#start(config, request.atUtcMs);
+        this.#start(
+          config,
+          request.atUtcMs,
+          request.opportunityId ?? null,
+        );
         changed = true;
         startedDialogueId = config.id;
       }
@@ -241,59 +250,26 @@ export class AmbientDialogueSystem {
     });
   }
 
-  observeOnline(
-    before: AmbientDialogueFacts,
-    after: AmbientDialogueFacts,
-    completedStoryEventIds: readonly string[],
-    quietMode: boolean,
-    atUtcMs: number,
+  requestForNpcOpportunity(
+    request: AmbientDialogueNpcOpportunityRequest,
   ): AmbientDialogueAdvanceResult {
-    validateFacts(before);
-    validateFacts(after);
     if (
-      after.totalSoldQuantity < before.totalSoldQuantity ||
-      after.totalCustomersLeft < before.totalCustomersLeft
+      request.opportunityId.length === 0 ||
+      request.opportunityId.length > 128 ||
+      !isPositiveInteger(request.availableSpeakerCount) ||
+      !isNonNegativeInteger(request.totalSoldQuantity)
     ) {
-      throw new Error(
-        "Ambient dialogue gameplay facts moved backwards.",
-      );
-    }
-
-    const context = this.#deriveContext(before, after);
-    if (context === null) {
-      return this.advanceTo(atUtcMs);
+      throw new Error("Ambient dialogue NPC opportunity is invalid.");
     }
     return this.request({
-      atUtcMs,
-      context,
-      familiarity: this.#getFamiliarity(
-        after.totalSoldQuantity,
-      ),
-      completedStoryEventIds,
-      quietMode,
+      atUtcMs: request.atUtcMs,
+      opportunityId: request.opportunityId,
+      context: request.context,
+      familiarity: this.#getFamiliarity(request.totalSoldQuantity),
+      completedStoryEventIds: request.completedStoryEventIds,
+      quietMode: request.quietMode,
+      availableSpeakerCount: request.availableSpeakerCount,
     });
-  }
-
-  #deriveContext(
-    before: AmbientDialogueFacts,
-    after: AmbientDialogueFacts,
-  ): AmbientDialogueContext | null {
-    if (after.totalSoldQuantity > before.totalSoldQuantity) {
-      return "eating";
-    }
-    if (after.totalCustomersLeft > before.totalCustomersLeft) {
-      return "departing";
-    }
-    if (
-      after.activeCustomerId !== null &&
-      after.activeCustomerId !== before.activeCustomerId
-    ) {
-      return "arrival";
-    }
-    if (after.activeCustomerId !== null) {
-      return "waiting";
-    }
-    return null;
   }
 
   #getFamiliarity(totalSoldQuantity: number): DialogueFamiliarity {
@@ -328,6 +304,7 @@ export class AmbientDialogueSystem {
       return (
         dialogue.locationId === this.#locationId &&
         dialogue.contexts.includes(request.context) &&
+        dialogue.participantCount <= request.availableSpeakerCount &&
         FAMILIARITY_RANK[request.familiarity] >=
           FAMILIARITY_RANK[dialogue.minimumFamiliarity] &&
         (this.#playCounts.get(dialogue.id) ?? 0) <
@@ -358,7 +335,11 @@ export class AmbientDialogueSystem {
     return candidates.at(-1) ?? null;
   }
 
-  #start(config: AmbientDialogueConfig, atUtcMs: number): void {
+  #start(
+    config: AmbientDialogueConfig,
+    atUtcMs: number,
+    opportunityId: string | null,
+  ): void {
     const firstDuration = config.lineDurationsMs[0];
     if (firstDuration === undefined) {
       throw new Error(`Ambient dialogue has no lines: ${config.id}`);
@@ -369,6 +350,7 @@ export class AmbientDialogueSystem {
       startedAtUtcMs: atUtcMs,
       endsAtUtcMs: safeAddTime(atUtcMs, firstDuration),
     };
+    this.#lastStartedOpportunityId = opportunityId;
     this.#playCounts.set(
       config.id,
       (this.#playCounts.get(config.id) ?? 0) + 1,

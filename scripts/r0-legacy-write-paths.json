@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "legacyRendererBusinessFiles": [],
+  "requiredPresentationBaselineAssertions": [
+    {
+      "file": "apps/desktop/tests/desktop-functional-hotspots.test.ts",
+      "includes": [
+        "keeps functional objects distinct and inside the viewport"
+      ]
+    }
+  ],
+  "pureRendererDirectors": [],
+  "pureRendererPresentationFiles": [
+    "apps/desktop/src/renderer/desktop/restaurant-npc-projector.ts",
+    "apps/desktop/src/renderer/desktop/desktop-world-presentation-model.ts"
+  ]
+}

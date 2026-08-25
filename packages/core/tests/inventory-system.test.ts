@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InventorySystem } from "../src";
+import { InventorySystem } from "../src/inventory-system";
 
 const INGREDIENT = "ingredient.cloud_wheat";
 const MEAL = "meal.hearth_flatbread";

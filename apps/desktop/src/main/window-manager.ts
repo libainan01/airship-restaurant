@@ -2,6 +2,7 @@ import {
   IPC_CHANNELS,
   type AppSettingsSnapshot,
   type DesktopCursorPoint,
+  type ManagementSection,
 } from "@airship-restaurant/contracts";
 import {
   BrowserWindow,
@@ -191,7 +192,7 @@ export class WindowManager {
     return desktopWindow;
   }
 
-  openManagementWindow(): BrowserWindow | null {
+  openManagementWindow(section: ManagementSection = "overview"): BrowserWindow | null {
     if (this.#isShuttingDown) {
       return null;
     }
@@ -206,6 +207,10 @@ export class WindowManager {
 
       this.#managementWindow.show();
       this.#managementWindow.focus();
+      this.#managementWindow.webContents.send(
+        IPC_CHANNELS.managementNavigate,
+        section,
+      );
       return this.#managementWindow;
     }
 
@@ -222,6 +227,12 @@ export class WindowManager {
       minWidth: 640,
       minHeight: 480,
       autoHideMenuBar: true,
+      titleBarStyle: "hidden",
+      titleBarOverlay: {
+        color: "#3b2d27",
+        symbolColor: "#fff1d2",
+        height: 58,
+      },
       webPreferences: {
         preload: this.#getPreloadPath("management"),
         nodeIntegration: false,
@@ -260,6 +271,14 @@ export class WindowManager {
       }
     });
 
+    managementWindow.webContents.once("did-finish-load", () => {
+      if (!managementWindow.isDestroyed()) {
+        managementWindow.webContents.send(
+          IPC_CHANNELS.managementNavigate,
+          section,
+        );
+      }
+    });
     this.#attachSharedWindowGuards(managementWindow, "management");
     void this.#loadRenderer(managementWindow, "management");
 

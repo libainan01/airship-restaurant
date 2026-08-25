@@ -42,7 +42,15 @@ function validateLocalization(
 function cloneCharacter(
   definition: CharacterDefinition,
 ): CharacterDefinition {
-  return Object.freeze({ ...definition });
+  return Object.freeze({
+    ...definition,
+    ...(definition.baseSkills === undefined ? {} : {
+      baseSkills: Object.freeze({ ...definition.baseSkills }),
+    }),
+    ...(definition.talentIds === undefined ? {} : {
+      talentIds: Object.freeze([...definition.talentIds]),
+    }),
+  });
 }
 
 function cloneCustomer(

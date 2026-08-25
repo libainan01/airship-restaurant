@@ -1,0 +1,59 @@
+{
+  "$schema": "../schemas/technology-catalog.schema.json",
+  "schemaVersion": 1,
+  "nodes": [
+    {
+      "id": "technology.cargo_lift_speed",
+      "name": "货梯传动效率",
+      "prerequisites": [],
+      "baseEffects": { "freight-elevator.travel-duration-multiplier": 1 },
+      "levels": [
+        { "level": 1, "costCopper": 20, "effects": { "freight-elevator.travel-duration-multiplier": 0.9 } },
+        { "level": 2, "costCopper": 40, "effects": { "freight-elevator.travel-duration-multiplier": 0.8 } },
+        { "level": 3, "costCopper": 80, "effects": { "freight-elevator.travel-duration-multiplier": 0.7 } }
+      ]
+    },
+    {
+      "id": "technology.cargo_lift_count",
+      "name": "并行货梯槽位",
+      "prerequisites": [{ "nodeId": "technology.cargo_lift_speed", "requiredLevel": 1 }],
+      "baseEffects": { "freight-elevator.available-count": 4 },
+      "levels": [
+        { "level": 1, "costCopper": 50, "effects": { "freight-elevator.available-count": 5 } },
+        { "level": 2, "costCopper": 100, "effects": { "freight-elevator.available-count": 6 } }
+      ]
+    },
+    {
+      "id": "technology.organization_management",
+      "name": "组织管理",
+      "prerequisites": [],
+      "baseEffects": { "employment.employee-limit": 3 },
+      "levels": [
+        { "level": 1, "costCopper": 30, "effects": { "employment.employee-limit": 4 } },
+        { "level": 2, "costCopper": 60, "effects": { "employment.employee-limit": 5 } },
+        { "level": 3, "costCopper": 120, "effects": { "employment.employee-limit": 6 } }
+      ]
+    },
+    {
+      "id": "technology.tray_improvement",
+      "name": "托盘改良",
+      "prerequisites": [],
+      "baseEffects": { "tray.capacity": 1 },
+      "levels": [
+        { "level": 1, "costCopper": 25, "effects": { "tray.capacity": 2 } },
+        { "level": 2, "costCopper": 55, "effects": { "tray.capacity": 3 } }
+      ]
+    },
+    {
+      "id": "technology.recruitment_center",
+      "name": "招募中心",
+      "prerequisites": [{ "nodeId": "technology.organization_management", "requiredLevel": 1 }],
+      "baseEffects": { "recruitment.quality-tier": 0 },
+      "levels": [
+        { "level": 1, "costCopper": 60, "effects": { "recruitment.quality-tier": 1 } },
+        { "level": 2, "costCopper": 120, "effects": { "recruitment.quality-tier": 2 } },
+        { "level": 3, "costCopper": 240, "effects": { "recruitment.quality-tier": 3 } }
+      ]
+    }
+  ]
+}

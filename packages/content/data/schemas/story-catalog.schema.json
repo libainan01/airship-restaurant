@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://airship-restaurant.local/schemas/story-catalog.schema.json",
+  "title": "story-catalog",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "storyEvents",
+    "recipeJournals",
+    "storyCharacters",
+    "mealAffinityQualityTiers",
+    "storyRosterNodes",
+    "localizations",
+    "sequences"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "storyEvents": {
+      "type": "array"
+    },
+    "recipeJournals": {
+      "type": "array"
+    },
+    "localizations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "sequences": {
+      "type": "array"
+    },
+    "storyCharacters": {
+      "type": "array"
+    },
+    "mealAffinityQualityTiers": {
+      "type": "array"
+    },
+    "storyRosterNodes": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,112 @@
+.progression-dialog {
+  width: min(900px, 100%);
+  max-height: min(820px, calc(100vh - 72px));
+  overflow-y: auto;
+}
+
+.progression-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 12px 15px;
+  border: 1px solid #cfb48d;
+  border-radius: 11px;
+  color: #65452f;
+  background: #efddbd;
+}
+
+.progression-summary strong {
+  font-size: 24px;
+}
+
+.progression-summary small {
+  margin-left: auto;
+  color: #806a58;
+}
+
+.progression-groups {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.progression-group > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.progression-group h3 {
+  margin: 0;
+  color: #4f382a;
+  font-size: 16px;
+}
+
+.progression-group header span {
+  color: #8b725f;
+  font-size: 11px;
+}
+
+.progression-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.progression-entry {
+  padding: 11px 13px;
+  border: 1px solid #cdbb9f;
+  border-radius: 10px;
+  background: rgb(255 250 237 / 74%);
+}
+
+.progression-entry > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.progression-entry strong {
+  color: #4d392e;
+  font-size: 13px;
+}
+
+.progression-entry span {
+  flex: 0 0 auto;
+  color: #826c5c;
+  font-size: 10px;
+}
+
+.progression-entry p {
+  margin: 6px 0 0;
+  color: #8c604a;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.progression-entry.is-usable {
+  border-color: #9cae7b;
+  background: #f2f3da;
+}
+
+.progression-entry.is-usable span {
+  color: #57713c;
+}
+
+.progression-entry.is-locked {
+  background: #e8dfd1;
+}
+
+@media (max-width: 680px) {
+  .progression-entry-grid {
+    grid-template-columns: 1fr;
+  }
+}

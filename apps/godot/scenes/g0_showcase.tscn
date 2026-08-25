@@ -1,0 +1,496 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/G0Showcase.cs" id="1_main"]
+[ext_resource type="Script" path="res://scripts/InteractiveHotspot.cs" id="2_hotspot"]
+[ext_resource type="Script" path="res://scripts/InteractionDebugOverlay.cs" id="3_debug"]
+[ext_resource type="Script" path="res://scripts/AtmosphereController.cs" id="4_atmosphere"]
+[ext_resource type="Theme" path="res://themes/steampunk_theme.tres" id="5_theme"]
+[ext_resource type="Texture2D" path="res://assets/world/layer-00-background.png" id="6_background"]
+[ext_resource type="Texture2D" path="res://assets/world/sprite-airship-orthographic.png" id="7_airship"]
+[ext_resource type="Texture2D" path="res://assets/world/sprite-restaurant-orthographic.png" id="8_station"]
+[ext_resource type="Texture2D" path="res://assets/world/sprite-cargo-lift-orthographic.png" id="9_lift"]
+[ext_resource type="Script" path="res://scripts/DesktopCompanionWindow.cs" id="10_desktop_window"]
+
+[node name="G0Showcase" type="Node"]
+script = ExtResource("1_main")
+
+[node name="DesktopCompanionWindow" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("10_desktop_window")
+
+[node name="WorldRoot" type="Node2D" parent="."]
+
+[node name="WorldModulate" type="CanvasModulate" parent="WorldRoot"]
+color = Color(1, 0.79, 0.68, 1)
+
+[node name="Backdrop" type="Sprite2D" parent="WorldRoot"]
+visible = false
+editor_description = "旧天空图仅保留为构图参考；桌面伴宠运行时必须保持透明。"
+z_index = -40
+texture = ExtResource("6_background")
+position = Vector2(720, 450)
+scale = Vector2(0.938, 0.88)
+
+[node name="CableGuideBack" type="Line2D" parent="WorldRoot"]
+z_index = -5
+points = PackedVector2Array(1362, -20, 1362, 920)
+width = 12.0
+default_color = Color(0.117647, 0.0823529, 0.0901961, 0.9)
+
+[node name="CableGuideFront" type="Line2D" parent="WorldRoot"]
+z_index = -4
+points = PackedVector2Array(1362, -20, 1362, 920)
+width = 3.0
+default_color = Color(0.772549, 0.541176, 0.294118, 0.95)
+
+[node name="AirshipRestaurant" type="Node2D" parent="WorldRoot"]
+position = Vector2(488, 158)
+scale = Vector2(0.61, 0.61)
+
+[node name="VisualRoot" type="Sprite2D" parent="WorldRoot/AirshipRestaurant"]
+texture = ExtResource("7_airship")
+
+[node name="AirshipKitchenAnchor" type="Marker2D" parent="WorldRoot/AirshipRestaurant"]
+position = Vector2(28, 252)
+
+[node name="AirshipExchangeAnchor" type="Marker2D" parent="WorldRoot/AirshipRestaurant"]
+position = Vector2(474, 238)
+
+[node name="PersonnelElevator" type="Node2D" parent="WorldRoot"]
+position = Vector2(1372, 344)
+scale = Vector2(0.255, 0.255)
+
+[node name="VisualRoot" type="Sprite2D" parent="WorldRoot/PersonnelElevator"]
+texture = ExtResource("9_lift")
+
+[node name="GroundExchangeStation" type="Node2D" parent="WorldRoot"]
+position = Vector2(1166, 646)
+scale = Vector2(0.37, 0.37)
+
+[node name="VisualRoot" type="Sprite2D" parent="WorldRoot/GroundExchangeStation"]
+texture = ExtResource("8_station")
+
+[node name="InteractionRoot" type="Area2D" parent="WorldRoot/GroundExchangeStation" groups=["desktop_input"]]
+unique_name_in_owner = true
+collision_layer = 1
+collision_mask = 1
+input_pickable = true
+script = ExtResource("2_hotspot")
+highlight_target_path = NodePath("../VisualRoot")
+
+[node name="LeftServiceIsland" type="CollisionPolygon2D" parent="WorldRoot/GroundExchangeStation/InteractionRoot"]
+polygon = PackedVector2Array(-488, -96, -406, -258, -158, -274, -70, -126, -92, 126, -220, 246, -478, 194, -544, 72)
+
+[node name="RightExchangeIsland" type="CollisionPolygon2D" parent="WorldRoot/GroundExchangeStation/InteractionRoot"]
+polygon = PackedVector2Array(86, -198, 244, -292, 432, -230, 522, -66, 482, 172, 332, 260, 132, 208, 54, 42)
+
+[node name="StationAnchors" type="Node2D" parent="WorldRoot/GroundExchangeStation"]
+unique_name_in_owner = true
+
+[node name="WorkAnchor" type="Marker2D" parent="WorldRoot/GroundExchangeStation/StationAnchors"]
+position = Vector2(-286, 268)
+
+[node name="ItemAnchor" type="Marker2D" parent="WorldRoot/GroundExchangeStation/StationAnchors"]
+position = Vector2(278, 224)
+
+[node name="DialogueAnchor" type="Marker2D" parent="WorldRoot/GroundExchangeStation/StationAnchors"]
+position = Vector2(-22, -294)
+
+[node name="StatusAnchor" type="Marker2D" parent="WorldRoot/GroundExchangeStation/StationAnchors"]
+position = Vector2(370, -236)
+
+[node name="DebugRoot" type="Node2D" parent="WorldRoot/GroundExchangeStation"]
+unique_name_in_owner = true
+z_index = 100
+script = ExtResource("3_debug")
+interaction_root_path = NodePath("../InteractionRoot")
+anchors_path = NodePath("../StationAnchors")
+fill_color = Color(0.0627451, 0.901961, 0.870588, 0.18)
+outline_color = Color(0.301961, 1, 0.94902, 0.96)
+anchor_color = Color(1, 0.698039, 0.180392, 1)
+line_width = 5.0
+
+[node name="AtmosphereCanvas" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Overlay" type="ColorRect" parent="AtmosphereCanvas"]
+mouse_filter = 2
+offset_right = 1440.0
+offset_bottom = 900.0
+color = Color(0.62, 0.22, 0.14, 0)
+
+[node name="AtmosphereController" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4_atmosphere")
+world_modulate_path = NodePath("../WorldRoot/WorldModulate")
+overlay_path = NodePath("../AtmosphereCanvas/Overlay")
+dawn_world_tint = Color(1, 0.79, 0.68, 1)
+dawn_overlay = Color(0.62, 0.22, 0.14, 0)
+noon_world_tint = Color(1, 0.98, 0.9, 1)
+noon_overlay = Color(1, 0.84, 0.46, 0)
+evening_world_tint = Color(0.72, 0.6, 0.84, 1)
+evening_overlay = Color(0.2, 0.08, 0.34, 0)
+transition_seconds = 0.65
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+layer = 50
+
+[node name="UIRoot" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("5_theme")
+
+[node name="StatusPanel" type="PanelContainer" parent="UILayer/UIRoot"]
+visible = false
+layout_mode = 0
+offset_left = 24.0
+offset_top = 800.0
+offset_right = 1026.0
+offset_bottom = 876.0
+mouse_filter = 1
+theme_type_variation = &"TopBarPanel"
+
+[node name="StatusLabel" type="Label" parent="UILayer/UIRoot/StatusPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "提示：点击右侧风铃交换站，或使用右下角功能入口。"
+vertical_alignment = 1
+
+[node name="LauncherButton" type="Button" parent="UILayer/UIRoot" groups=["desktop_input"]]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -98.0
+offset_top = -98.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"PrimaryButton"
+text = "功能"
+
+[node name="QuickMenu" type="PanelContainer" parent="UILayer/UIRoot" groups=["desktop_input"]]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -356.0
+offset_top = -500.0
+offset_right = -24.0
+offset_bottom = -116.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 0
+theme_type_variation = &"QuickMenuPanel"
+
+[node name="Content" type="VBoxContainer" parent="UILayer/UIRoot/QuickMenu"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="UILayer/UIRoot/QuickMenu/Content"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "船长工具匣"
+
+[node name="Hint" type="Label" parent="UILayer/UIRoot/QuickMenu/Content"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "统一入口 · G0 只开放展示功能"
+
+[node name="Separator" type="HSeparator" parent="UILayer/UIRoot/QuickMenu/Content"]
+layout_mode = 2
+
+[node name="PeriodTitle" type="Label" parent="UILayer/UIRoot/QuickMenu/Content"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "局部光照预览"
+
+[node name="PeriodButtons" type="HBoxContainer" parent="UILayer/UIRoot/QuickMenu/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DawnButton" type="Button" parent="UILayer/UIRoot/QuickMenu/Content/PeriodButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 42)
+layout_mode = 2
+text = "黎明"
+
+[node name="NoonButton" type="Button" parent="UILayer/UIRoot/QuickMenu/Content/PeriodButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 42)
+layout_mode = 2
+text = "正午"
+
+[node name="EveningButton" type="Button" parent="UILayer/UIRoot/QuickMenu/Content/PeriodButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 42)
+layout_mode = 2
+text = "傍晚"
+
+[node name="WarehouseButton" type="Button" parent="UILayer/UIRoot/QuickMenu/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_type_variation = &"PrimaryButton"
+text = "打开仓库"
+
+[node name="DebugToggle" type="CheckButton" parent="UILayer/UIRoot/QuickMenu/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = false
+text = "显示交互区与锚点  [D]"
+
+[node name="LockedHint" type="Label" parent="UILayer/UIRoot/QuickMenu/Content"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "食谱、员工、科技树将在对应审核块开放"
+autowrap_mode = 2
+
+[node name="WarehouseOverlay" type="Control" parent="UILayer/UIRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="UILayer/UIRoot/WarehouseOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="Center" type="CenterContainer" parent="UILayer/UIRoot/WarehouseOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="WarehouseWindow" type="PanelContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center" groups=["desktop_input"]]
+custom_minimum_size = Vector2(580, 662)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+mouse_filter = 0
+theme_type_variation = &"WarehouseWindow"
+
+[node name="Layout" type="VBoxContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleBlock" type="VBoxContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="Title" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Header/TitleBlock"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "风铃交换站 · 仓库"
+
+[node name="Subtitle" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Header/TitleBlock"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "这是 G0 视觉样板，不连接经营数据，也不会创建存档"
+
+[node name="WarehouseCloseButton" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(92, 48)
+layout_mode = 2
+text = "关闭"
+
+[node name="Separator" type="HSeparator" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout"]
+layout_mode = 2
+
+[node name="Body" type="HBoxContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="Categories" type="PanelContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body"]
+visible = false
+custom_minimum_size = Vector2(214, 0)
+layout_mode = 2
+theme_type_variation = &"WarehouseInnerPanel"
+
+[node name="List" type="VBoxContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Categories"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Categories/List"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "仓储分区"
+
+[node name="All" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Categories/List"]
+layout_mode = 2
+theme_type_variation = &"PrimaryButton"
+text = "全部物资   26"
+
+[node name="Ingredients" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Categories/List"]
+layout_mode = 2
+text = "食材          18"
+
+[node name="Meals" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Categories/List"]
+layout_mode = 2
+text = "餐点            3"
+
+[node name="Dishware" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Categories/List"]
+layout_mode = 2
+text = "餐盘            5"
+
+[node name="Spacer" type="Control" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Categories/List"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Capacity" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Categories/List"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "交换站容量\n26 / 9999"
+
+[node name="Inventory" type="PanelContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"WarehouseInnerPanel"
+
+[node name="Layout" type="VBoxContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SectionLabel"
+text = "物资格"
+
+[node name="Hint" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout/Header"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "全部物资 · 同类物品堆叠显示"
+
+[node name="Slots" type="GridContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 3
+
+[node name="Tomato" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout/Slots"]
+custom_minimum_size = Vector2(154, 116)
+layout_mode = 2
+theme_type_variation = &"SlotButton"
+text = "番茄\n× 8"
+
+[node name="Egg" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout/Slots"]
+custom_minimum_size = Vector2(154, 116)
+layout_mode = 2
+theme_type_variation = &"SlotButton"
+text = "鸡蛋\n× 6"
+
+[node name="Carrot" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout/Slots"]
+custom_minimum_size = Vector2(154, 116)
+layout_mode = 2
+theme_type_variation = &"SlotButton"
+text = "胡萝卜\n× 4"
+
+[node name="Meal" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout/Slots"]
+custom_minimum_size = Vector2(154, 116)
+layout_mode = 2
+theme_type_variation = &"SlotButton"
+text = "番茄炒蛋\n× 3"
+
+[node name="CleanPlate" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout/Slots"]
+custom_minimum_size = Vector2(154, 116)
+layout_mode = 2
+theme_type_variation = &"SlotButton"
+text = "干净餐盘\n× 4"
+
+[node name="DirtyPlate" type="Button" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inventory/Layout/Slots"]
+custom_minimum_size = Vector2(154, 116)
+layout_mode = 2
+theme_type_variation = &"SlotButton"
+text = "待清洗餐盘\n× 1"
+
+[node name="Inspector" type="PanelContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body"]
+visible = false
+custom_minimum_size = Vector2(252, 0)
+layout_mode = 2
+theme_type_variation = &"WarehouseInnerPanel"
+
+[node name="Layout" type="VBoxContainer" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector/Layout"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "番茄"
+
+[node name="Quantity" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector/Layout"]
+layout_mode = 2
+theme_type_variation = &"QuantityLabel"
+text = "库存 8 个"
+
+[node name="Divider" type="HSeparator" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector/Layout"]
+layout_mode = 2
+
+[node name="LocationTitle" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector/Layout"]
+layout_mode = 2
+text = "当前位置"
+
+[node name="Location" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector/Layout"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "地面风铃交换站\n食材分区"
+
+[node name="TransitTitle" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector/Layout"]
+layout_mode = 2
+text = "在途数量"
+
+[node name="Transit" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector/Layout"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "前往飞艇：2\n前往地面：0"
+
+[node name="Spacer" type="Control" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="PrototypeNote" type="Label" parent="UILayer/UIRoot/WarehouseOverlay/Center/WarehouseWindow/Layout/Body/Inspector/Layout"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "G0 不允许移动物品\n所有数量仅用于布局展示"
+autowrap_mode = 2

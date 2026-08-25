@@ -1,3 +1,7 @@
+import { DEFAULT_RESTAURANT_LAYOUT_DEFINITION } from "./restaurant-layout-definition";
+
+export { DEFAULT_RESTAURANT_LAYOUT_DEFINITION } from "./restaurant-layout-definition";
+
 export type RestaurantPropKind =
   | "pillar"
   | "window"
@@ -54,6 +58,7 @@ export interface RestaurantLayoutPropInstance {
   readonly capabilities: readonly RestaurantPropCapability[];
   readonly tags: readonly string[];
   readonly enabled?: boolean;
+  readonly unlockSeatCapacity?: number;
 }
 
 export interface RestaurantFunctionalPosition {
@@ -64,6 +69,7 @@ export interface RestaurantFunctionalPosition {
   readonly parentPropId?: string;
   readonly tags: readonly string[];
   readonly enabled?: boolean;
+  readonly unlockSeatCapacity?: number;
 }
 
 export interface RestaurantAnchorInstance
@@ -99,248 +105,6 @@ export interface RestaurantPositionReservation {
   readonly position: RestaurantPositionSlotInstance;
 }
 
-const createProp = (
-  instance: RestaurantLayoutPropInstance,
-): RestaurantLayoutPropInstance =>
-  Object.freeze({
-    ...instance,
-    transform: Object.freeze({ ...instance.transform }),
-    dimensions: Object.freeze({ ...instance.dimensions }),
-    capabilities: Object.freeze([...instance.capabilities]),
-    tags: Object.freeze([...instance.tags]),
-  });
-
-const CONVERSATION_SLOT_IDS = Object.freeze([
-  "position.conversation.far-left",
-  "position.conversation.inner-left",
-  "position.conversation.center",
-  "position.conversation.inner-right",
-  "position.conversation.far-right",
-] as const);
-
-const createConversationSlot = (
-  id: string,
-  xRatio: number,
-  facing: -1 | 1,
-): RestaurantPositionSlotInstance =>
-  Object.freeze({
-    id,
-    kind: "conversation",
-    xRatio,
-    yRatio: 0.765,
-    facing,
-    parentPropId: "prop.table.center",
-    priority: 0,
-    conflictsWith: Object.freeze(["position.seat.center"]),
-    tags: Object.freeze(["dialogue", "table-side"]),
-  });
-
-export const DEFAULT_RESTAURANT_LAYOUT_DEFINITION: RestaurantLayoutDefinition =
-  Object.freeze({
-    schemaVersion: 1,
-    layoutId: "restaurant.home-port.default",
-    props: Object.freeze([
-      ...[0.2, 0.4, 0.6, 0.8].map((xRatio, index) =>
-        createProp({
-          id: `prop.pillar.${index + 1}`,
-          kind: "pillar",
-          visualKey: "placeholder.restaurant.pillar",
-          renderLayer: "background",
-          transform: {
-            xRatio,
-            yRatio: 0.5,
-            offsetYPx: 14,
-            originX: 0.5,
-            originY: 0.5,
-          },
-          dimensions: {
-            widthPx: 10,
-            heightRatio: 1,
-            heightOffsetPx: -28,
-          },
-          capabilities: ["structural"],
-          tags: ["wall-support"],
-        }),
-      ),
-      ...[0.3, 0.5, 0.7].map((xRatio, index) =>
-        createProp({
-          id: `prop.window.${index + 1}`,
-          kind: "window",
-          visualKey: "placeholder.restaurant.window",
-          renderLayer: "background",
-          transform: {
-            xRatio,
-            yRatio: 0.48,
-            originX: 0.5,
-            originY: 0.5,
-          },
-          dimensions: { widthPx: 92, heightPx: 56 },
-          capabilities: [],
-          tags: ["wall-fixture"],
-        }),
-      ),
-      ...([
-        ["left", 0.32],
-        ["center", 0.5],
-        ["right", 0.68],
-      ] as const).map(([name, xRatio]) =>
-        createProp({
-          id: `prop.table.${name}`,
-          kind: "table",
-          visualKey: "placeholder.restaurant.table",
-          renderLayer: "furniture",
-          transform: {
-            xRatio,
-            yRatio: 0.76,
-            originX: 0.5,
-            originY: 0.5,
-          },
-          dimensions: { widthPx: 76, heightPx: 13 },
-          capabilities: ["seating", "upgradeable"],
-          tags: ["guest-table", `table-${name}`],
-        }),
-      ),
-      createProp({
-        id: "prop.counter.service",
-        kind: "counter",
-        visualKey: "placeholder.restaurant.service-counter",
-        renderLayer: "furniture",
-        transform: {
-          xRatio: 1,
-          yRatio: 0.63,
-          offsetXPx: -128,
-          originX: 0.5,
-          originY: 0.5,
-        },
-        dimensions: { widthPx: 154, heightRatio: 0.42 },
-        capabilities: ["service", "upgradeable"],
-        tags: ["otto-work-area", "food-pickup"],
-      }),
-      ...[0.25, 0.75].map((xRatio, index) =>
-        createProp({
-          id: `prop.lamp.${index + 1}`,
-          kind: "lamp",
-          visualKey: "placeholder.restaurant.hanging-lamp",
-          renderLayer: "lighting",
-          transform: {
-            xRatio,
-            yRatio: 0.38,
-            originX: 0.5,
-            originY: 0.5,
-          },
-          dimensions: { widthPx: 20, heightPx: 20 },
-          capabilities: ["lighting", "upgradeable"],
-          tags: ["hanging", "ambient-light"],
-        }),
-      ),
-    ]),
-    anchors: Object.freeze([
-      Object.freeze({
-        id: "anchor.guest.entry",
-        role: "guest-entry",
-        xRatio: 0.11,
-        yRatio: 0.765,
-        facing: 1,
-        tags: Object.freeze(["guest-flow"]),
-      }),
-      Object.freeze({
-        id: "anchor.guest.exit",
-        role: "guest-exit",
-        xRatio: 0.88,
-        yRatio: 0.765,
-        facing: 1,
-        tags: Object.freeze(["guest-flow"]),
-      }),
-      Object.freeze({
-        id: "anchor.otto.home",
-        role: "otto-home",
-        xRatio: 0.82,
-        yRatio: 0.765,
-        facing: -1,
-        parentPropId: "prop.counter.service",
-        tags: Object.freeze(["otto", "idle"]),
-      }),
-      Object.freeze({
-        id: "anchor.otto.pickup",
-        role: "otto-pickup",
-        xRatio: 0.82,
-        yRatio: 0.765,
-        facing: -1,
-        parentPropId: "prop.counter.service",
-        tags: Object.freeze(["otto", "service"]),
-      }),
-      Object.freeze({
-        id: "anchor.otto.delivery",
-        role: "delivery-table",
-        xRatio: 0.715,
-        yRatio: 0.765,
-        facing: -1,
-        parentPropId: "prop.table.right",
-        tags: Object.freeze(["otto", "service"]),
-      }),
-    ]),
-    positionSlots: Object.freeze([
-      ...([
-        ["left", 0.32, "prop.table.left"],
-        ["center", 0.5, "prop.table.center"],
-        ["right", 0.68, "prop.table.right"],
-      ] as const).map(([name, xRatio, parentPropId], index) =>
-        Object.freeze({
-          id: `position.seat.${name}`,
-          kind: "seat" as const,
-          xRatio,
-          yRatio: 0.765,
-          facing: index === 2 ? (-1 as const) : (1 as const),
-          parentPropId,
-          priority: index,
-          conflictsWith: Object.freeze(
-            name === "center" ? [...CONVERSATION_SLOT_IDS] : [],
-          ),
-          tags: Object.freeze(["ambient-guest", `seat-${name}`]),
-        }),
-      ),
-      createConversationSlot(CONVERSATION_SLOT_IDS[0], 0.4, 1),
-      createConversationSlot(CONVERSATION_SLOT_IDS[1], 0.45, 1),
-      createConversationSlot(CONVERSATION_SLOT_IDS[2], 0.5, 1),
-      createConversationSlot(CONVERSATION_SLOT_IDS[3], 0.55, -1),
-      createConversationSlot(CONVERSATION_SLOT_IDS[4], 0.6, -1),
-    ]),
-    conversationFormations: Object.freeze([
-      Object.freeze({
-        id: "formation.conversation.2",
-        participantCount: 2,
-        slotIds: Object.freeze([
-          "position.conversation.inner-left",
-          "position.conversation.inner-right",
-        ]),
-      }),
-      Object.freeze({
-        id: "formation.conversation.3",
-        participantCount: 3,
-        slotIds: Object.freeze([
-          "position.conversation.far-left",
-          "position.conversation.center",
-          "position.conversation.far-right",
-        ]),
-      }),
-      Object.freeze({
-        id: "formation.conversation.4",
-        participantCount: 4,
-        slotIds: Object.freeze([
-          "position.conversation.far-left",
-          "position.conversation.inner-left",
-          "position.conversation.inner-right",
-          "position.conversation.far-right",
-        ]),
-      }),
-      Object.freeze({
-        id: "formation.conversation.5",
-        participantCount: 5,
-        slotIds: CONVERSATION_SLOT_IDS,
-      }),
-    ]),
-  });
-
 const isEnabled = (instance: { readonly enabled?: boolean }): boolean =>
   instance.enabled !== false;
 
@@ -365,6 +129,7 @@ export class RestaurantLayoutRuntime {
   readonly #slotOccupants = new Map<string, string>();
   readonly #actorSlots = new Map<string, string>();
   readonly #conversationActors = new Map<string, readonly string[]>();
+  #seatCapacity = 3;
 
   constructor(definition: RestaurantLayoutDefinition) {
     this.#definition = definition;
@@ -379,7 +144,9 @@ export class RestaurantLayoutRuntime {
     kind?: RestaurantPropKind,
   ): readonly RestaurantLayoutPropInstance[] {
     return this.#definition.props.filter(
-      (prop) => isEnabled(prop) && (kind === undefined || prop.kind === kind),
+      (prop) =>
+        this.#isUnlocked(prop) &&
+        (kind === undefined || prop.kind === kind),
     );
   }
 
@@ -389,14 +156,15 @@ export class RestaurantLayoutRuntime {
     return this.#definition.positionSlots
       .filter(
         (slot) =>
-          isEnabled(slot) && (kind === undefined || slot.kind === kind),
+          this.#isUnlocked(slot) &&
+          (kind === undefined || slot.kind === kind),
       )
       .sort((left, right) => left.priority - right.priority);
   }
 
   requireProp(id: string): RestaurantLayoutPropInstance {
     const prop = this.#propsById.get(id);
-    if (prop === undefined || !isEnabled(prop)) {
+    if (prop === undefined || !this.#isUnlocked(prop)) {
       throw new Error(`Restaurant layout is missing enabled prop '${id}'.`);
     }
     return prop;
@@ -412,7 +180,7 @@ export class RestaurantLayoutRuntime {
 
   requirePositionSlot(id: string): RestaurantPositionSlotInstance {
     const slot = this.#slotsById.get(id);
-    if (slot === undefined || !isEnabled(slot)) {
+    if (slot === undefined || !this.#isUnlocked(slot)) {
       throw new Error(`Restaurant layout is missing enabled position '${id}'.`);
     }
     return slot;
@@ -422,6 +190,28 @@ export class RestaurantLayoutRuntime {
     return this.#slotOccupants.get(slotId) ?? null;
   }
 
+  setSeatCapacity(seatCapacity: number): void {
+    const availableSeatCount = this.#definition.positionSlots.filter(
+      (slot) => isEnabled(slot) && slot.kind === "seat",
+    ).length;
+    if (
+      !Number.isInteger(seatCapacity) ||
+      seatCapacity < 1 ||
+      seatCapacity > availableSeatCount
+    ) {
+      throw new RangeError("Restaurant layout seat capacity is invalid.");
+    }
+    for (const [slotId] of this.#slotOccupants) {
+      const slot = this.#slotsById.get(slotId);
+      if (
+        slot?.kind === "seat" &&
+        (slot.unlockSeatCapacity ?? 1) > seatCapacity
+      ) {
+        throw new Error("Cannot hide an occupied restaurant seat.");
+      }
+    }
+    this.#seatCapacity = seatCapacity;
+  }
   reservePosition(
     slotId: string,
     actorId: string,
@@ -518,6 +308,16 @@ export class RestaurantLayoutRuntime {
     for (const actorId of actorIds) {
       this.releaseActor(actorId);
     }
+  }
+
+  #isUnlocked(instance: {
+    readonly enabled?: boolean;
+    readonly unlockSeatCapacity?: number;
+  }): boolean {
+    return (
+      isEnabled(instance) &&
+      (instance.unlockSeatCapacity ?? 1) <= this.#seatCapacity
+    );
   }
 
   #occupy(slot: RestaurantPositionSlotInstance, actorId: string): void {

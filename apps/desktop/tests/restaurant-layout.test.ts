@@ -28,6 +28,24 @@ describe("restaurant layout runtime", () => {
     );
   });
 
+  it("unlocks matching tables and seat slots as capacity increases", () => {
+    const layout = createDefaultRestaurantLayoutRuntime();
+
+    expect(layout.getProps("table")).toHaveLength(3);
+    expect(layout.getPositionSlots("seat")).toHaveLength(3);
+
+    layout.setSeatCapacity(4);
+    expect(layout.getProps("table").map((prop) => prop.id)).toContain(
+      "prop.table.expansion-1",
+    );
+    expect(layout.getPositionSlots("seat").map((slot) => slot.id)).toContain(
+      "position.seat.expansion-1",
+    );
+
+    layout.setSeatCapacity(6);
+    expect(layout.getProps("table")).toHaveLength(6);
+    expect(layout.getPositionSlots("seat")).toHaveLength(6);
+  });
   it("reserves and releases seat instances by actor id", () => {
     const layout = createDefaultRestaurantLayoutRuntime();
     const first = layout.reserveFirstAvailableSeat("npc.test.1");

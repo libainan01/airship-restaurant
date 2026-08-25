@@ -1,5 +1,7 @@
 export * from "./content-registry";
 export * from "./definitions";
+export * from "./story-roster-content-registry";
+export * from "./story-sequence-content-registry";
 export * from "./m2-content";
 
 export interface ContentRecord {
@@ -21,3 +23,5 @@ export function indexContent<T extends ContentRecord>(
 
   return index;
 }
+
+export * from "./generated/content-data";

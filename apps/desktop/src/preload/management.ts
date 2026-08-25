@@ -4,6 +4,8 @@ import {
   type AppSettingsUpdate,
   type DisplayOption,
   type ManagementBridge,
+  type ManagementNavigationListener,
+  type ManagementSection,
   type SaveDiagnosticsSnapshot,
   type SaveDiagnosticsListener,
   type WorkspaceBridgeInfo,
@@ -17,6 +19,21 @@ const workspaceInfo: WorkspaceBridgeInfo = Object.freeze({
   version: "0.1.0",
 });
 
+const navigationListeners = new Set<ManagementNavigationListener>();
+let pendingNavigation: ManagementSection | null = null;
+
+ipcRenderer.on(
+  IPC_CHANNELS.managementNavigate,
+  (_event: IpcRendererEvent, section: ManagementSection): void => {
+    if (navigationListeners.size === 0) {
+      pendingNavigation = section;
+      return;
+    }
+    pendingNavigation = null;
+    for (const listener of navigationListeners) listener(section);
+  },
+);
+
 const managementBridge: ManagementBridge = Object.freeze({
   ...createRuntimeBridge(workspaceInfo),
   ...createSettingsReadBridge(),
@@ -28,6 +45,19 @@ const managementBridge: ManagementBridge = Object.freeze({
     ipcRenderer.invoke(IPC_CHANNELS.settingsListDisplays),
   getSaveDiagnostics: (): Promise<SaveDiagnosticsSnapshot> =>
     ipcRenderer.invoke(IPC_CHANNELS.saveGetDiagnostics),
+  onNavigationRequested: (
+    listener: ManagementNavigationListener,
+  ): (() => void) => {
+    navigationListeners.add(listener);
+    if (pendingNavigation !== null) {
+      const section = pendingNavigation;
+      pendingNavigation = null;
+      listener(section);
+    }
+    return () => {
+      navigationListeners.delete(listener);
+    };
+  },
   onSaveDiagnosticsChanged: (
     listener: SaveDiagnosticsListener,
   ) => {

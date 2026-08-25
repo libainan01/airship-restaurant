@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://airship-restaurant.local/schemas/route-catalog.schema.json",
+  "title": "route-catalog",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "procurementRegions",
+    "localSuppliers",
+    "localProcurementCarts",
+    "remoteProcurementRoutes",
+    "procurementAirships",
+    "initialProcurementAirships"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "procurementRegions": {
+      "type": "array"
+    },
+    "localSuppliers": {
+      "type": "array"
+    },
+    "localProcurementCarts": {
+      "type": "array"
+    },
+    "remoteProcurementRoutes": {
+      "type": "array"
+    },
+    "procurementAirships": {
+      "type": "array"
+    },
+    "initialProcurementAirships": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

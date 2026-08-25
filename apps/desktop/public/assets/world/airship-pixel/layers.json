@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "canvas": {
+    "width": 1536,
+    "height": 1024
+  },
+  "rendering": {
+    "pixelArt": true,
+    "roundPixels": true,
+    "textureFilter": "NEAREST"
+  },
+  "layers": [
+    {
+      "id": "background",
+      "texture": "layer-00-background.png",
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "depth": 0,
+      "scrollFactor": 0.12
+    },
+    {
+      "id": "restaurant",
+      "texture": "sprite-restaurant-orthographic.png",
+      "x": 90,
+      "y": 490,
+      "originX": 0,
+      "originY": 0,
+      "scale": 0.56,
+      "depth": 20,
+      "scrollFactor": 0.78,
+      "sourceBounds": {
+        "left": 113,
+        "top": 66,
+        "right": 1361,
+        "bottom": 897
+      }
+    },
+    {
+      "id": "cargo-lift",
+      "texture": "sprite-cargo-lift-orthographic.png",
+      "x": 790,
+      "y": 535,
+      "originX": 0,
+      "originY": 0,
+      "scale": 0.21,
+      "depth": 30,
+      "scrollFactor": 1.0,
+      "sourceBounds": {
+        "left": 349,
+        "top": 117,
+        "right": 905,
+        "bottom": 1120
+      }
+    },
+    {
+      "id": "airship",
+      "texture": "sprite-airship-orthographic.png",
+      "x": 300,
+      "y": -75,
+      "originX": 0,
+      "originY": 0,
+      "scale": 0.72,
+      "depth": 40,
+      "scrollFactor": 0.62,
+      "sourceBounds": {
+        "left": 90,
+        "top": 89,
+        "right": 1424,
+        "bottom": 910
+      }
+    },
+    {
+      "id": "foreground",
+      "texture": "sprite-foreground.png",
+      "x": 0,
+      "y": 634,
+      "originX": 0,
+      "originY": 0,
+      "scale": 1.0,
+      "depth": 50,
+      "scrollFactor": 1.0,
+      "sourceBounds": {
+        "left": 0,
+        "top": 634,
+        "right": 1536,
+        "bottom": 1024
+      }
+    },
+    {
+      "id": "lighting",
+      "texture": "layer-50-lighting.png",
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "depth": 60,
+      "scrollFactor": 1,
+      "blendMode": "ADD",
+      "alpha": 0.46
+    }
+  ],
+  "animationHints": {
+    "airship": {
+      "axis": "y",
+      "amplitude": 3,
+      "durationMs": 4200
+    },
+    "cargo-lift": {
+      "axis": "y",
+      "range": [
+        535,
+        760
+      ],
+      "durationMs": 6200
+    },
+    "lighting": {
+      "alphaRange": [
+        0.38,
+        0.5
+      ],
+      "durationMs": 1800
+    }
+  }
+}

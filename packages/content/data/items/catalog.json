@@ -1,0 +1,41 @@
+{
+  "$schema": "../schemas/item-catalog.schema.json",
+  "schemaVersion": 1,
+  "ingredients": [
+    {
+      "id": "ingredient.egg",
+      "name": "鸡蛋",
+      "capacity": 30
+    },
+    {
+      "id": "ingredient.tomato",
+      "name": "番茄",
+      "capacity": 30
+    },
+    {
+      "id": "ingredient.cloud_wheat",
+      "name": "云穗麦粉",
+      "capacity": 30
+    },
+    {
+      "id": "ingredient.kettle_milk",
+      "name": "铜壶奶",
+      "capacity": 30
+    },
+    {
+      "id": "ingredient.wind_root",
+      "name": "风根菜",
+      "capacity": 30
+    },
+    {
+      "id": "ingredient.smoked_meat",
+      "name": "烟熏肉",
+      "capacity": 30
+    },
+    {
+      "id": "ingredient.moon_herb",
+      "name": "月露香草",
+      "capacity": 30
+    }
+  ]
+}

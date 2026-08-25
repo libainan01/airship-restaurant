@@ -1,5 +1,6 @@
 import type {
-  GameSnapshot,
+  DesktopWorldReadModel,
+  OperationsReadModel,
   SaveDiagnosticsSnapshot,
   WorkspaceBridgeInfo,
 } from "@airship-restaurant/contracts";
@@ -11,7 +12,8 @@ type RendererKind = "desktop" | "management";
 export interface RendererBridgeSmokeResult {
   readonly renderer: RendererKind;
   readonly workspace: WorkspaceBridgeInfo;
-  readonly snapshot: GameSnapshot;
+  readonly desktopWorld: DesktopWorldReadModel;
+  readonly operations: OperationsReadModel;
   readonly saveDiagnostics: SaveDiagnosticsSnapshot | null;
 }
 
@@ -62,7 +64,7 @@ async function waitForBridge(
   while (Date.now() < deadline) {
     try {
       const result: unknown = await webContents.executeJavaScript(
-        createBridgeProbeScript(bridgeGlobal),
+        createBridgeProbeScript(bridgeGlobal, renderer),
         true,
       );
       const smokeResult = parseSmokeResult(result, renderer);
@@ -85,7 +87,10 @@ async function waitForBridge(
   );
 }
 
-function createBridgeProbeScript(bridgeGlobal: string): string {
+function createBridgeProbeScript(
+  bridgeGlobal: string,
+  renderer: RendererKind,
+): string {
   return `
     (async () => {
       const bridge = globalThis[${JSON.stringify(bridgeGlobal)}];
@@ -93,7 +98,7 @@ function createBridgeProbeScript(bridgeGlobal: string): string {
         typeof bridge !== "object" ||
         bridge === null ||
         typeof bridge.getWorkspaceInfo !== "function" ||
-        typeof bridge.getSnapshot !== "function"
+        typeof bridge.getReadModel !== "function"
       ) {
         return null;
       }
@@ -103,9 +108,60 @@ function createBridgeProbeScript(bridgeGlobal: string): string {
           ? await bridge.getSaveDiagnostics()
           : null;
 
+      if (${JSON.stringify(renderer)} === "management") {
+        const navigate = async (section) => {
+          const button = document.querySelector(
+            '[data-management-section="' + section + '"]',
+          );
+          if (!(button instanceof HTMLButtonElement) || button.disabled) {
+            throw new Error("Management " + section + " entry is unavailable.");
+          }
+          button.click();
+          await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+        };
+
+        await navigate("technology");
+        const dialog = document.querySelector(
+          '.technology-tree-dialog[role="dialog"]',
+        );
+        if (!(dialog instanceof HTMLElement)) {
+          throw new Error("Management technology tree did not open.");
+        }
+        await navigate("overview");
+        await navigate("technology");
+        const reopenedDialog = document.querySelector(
+          '.technology-tree-dialog[role="dialog"]',
+        );
+        if (!(reopenedDialog instanceof HTMLElement)) {
+          throw new Error("Management technology tree did not reopen.");
+        }
+
+        await navigate("procurement");
+        const procurementDialog = document.querySelector(
+          '.procurement-dialog[role="dialog"]',
+        );
+        if (!(procurementDialog instanceof HTMLElement)) {
+          throw new Error("Management procurement page did not open.");
+        }
+        const procurementSlice = await bridge.getReadModel("procurement");
+        if (procurementSlice?.value?.authority !== "module.procurement") {
+          throw new Error("Management procurement still reads the legacy M2 authority.");
+        }
+        if (!procurementDialog.textContent?.includes("本地小车与采购飞艇") ||
+            !procurementDialog.textContent.includes("餐厅管理员")) {
+          throw new Error("Management procurement did not render the unified transport and automation rules.");
+        }
+        const operationsSnapshot = (await bridge.getReadModel("operations"))?.value;
+        if (operationsSnapshot === null || operationsSnapshot === undefined) {
+          throw new Error("Management Operations read model was unavailable.");
+        }
+        await navigate("overview");
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
       return {
         workspace: bridge.getWorkspaceInfo(),
-        snapshot: await bridge.getSnapshot(),
+        desktopWorld: (await bridge.getReadModel("desktop-world"))?.value,
+        operations: (await bridge.getReadModel("operations"))?.value,
         saveDiagnostics,
       };
     })()
@@ -121,20 +177,22 @@ function parseSmokeResult(
   }
 
   const workspace = value.workspace;
-  const snapshot = value.snapshot;
+  const desktopWorld = value.desktopWorld;
+  const operations = value.operations;
   const saveDiagnostics = value.saveDiagnostics;
 
   if (
     !isRecord(workspace) ||
     workspace.channel !== renderer ||
     typeof workspace.version !== "string" ||
-    !isRecord(snapshot) ||
-    snapshot.phase !== "ready" ||
-    typeof snapshot.revision !== "number" ||
-    !isRecord(snapshot.gameplay) ||
-    !isRecord(snapshot.gameplay.cooking) ||
-    !isRecord(snapshot.gameplay.logistics) ||
-    !isRecord(snapshot.gameplay.restaurant)
+    !isRecord(desktopWorld) ||
+    desktopWorld.phase !== "ready" ||
+    typeof desktopWorld.sourceRevision !== "number" ||
+    !isRecord(desktopWorld.gameplay) ||
+    !isRecord(desktopWorld.gameplay.cooking) ||
+    !isRecord(desktopWorld.gameplay.logistics) ||
+    !isRecord(desktopWorld.gameplay.restaurant) ||
+    !isRecord(operations)
   ) {
     return null;
   }
@@ -144,6 +202,7 @@ function parseSmokeResult(
     (!isRecord(saveDiagnostics) ||
       typeof saveDiagnostics.revision !== "number" ||
       typeof saveDiagnostics.status !== "string" ||
+      !isRecord(operations.gameplay) ||
       saveDiagnostics.fileName !== "save.json" ||
       saveDiagnostics.backupFileName !== "save.json.bak")
   ) {
@@ -156,7 +215,8 @@ function parseSmokeResult(
   return {
     renderer,
     workspace: workspace as unknown as WorkspaceBridgeInfo,
-    snapshot: snapshot as unknown as GameSnapshot,
+    desktopWorld: desktopWorld as unknown as DesktopWorldReadModel,
+    operations: operations as unknown as OperationsReadModel,
     saveDiagnostics:
       saveDiagnostics as SaveDiagnosticsSnapshot | null,
   };

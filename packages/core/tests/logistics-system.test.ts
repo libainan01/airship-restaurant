@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { InventorySystem, LogisticsSystem } from "../src";
+import { InventorySystem } from "../src/inventory-system";
+import { LogisticsSystem } from "../src/logistics-system";
 
 const DISH = "dish.hearth_flatbread";
 

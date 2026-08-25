@@ -1,0 +1,1198 @@
+{
+  "schemaVersion": 1,
+  "status": "completed",
+  "startedAtUtcMs": 1787217206203,
+  "finishedAtUtcMs": 1787217386211,
+  "requestedDurationMs": 180000,
+  "actualDurationMs": 180008,
+  "sampleIntervalMs": 15000,
+  "summary": {
+    "sampleCount": 13,
+    "initialWorkingSetKb": 107452,
+    "finalWorkingSetKb": 678788,
+    "workingSetGrowthKb": 571336,
+    "peakTotalWorkingSetKb": 700868,
+    "peakCombinedCpuPercent": 1.6448427216408288,
+    "minimumRendererCount": 2,
+    "maximumRendererCount": 2,
+    "saveErrorSamples": 0,
+    "runtimeRevisionDelta": 179,
+    "gameplayRevisionDelta": 178,
+    "soldQuantityDelta": 1,
+    "copperBalanceDelta": 4,
+    "finalWindowDiagnostics": {
+      "rendererExitCount": 0,
+      "mainFrameLoadFailureCount": 0,
+      "desktopRecoveryCount": 0
+    }
+  },
+  "samples": [
+    {
+      "sampledAtUtcMs": 1787217206203,
+      "elapsedMs": 0,
+      "rendererCount": 2,
+      "runtimeRevision": 1,
+      "gameplayRevision": 26,
+      "soldQuantity": 0,
+      "copperBalance": 1552,
+      "save": {
+        "revision": 2,
+        "status": "saving",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217181692,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 107452,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0,
+          "cumulativeCpuSeconds": 0.015625,
+          "workingSetKb": 107452,
+          "peakWorkingSetKb": 107452,
+          "privateBytesKb": 90468
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217221206,
+      "elapsedMs": 15003,
+      "rendererCount": 2,
+      "runtimeRevision": 15,
+      "gameplayRevision": 40,
+      "soldQuantity": 0,
+      "copperBalance": 1552,
+      "save": {
+        "revision": 31,
+        "status": "ready",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217220300,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 674956,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.33101782466096,
+          "cumulativeCpuSeconds": 1.207502,
+          "workingSetKb": 127364,
+          "peakWorkingSetKb": 136496,
+          "privateBytesKb": 103860
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0,
+          "cumulativeCpuSeconds": 1.941479,
+          "workingSetKb": 207416,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 228680
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0,
+          "cumulativeCpuSeconds": 0.120356,
+          "workingSetKb": 46036,
+          "peakWorkingSetKb": 46036,
+          "privateBytesKb": 12800
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0,
+          "cumulativeCpuSeconds": 1.314882,
+          "workingSetKb": 125480,
+          "peakWorkingSetKb": 129300,
+          "privateBytesKb": 60116
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0,
+          "cumulativeCpuSeconds": 0.385828,
+          "workingSetKb": 92504,
+          "peakWorkingSetKb": 95468,
+          "privateBytesKb": 40096
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0,
+          "cumulativeCpuSeconds": 0.183284,
+          "workingSetKb": 76156,
+          "peakWorkingSetKb": 76156,
+          "privateBytesKb": 11356
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217236206,
+      "elapsedMs": 30003,
+      "rendererCount": 2,
+      "runtimeRevision": 30,
+      "gameplayRevision": 55,
+      "soldQuantity": 0,
+      "copperBalance": 1552,
+      "save": {
+        "revision": 63,
+        "status": "ready",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217236206,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 698340,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.24466593986398913,
+          "cumulativeCpuSeconds": 2.08835,
+          "workingSetKb": 133384,
+          "peakWorkingSetKb": 140188,
+          "privateBytesKb": 115036
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.8877839772791511,
+          "cumulativeCpuSeconds": 5.137682,
+          "workingSetKb": 212972,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 221000
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.0002227653474713889,
+          "cumulativeCpuSeconds": 0.121158,
+          "workingSetKb": 45712,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12708
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.3938295098349591,
+          "cumulativeCpuSeconds": 2.732743,
+          "workingSetKb": 136516,
+          "peakWorkingSetKb": 139356,
+          "privateBytesKb": 68812
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.040550485992529035,
+          "cumulativeCpuSeconds": 0.531817,
+          "workingSetKb": 93596,
+          "peakWorkingSetKb": 95468,
+          "privateBytesKb": 41000
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.02305559688697111,
+          "cumulativeCpuSeconds": 0.266288,
+          "workingSetKb": 76160,
+          "peakWorkingSetKb": 76160,
+          "privateBytesKb": 11360
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217251219,
+      "elapsedMs": 45016,
+      "rendererCount": 2,
+      "runtimeRevision": 45,
+      "gameplayRevision": 70,
+      "soldQuantity": 0,
+      "copperBalance": 1552,
+      "save": {
+        "revision": 93,
+        "status": "ready",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217250555,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 679732,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.22681942178135658,
+          "cumulativeCpuSeconds": 2.905596,
+          "workingSetKb": 125756,
+          "peakWorkingSetKb": 140188,
+          "privateBytesKb": 104348
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.5517821495754839,
+          "cumulativeCpuSeconds": 7.125785,
+          "workingSetKb": 198868,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 204992
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0,
+          "cumulativeCpuSeconds": 0.121158,
+          "workingSetKb": 45712,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12708
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.4486336905417147,
+          "cumulativeCpuSeconds": 4.349183,
+          "workingSetKb": 137640,
+          "peakWorkingSetKb": 140012,
+          "privateBytesKb": 69316
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.05005026675194629,
+          "cumulativeCpuSeconds": 0.712149,
+          "workingSetKb": 95904,
+          "peakWorkingSetKb": 95904,
+          "privateBytesKb": 42716
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.0030729902233171302,
+          "cumulativeCpuSeconds": 0.27736,
+          "workingSetKb": 75852,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11236
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217266219,
+      "elapsedMs": 60016,
+      "rendererCount": 2,
+      "runtimeRevision": 60,
+      "gameplayRevision": 85,
+      "soldQuantity": 0,
+      "copperBalance": 1552,
+      "save": {
+        "revision": 124,
+        "status": "saving",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217265680,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 688112,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.24375267313361104,
+          "cumulativeCpuSeconds": 3.78308,
+          "workingSetKb": 133440,
+          "peakWorkingSetKb": 140188,
+          "privateBytesKb": 116844
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.4107437854540346,
+          "cumulativeCpuSeconds": 8.604416,
+          "workingSetKb": 198888,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 205128
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.0004500143404569826,
+          "cumulativeCpuSeconds": 0.122778,
+          "workingSetKb": 45620,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12552
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.4833285865141355,
+          "cumulativeCpuSeconds": 6.08911,
+          "workingSetKb": 138692,
+          "peakWorkingSetKb": 141316,
+          "privateBytesKb": 70236
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.03695202318848,
+          "cumulativeCpuSeconds": 0.845172,
+          "workingSetKb": 95620,
+          "peakWorkingSetKb": 96072,
+          "privateBytesKb": 42116
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0,
+          "cumulativeCpuSeconds": 0.27736,
+          "workingSetKb": 75852,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11236
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217281220,
+      "elapsedMs": 75017,
+      "rendererCount": 2,
+      "runtimeRevision": 75,
+      "gameplayRevision": 100,
+      "soldQuantity": 1,
+      "copperBalance": 1556,
+      "save": {
+        "revision": 155,
+        "status": "ready",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217280811,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 686980,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.2920381558015899,
+          "cumulativeCpuSeconds": 4.834511,
+          "workingSetKb": 138644,
+          "peakWorkingSetKb": 140188,
+          "privateBytesKb": 120468
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.4336837700287712,
+          "cumulativeCpuSeconds": 10.165821,
+          "workingSetKb": 192016,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 249452
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.00022859012653749498,
+          "cumulativeCpuSeconds": 0.123601,
+          "workingSetKb": 45620,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12552
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.530885845332062,
+          "cumulativeCpuSeconds": 8.000475,
+          "workingSetKb": 140508,
+          "peakWorkingSetKb": 141316,
+          "privateBytesKb": 71496
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.04730703033449407,
+          "cumulativeCpuSeconds": 1.015493,
+          "workingSetKb": 94380,
+          "peakWorkingSetKb": 96072,
+          "privateBytesKb": 40932
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.0005074528407160028,
+          "cumulativeCpuSeconds": 0.279187,
+          "workingSetKb": 75812,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11168
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217296226,
+      "elapsedMs": 90023,
+      "rendererCount": 2,
+      "runtimeRevision": 90,
+      "gameplayRevision": 115,
+      "soldQuantity": 1,
+      "copperBalance": 1556,
+      "save": {
+        "revision": 186,
+        "status": "saving",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217295937,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 690908,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.3316102530993319,
+          "cumulativeCpuSeconds": 6.028745,
+          "workingSetKb": 145048,
+          "peakWorkingSetKb": 148932,
+          "privateBytesKb": 123996
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.46573796971402004,
+          "cumulativeCpuSeconds": 11.843089,
+          "workingSetKb": 187764,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 235928
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.0000930216336664785,
+          "cumulativeCpuSeconds": 0.123936,
+          "workingSetKb": 45620,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12552
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.5740282858240934,
+          "cumulativeCpuSeconds": 10.06773,
+          "workingSetKb": 141636,
+          "peakWorkingSetKb": 142672,
+          "privateBytesKb": 72624
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.04623870617102683,
+          "cumulativeCpuSeconds": 1.182013,
+          "workingSetKb": 95028,
+          "peakWorkingSetKb": 96072,
+          "privateBytesKb": 41640
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.00007802718487113642,
+          "cumulativeCpuSeconds": 0.279468,
+          "workingSetKb": 75812,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11168
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217311232,
+      "elapsedMs": 105029,
+      "rendererCount": 2,
+      "runtimeRevision": 105,
+      "gameplayRevision": 130,
+      "soldQuantity": 1,
+      "copperBalance": 1556,
+      "save": {
+        "revision": 217,
+        "status": "ready",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217311073,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 689236,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.46296805368318866,
+          "cumulativeCpuSeconds": 7.696043,
+          "workingSetKb": 151244,
+          "peakWorkingSetKb": 151244,
+          "privateBytesKb": 133008
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.449790528224654,
+          "cumulativeCpuSeconds": 13.462931,
+          "workingSetKb": 179912,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 203848
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.00008691250699520728,
+          "cumulativeCpuSeconds": 0.124249,
+          "workingSetKb": 45620,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12552
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.6605966396203741,
+          "cumulativeCpuSeconds": 12.446751,
+          "workingSetKb": 141736,
+          "peakWorkingSetKb": 143512,
+          "privateBytesKb": 72568
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.04601283857798668,
+          "cumulativeCpuSeconds": 1.34772,
+          "workingSetKb": 94912,
+          "peakWorkingSetKb": 96072,
+          "privateBytesKb": 41476
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.00009191074996350782,
+          "cumulativeCpuSeconds": 0.279799,
+          "workingSetKb": 75812,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11168
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217326233,
+      "elapsedMs": 120030,
+      "rendererCount": 2,
+      "runtimeRevision": 121,
+      "gameplayRevision": 145,
+      "soldQuantity": 1,
+      "copperBalance": 1556,
+      "save": {
+        "revision": 250,
+        "status": "saving",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217326200,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 672652,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.36090599034846343,
+          "cumulativeCpuSeconds": 8.995349,
+          "workingSetKb": 139504,
+          "peakWorkingSetKb": 156704,
+          "privateBytesKb": 118080
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.4725872711406995,
+          "cumulativeCpuSeconds": 15.164302,
+          "workingSetKb": 172872,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 217200
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.00030304539343336244,
+          "cumulativeCpuSeconds": 0.12534,
+          "workingSetKb": 45620,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12552
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.5728670259834107,
+          "cumulativeCpuSeconds": 14.509142,
+          "workingSetKb": 142756,
+          "peakWorkingSetKb": 143512,
+          "privateBytesKb": 73384
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.05175491390024924,
+          "cumulativeCpuSeconds": 1.534044,
+          "workingSetKb": 96088,
+          "peakWorkingSetKb": 96088,
+          "privateBytesKb": 42488
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.00008471934176460223,
+          "cumulativeCpuSeconds": 0.280104,
+          "workingSetKb": 75812,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11168
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217341239,
+      "elapsedMs": 135036,
+      "rendererCount": 2,
+      "runtimeRevision": 135,
+      "gameplayRevision": 159,
+      "soldQuantity": 1,
+      "copperBalance": 1556,
+      "save": {
+        "revision": 279,
+        "status": "ready",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217340308,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 687276,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.4622899545536348,
+          "cumulativeCpuSeconds": 10.66032,
+          "workingSetKb": 158760,
+          "peakWorkingSetKb": 158760,
+          "privateBytesKb": 141364
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.4528769176878305,
+          "cumulativeCpuSeconds": 16.795373,
+          "workingSetKb": 166796,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 209272
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.00044785918423190935,
+          "cumulativeCpuSeconds": 0.126953,
+          "workingSetKb": 45580,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12452
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.6792654527901031,
+          "cumulativeCpuSeconds": 16.95557,
+          "workingSetKb": 143472,
+          "peakWorkingSetKb": 147308,
+          "privateBytesKb": 74152
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.04962601842289995,
+          "cumulativeCpuSeconds": 1.712776,
+          "workingSetKb": 96860,
+          "peakWorkingSetKb": 101756,
+          "privateBytesKb": 43384
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.0003365190021285326,
+          "cumulativeCpuSeconds": 0.281316,
+          "workingSetKb": 75808,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11164
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217356240,
+      "elapsedMs": 150037,
+      "rendererCount": 2,
+      "runtimeRevision": 150,
+      "gameplayRevision": 174,
+      "soldQuantity": 1,
+      "copperBalance": 1556,
+      "save": {
+        "revision": 310,
+        "status": "saving",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217355432,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 700868,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.42940865792213967,
+          "cumulativeCpuSeconds": 12.206263,
+          "workingSetKb": 141656,
+          "peakWorkingSetKb": 170376,
+          "privateBytesKb": 116908
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.48911617575862665,
+          "cumulativeCpuSeconds": 18.55627,
+          "workingSetKb": 197024,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 203084
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.00009249590551458255,
+          "cumulativeCpuSeconds": 0.127286,
+          "workingSetKb": 45580,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12452
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.614393285432771,
+          "cumulativeCpuSeconds": 19.167483,
+          "workingSetKb": 143568,
+          "peakWorkingSetKb": 147308,
+          "privateBytesKb": 74240
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.040749048525007936,
+          "cumulativeCpuSeconds": 1.859479,
+          "workingSetKb": 97248,
+          "peakWorkingSetKb": 101756,
+          "privateBytesKb": 43452
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.0001361052132185383,
+          "cumulativeCpuSeconds": 0.281806,
+          "workingSetKb": 75792,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11132
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217371248,
+      "elapsedMs": 165045,
+      "rendererCount": 2,
+      "runtimeRevision": 165,
+      "gameplayRevision": 189,
+      "soldQuantity": 1,
+      "copperBalance": 1556,
+      "save": {
+        "revision": 341,
+        "status": "ready",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217370530,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 688608,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.4132660688913139,
+          "cumulativeCpuSeconds": 13.694768,
+          "workingSetKb": 149784,
+          "peakWorkingSetKb": 170376,
+          "privateBytesKb": 127752
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.604877453632653,
+          "cumulativeCpuSeconds": 20.734924,
+          "workingSetKb": 176328,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 202508
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.00007496228897116158,
+          "cumulativeCpuSeconds": 0.127556,
+          "workingSetKb": 45580,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12452
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.5679578662928121,
+          "cumulativeCpuSeconds": 21.21317,
+          "workingSetKb": 142924,
+          "peakWorkingSetKb": 147308,
+          "privateBytesKb": 73456
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.0529741354619982,
+          "cumulativeCpuSeconds": 2.050284,
+          "workingSetKb": 98200,
+          "peakWorkingSetKb": 106668,
+          "privateBytesKb": 43660
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.00004858595977926537,
+          "cumulativeCpuSeconds": 0.281981,
+          "workingSetKb": 75792,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11132
+        }
+      ]
+    },
+    {
+      "sampledAtUtcMs": 1787217386210,
+      "elapsedMs": 180007,
+      "rendererCount": 2,
+      "runtimeRevision": 180,
+      "gameplayRevision": 204,
+      "soldQuantity": 1,
+      "copperBalance": 1556,
+      "save": {
+        "revision": 371,
+        "status": "ready",
+        "loadSource": "primary",
+        "migrationStatus": "not-needed",
+        "loadDiagnostics": [],
+        "lastSavedAtUtcMs": 1787217385627,
+        "lastError": null,
+        "fileName": "save.json",
+        "backupFileName": "save.json.bak"
+      },
+      "windows": {
+        "rendererExitCount": 0,
+        "mainFrameLoadFailureCount": 0,
+        "desktopRecoveryCount": 0
+      },
+      "totalWorkingSetKb": 678788,
+      "processes": [
+        {
+          "pid": 89876,
+          "type": "Browser",
+          "name": null,
+          "creationTimeUtcMs": 1787217203729.072,
+          "cpuPercent": 0.45667570098629856,
+          "cumulativeCpuSeconds": 15.334658,
+          "workingSetKb": 156888,
+          "peakWorkingSetKb": 170376,
+          "privateBytesKb": 137332
+        },
+        {
+          "pid": 80772,
+          "type": "GPU",
+          "name": null,
+          "creationTimeUtcMs": 1787217205928.352,
+          "cpuPercent": 0.4040124009003015,
+          "cumulativeCpuSeconds": 22.185708,
+          "workingSetKb": 158244,
+          "peakWorkingSetKb": 285332,
+          "privateBytesKb": 202636
+        },
+        {
+          "pid": 19948,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTimeUtcMs": 1787217205940.604,
+          "cpuPercent": 0.00022194717481241203,
+          "cumulativeCpuSeconds": 0.128353,
+          "workingSetKb": 45580,
+          "peakWorkingSetKb": 46048,
+          "privateBytesKb": 12452
+        },
+        {
+          "pid": 52056,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206163.737,
+          "cpuPercent": 0.5932517042193429,
+          "cumulativeCpuSeconds": 23.343498,
+          "workingSetKb": 143476,
+          "peakWorkingSetKb": 147308,
+          "privateBytesKb": 74020
+        },
+        {
+          "pid": 62612,
+          "type": "Tab",
+          "name": null,
+          "creationTimeUtcMs": 1787217206209.38,
+          "cpuPercent": 0.04355599126213447,
+          "cumulativeCpuSeconds": 2.20669,
+          "workingSetKb": 98808,
+          "peakWorkingSetKb": 106668,
+          "privateBytesKb": 43864
+        },
+        {
+          "pid": 30604,
+          "type": "Utility",
+          "name": "Audio Service",
+          "creationTimeUtcMs": 1787217207619.229,
+          "cpuPercent": 0.00007017723963642575,
+          "cumulativeCpuSeconds": 0.282233,
+          "workingSetKb": 75792,
+          "peakWorkingSetKb": 76180,
+          "privateBytesKb": 11132
+        }
+      ]
+    }
+  ]
+}

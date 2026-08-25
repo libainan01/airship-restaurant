@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "savedAtUtcMs": 68000,
+  "payload": {
+    "version": 1,
+    "revision": 1,
+    "currentUtcMs": 67500,
+    "nextSupplyAtUtcMs": 121000,
+    "supplyBoxesReceived": 1,
+    "randomState": 1831565936,
+    "kitchenActivated": true,
+    "upgrades": {
+      "kitchen": 0,
+      "transport": 0,
+      "restaurant": 0,
+      "procurement": 0
+    },
+    "inventory": {
+      "kitchenIngredients": [
+        {
+          "itemId": "ingredient.test",
+          "quantity": 11
+        }
+      ],
+      "kitchenOutput": [],
+      "cableCargo": [],
+      "restaurantStorage": []
+    },
+    "cooking": {
+      "selectedRecipeId": "recipe.test",
+      "autoRepeat": true,
+      "activeJob": {
+        "id": "cooking-job-1",
+        "recipeId": "recipe.test",
+        "reservationId": "cooking-job-1:ingredients",
+        "startedAtUtcMs": 67245,
+        "finishAtUtcMs": 68245,
+        "completionAttempt": 0,
+        "status": "cooking"
+      },
+      "blockedReason": null,
+      "completedBatches": 0,
+      "jobSequence": 1,
+      "automaticAttemptSequence": 0
+    },
+    "logistics": {
+      "phase": "idle",
+      "activeShipment": null,
+      "kitchenWaitingSinceUtcMs": null,
+      "shipmentSequence": 0,
+      "totalDeliveredQuantity": 0,
+      "capacityBlockAnnounced": false
+    },
+    "restaurant": {
+      "selectedRecipeId": "recipe.test",
+      "activeCustomer": {
+        "id": "customer-1",
+        "recipeId": "recipe.test",
+        "dishItemId": "dish.test",
+        "arrivedAtUtcMs": 36745,
+        "leaveAtUtcMs": 396745,
+        "fulfillmentAttempt": 0,
+        "phase": "waiting-meal",
+        "phaseEndsAtUtcMs": 72245,
+        "notificationChannelId": "fixed-delay-placeholder"
+      },
+      "diningCustomers": [],
+      "nextCustomerAtUtcMs": null,
+      "customerSequence": 1,
+      "totalSoldQuantity": 0,
+      "totalCustomersLeft": 0,
+      "copperBalance": 0,
+      "totalCopperSpent": 0,
+      "soldByDish": [],
+      "recentSales": []
+    },
+    "procurement": {
+      "version": 1,
+      "revision": 0,
+      "arrivalRevision": 0,
+      "nextOrderSequence": 1,
+      "orders": [],
+      "automationReserveCopper": 0,
+      "automationPolicies": []
+    }
+  }
+}

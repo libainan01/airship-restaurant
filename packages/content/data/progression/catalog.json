@@ -1,0 +1,40 @@
+{
+  "$schema": "../schemas/progression-catalog.schema.json",
+  "schemaVersion": 1,
+  "contents": [
+    { "id": "region.greyfeather", "kind": "region", "name": "灰羽港", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "region.windroot", "kind": "region", "name": "风根谷", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": false, "revealSources": [], "unlockSources": [
+      { "id": "source.story_bell_first_service", "requirements": [{ "kind": "fact", "factId": "story_node.martha_bell.first_service.completed" }] }
+    ] },
+    { "id": "region.brasslands", "kind": "region", "name": "赤铜高地", "spoilerSensitive": true, "initiallyRevealed": false, "initiallyUnlocked": false, "revealSources": [
+      { "id": "source.windroot_discovered", "requirements": [{ "kind": "content-unlocked", "contentId": "region.windroot" }] }
+    ], "unlockSources": [
+      { "id": "source.brasslands_story", "requirements": [{ "kind": "fact", "factId": "story.brasslands_introduction.completed" }] }
+    ] },
+    { "id": "route.greyfeather_windroot", "kind": "route", "name": "灰羽—风根航线", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": false, "revealSources": [], "unlockSources": [
+      { "id": "source.windroot_port", "requirements": [{ "kind": "content-unlocked", "contentId": "region.windroot" }, { "kind": "fact", "factId": "port.windroot.connected" }] }
+    ] },
+    { "id": "route.windroot_brasslands", "kind": "route", "name": "风根—赤铜航线", "spoilerSensitive": true, "initiallyRevealed": false, "initiallyUnlocked": false, "revealSources": [
+      { "id": "source.brasslands_discovered", "requirements": [{ "kind": "content-unlocked", "contentId": "region.brasslands" }] }
+    ], "unlockSources": [
+      { "id": "source.brasslands_port", "requirements": [{ "kind": "content-unlocked", "contentId": "region.brasslands" }, { "kind": "fact", "factId": "port.brasslands.connected" }] }
+    ] },
+    { "id": "recipe.tomato_scrambled_egg", "kind": "recipe", "name": "番茄炒蛋", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "recipe.hearth_flatbread", "kind": "recipe", "name": "炉火云麦饼", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "recipe.windroot_soup", "kind": "recipe", "name": "风根浓汤", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": false, "revealSources": [], "unlockSources": [
+      { "id": "source.windroot_region", "requirements": [{ "kind": "content-unlocked", "contentId": "region.windroot" }] }
+    ] },
+    { "id": "recipe.homecoming_stew", "kind": "recipe", "name": "贝尔家的炉火炖菜", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.ground_exchange_station", "kind": "building", "name": "地面交换站", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.airship_exchange_station", "kind": "building", "name": "飞艇交换站", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.dish_cabinet", "kind": "building", "name": "橱柜", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.prep_station", "kind": "building", "name": "备菜台", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.pan_fry_station", "kind": "building", "name": "煎炒灶台", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.steam_boil_station", "kind": "building", "name": "蒸煮灶台", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.baking_station", "kind": "building", "name": "烘烤设备", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.plating_station", "kind": "building", "name": "装盘点", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.personnel_elevator", "kind": "building", "name": "人员电梯", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.cargo_lift", "kind": "building", "name": "小型货梯", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] },
+    { "id": "building.waiting_area", "kind": "building", "name": "顾客等候区", "spoilerSensitive": false, "initiallyRevealed": true, "initiallyUnlocked": true, "revealSources": [], "unlockSources": [] }
+  ]
+}

@@ -170,6 +170,7 @@ export class CookingSystem {
   #automaticAttemptSequence = 0;
   #lastAutoAttemptSignature: string | null = null;
   #lastCompletionAttemptSignature: string | null = null;
+  #durationScale = 1;
 
   constructor(options: CookingSystemOptions) {
     this.#inventory = options.inventory;
@@ -210,6 +211,12 @@ export class CookingSystem {
     }
   }
 
+  setDurationScale(scale: number): void {
+    if (!Number.isFinite(scale) || scale <= 0 || scale > 1) {
+      throw new RangeError("Cooking duration scale must be in the range (0, 1].");
+    }
+    this.#durationScale = scale;
+  }
   getSnapshot(): CookingSnapshot {
     const activeJob =
       this.#activeJob === null
@@ -495,7 +502,8 @@ export class CookingSystem {
       };
     }
 
-    const finishAtUtcMs = nowUtcMs + recipe.durationMs;
+    const finishAtUtcMs = nowUtcMs +
+      Math.max(1, Math.round(recipe.durationMs * this.#durationScale));
     if (!Number.isSafeInteger(finishAtUtcMs)) {
       throw new RangeError(
         "Cooking finish time exceeds the safe integer range.",

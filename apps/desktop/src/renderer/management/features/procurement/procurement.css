@@ -1,0 +1,297 @@
+.procurement-dialog {
+  width: min(940px, 100%);
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+}
+
+.procurement-tabs {
+  display: flex;
+  gap: 7px;
+  margin-top: 18px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #e8d6b7;
+}
+
+.procurement-tabs button {
+  flex: 1;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 8px;
+  color: #6b5748;
+  font-weight: 700;
+  background: transparent;
+  cursor: pointer;
+}
+
+.procurement-tabs button.is-active {
+  color: #fffaf0;
+  background: #8e5139;
+  box-shadow: 0 3px 9px rgb(69 43 31 / 20%);
+}
+
+.procurement-market {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.procurement-region {
+  padding: 13px;
+  border: 1px solid #c7ad84;
+  border-radius: 12px;
+  background: rgb(255 250 237 / 78%);
+}
+
+.procurement-region.is-locked {
+  opacity: 0.58;
+}
+
+.procurement-region > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgb(145 105 65 / 24%);
+}
+
+.procurement-region > header div,
+.procurement-line > div:first-child,
+.procurement-recipes article > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.procurement-region > header span {
+  color: #8c5c43;
+  font-size: 10px;
+  text-align: right;
+}
+
+.procurement-region small,
+.procurement-line small,
+.procurement-recipes small,
+.procurement-orders small {
+  color: #7c6a5c;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.procurement-line,
+.procurement-recipes article,
+.procurement-orders article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.procurement-line + .procurement-line,
+.procurement-orders article + article {
+  border-top: 1px dashed rgb(145 105 65 / 28%);
+}
+
+.quantity-stepper {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.quantity-stepper button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #a57d5b;
+  border-radius: 7px;
+  color: #644536;
+  font-weight: 800;
+  background: #fff7e7;
+  cursor: pointer;
+}
+
+.quantity-stepper button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.quantity-stepper span {
+  min-width: 38px;
+  color: #4a382e;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.procurement-recipes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.procurement-recipes article {
+  padding: 13px;
+  border: 1px solid #c7ad84;
+  border-radius: 11px;
+  background: rgb(255 250 237 / 78%);
+}
+
+.procurement-plan,
+.procurement-orders,
+.procurement-automation {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgb(145 105 65 / 34%);
+  border-radius: 12px;
+  background: rgb(255 252 242 / 62%);
+}
+
+.procurement-plan h3,
+.procurement-orders h3,
+.procurement-automation h3 {
+  margin: 0;
+  color: #4a382e;
+  font-size: 15px;
+}
+
+.procurement-plan p,
+.procurement-automation p {
+  margin: 4px 0 0;
+  color: #746357;
+  font-size: 11px;
+}
+
+.procurement-plan-regions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.procurement-plan-regions article {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 9px;
+  background: #efe0c5;
+}
+
+.procurement-plan-regions span,
+.procurement-plan-regions small {
+  color: #6f5d4f;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.procurement-empty {
+  padding: 12px;
+  color: #8b796c;
+  font-size: 11px;
+  text-align: center;
+}
+
+.procurement-warning {
+  color: #a34b32 !important;
+  font-weight: 700;
+}
+
+.procurement-confirm {
+  width: 100%;
+  margin-top: 11px;
+  padding: 10px 14px;
+  border: 1px solid #875039;
+  border-radius: 9px;
+  color: #fffaf0;
+  font-weight: 800;
+  background: #9e5032;
+  cursor: pointer;
+}
+
+.procurement-confirm:disabled {
+  border-color: #b7a796;
+  color: #776d64;
+  background: #ded4c4;
+  cursor: default;
+}
+
+.procurement-orders > article > span {
+  color: #8c5c43;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.procurement-automation {
+  display: block;
+}
+
+.procurement-automation .operation-heading {
+  align-items: flex-start;
+}
+
+.procurement-automation .procurement-plan-regions article {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.procurement-automation-reserve {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(90px, 140px) 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 9px;
+  color: #604536;
+  background: #efe0c5;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.procurement-automation-reserve input {
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid #b89a75;
+  border-radius: 7px;
+  color: #4a382e;
+  background: #fffaf0;
+}
+
+.procurement-automation-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 7px;
+}
+
+.procurement-automation button {
+  padding: 8px 11px;
+  border: 1px solid #a57d5b;
+  border-radius: 8px;
+  color: #604536;
+  background: #fff7e7;
+  cursor: pointer;
+}
+
+.procurement-automation button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 760px) {
+  .procurement-market,
+  .procurement-recipes,
+  .procurement-plan-regions {
+    grid-template-columns: 1fr;
+  }
+
+  .procurement-automation {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

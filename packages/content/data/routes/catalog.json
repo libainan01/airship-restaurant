@@ -1,0 +1,160 @@
+{
+  "$schema": "../schemas/route-catalog.schema.json",
+  "schemaVersion": 1,
+  "procurementRegions": [
+    {
+      "id": "region.greyfeather",
+      "name": "灰羽港",
+      "deliveryDurationMs": 15000,
+      "freightCostCopper": 0,
+      "cargoCapacity": 12,
+      "minimumTransportLevel": 0,
+      "items": [
+        {
+          "itemId": "ingredient.cloud_wheat",
+          "unitPriceCopper": 1
+        },
+        {
+          "itemId": "ingredient.kettle_milk",
+          "unitPriceCopper": 2
+        }
+      ]
+    },
+    {
+      "id": "region.windroot",
+      "name": "风根谷",
+      "deliveryDurationMs": 60000,
+      "freightCostCopper": 3,
+      "cargoCapacity": 10,
+      "minimumTransportLevel": 1,
+      "items": [
+        {
+          "itemId": "ingredient.wind_root",
+          "unitPriceCopper": 3
+        },
+        {
+          "itemId": "ingredient.moon_herb",
+          "unitPriceCopper": 4
+        }
+      ]
+    },
+    {
+      "id": "region.brasslands",
+      "name": "赤铜高地",
+      "deliveryDurationMs": 120000,
+      "freightCostCopper": 6,
+      "cargoCapacity": 8,
+      "minimumTransportLevel": 2,
+      "items": [
+        {
+          "itemId": "ingredient.smoked_meat",
+          "unitPriceCopper": 6
+        }
+      ]
+    }
+  ],
+  "localSuppliers": [
+    {
+      "id": "supplier.greyfeather_market",
+      "sourceRegionId": "region.greyfeather",
+      "preparationDurationMs": 5000,
+      "roundTripDistanceUnits": 100,
+      "items": [
+        {
+          "itemId": "ingredient.cloud_wheat",
+          "baseUnitPriceCopper": 1
+        },
+        {
+          "itemId": "ingredient.kettle_milk",
+          "baseUnitPriceCopper": 2
+        }
+      ]
+    }
+  ],
+  "localProcurementCarts": [
+    {
+      "id": "cart.greyfeather_1",
+      "capacity": 3,
+      "speedUnitsPerSecond": 20,
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "capacity": 3,
+          "speedUnitsPerSecond": 20
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 40,
+          "capacity": 5,
+          "speedUnitsPerSecond": 28
+        },
+        {
+          "level": 3,
+          "upgradeCostCopper": 90,
+          "capacity": 8,
+          "speedUnitsPerSecond": 38
+        }
+      ]
+    }
+  ],
+  "remoteProcurementRoutes": [
+    {
+      "id": "route.greyfeather_windroot",
+      "originRegionId": "region.greyfeather",
+      "destinationRegionId": "region.windroot",
+      "roundTripDistanceUnits": 1200
+    },
+    {
+      "id": "route.windroot_brasslands",
+      "originRegionId": "region.windroot",
+      "destinationRegionId": "region.brasslands",
+      "roundTripDistanceUnits": 1800
+    }
+  ],
+  "procurementAirships": [
+    {
+      "id": "airship.procurement.skylark",
+      "name": "云雀号",
+      "purchaseCostCopper": 500,
+      "defaultStyleId": "style.airship.skylark_brass",
+      "styleIds": [
+        "style.airship.skylark_brass"
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "cargoCapacity": 8,
+          "speedUnitsPerSecond": 40,
+          "maxDurability": 100,
+          "cooldownEfficiency": 1
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 180,
+          "cargoCapacity": 12,
+          "speedUnitsPerSecond": 52,
+          "maxDurability": 120,
+          "cooldownEfficiency": 1.2
+        },
+        {
+          "level": 3,
+          "upgradeCostCopper": 420,
+          "cargoCapacity": 18,
+          "speedUnitsPerSecond": 68,
+          "maxDurability": 150,
+          "cooldownEfficiency": 1.5
+        }
+      ]
+    }
+  ],
+  "initialProcurementAirships": [
+    {
+      "id": "instance.airship.skylark_01",
+      "definitionId": "airship.procurement.skylark",
+      "level": 1,
+      "styleId": "style.airship.skylark_brass"
+    }
+  ]
+}

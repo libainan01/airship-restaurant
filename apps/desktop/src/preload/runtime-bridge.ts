@@ -2,7 +2,9 @@ import {
   IPC_CHANNELS,
   type CommandResult,
   type GameCommand,
-  type GameSnapshot,
+  type RuntimeReadModelChangedListener,
+  type RuntimeReadModelKey,
+  type RuntimeReadModelSlice,
   type RuntimeBridge,
   type WorkspaceBridgeInfo,
 } from "@airship-restaurant/contracts";
@@ -13,30 +15,39 @@ export function createRuntimeBridge(
 ): RuntimeBridge {
   return Object.freeze({
     getWorkspaceInfo: (): WorkspaceBridgeInfo => workspaceInfo,
-    getSnapshot: (): Promise<GameSnapshot> =>
-      ipcRenderer.invoke(IPC_CHANNELS.runtimeGetSnapshot),
+    getReadModel: (
+      key: RuntimeReadModelKey,
+    ): Promise<RuntimeReadModelSlice> =>
+      ipcRenderer.invoke(IPC_CHANNELS.runtimeGetReadModel, key),
     dispatchCommand: (command: GameCommand): Promise<CommandResult> =>
       ipcRenderer.invoke(IPC_CHANNELS.runtimeDispatchCommand, command),
-    onSnapshotChanged: (
-      listener: (snapshot: GameSnapshot) => void,
+    onReadModelChanged: (
+      key: RuntimeReadModelKey,
+      listener: RuntimeReadModelChangedListener,
     ): (() => void) => {
       const wrappedListener = (
         _event: IpcRendererEvent,
-        snapshot: GameSnapshot,
+        slice: RuntimeReadModelSlice,
       ): void => {
-        listener(snapshot);
+        if (slice.key === key) listener(slice);
       };
-
-      ipcRenderer.on(
-        IPC_CHANNELS.runtimeSnapshotChanged,
-        wrappedListener,
-      );
-
+      let active = true;
+      ipcRenderer.on(IPC_CHANNELS.runtimeReadModelChanged, wrappedListener);
+      void ipcRenderer
+        .invoke(IPC_CHANNELS.runtimeSubscribeReadModel, key)
+        .then((slice: RuntimeReadModelSlice) => {
+          if (active && slice.key === key) listener(slice);
+        })
+        .catch(() => undefined);
       return () => {
+        active = false;
         ipcRenderer.removeListener(
-          IPC_CHANNELS.runtimeSnapshotChanged,
+          IPC_CHANNELS.runtimeReadModelChanged,
           wrappedListener,
         );
+        void ipcRenderer
+          .invoke(IPC_CHANNELS.runtimeUnsubscribeReadModel, key)
+          .catch(() => undefined);
       };
     },
   });

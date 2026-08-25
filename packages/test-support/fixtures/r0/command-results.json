@@ -1,0 +1,85 @@
+{
+  "fixtureVersion": 2,
+  "results": [
+    {
+      "label": "runtime-not-ready",
+      "accepted": false,
+      "commandId": "r0.before-ready",
+      "code": "RUNTIME_NOT_READY",
+      "message": "The game runtime is not ready."
+    },
+    {
+      "label": "accepted-change",
+      "accepted": true,
+      "commandId": "r0.quiet-on"
+    },
+    {
+      "label": "accepted-no-change",
+      "accepted": true,
+      "commandId": "r0.quiet-on-again"
+    },
+    {
+      "label": "duplicate",
+      "accepted": false,
+      "commandId": "r0.quiet-on",
+      "code": "DUPLICATE_COMMAND",
+      "message": "The command id has already been processed."
+    },
+    {
+      "label": "gameplay.select-recipe",
+      "accepted": false,
+      "commandId": "r0.select",
+      "code": "GAMEPLAY_REJECTED",
+      "message": "The gameplay simulation is unavailable."
+    },
+    {
+      "label": "gameplay.set-auto-repeat",
+      "accepted": false,
+      "commandId": "r0.repeat",
+      "code": "GAMEPLAY_REJECTED",
+      "message": "The gameplay simulation is unavailable."
+    },
+    {
+      "label": "gameplay.place-procurement-order",
+      "accepted": false,
+      "commandId": "r0.procure",
+      "code": "GAMEPLAY_REJECTED",
+      "message": "Procurement is unavailable."
+    },
+    {
+      "label": "gameplay.configure-procurement-automation",
+      "accepted": false,
+      "commandId": "r0.automation",
+      "code": "GAMEPLAY_REJECTED",
+      "message": "Automatic procurement is unavailable."
+    },
+    {
+      "label": "narrative.mark-viewed",
+      "accepted": false,
+      "commandId": "r0.view",
+      "code": "NARRATIVE_REJECTED",
+      "message": "The narrative system is unavailable."
+    },
+    {
+      "label": "narrative.complete",
+      "accepted": false,
+      "commandId": "r0.complete",
+      "code": "NARRATIVE_REJECTED",
+      "message": "The narrative system is unavailable."
+    },
+    {
+      "label": "story.replay-dialogue",
+      "accepted": false,
+      "commandId": "r0.replay",
+      "code": "STORY_REJECTED",
+      "message": "The story sequence is unavailable."
+    },
+    {
+      "label": "dialogue.request-ambient",
+      "accepted": false,
+      "commandId": "r0.dialogue",
+      "code": "DIALOGUE_REJECTED",
+      "message": "The ambient dialogue system is unavailable."
+    }
+  ]
+}

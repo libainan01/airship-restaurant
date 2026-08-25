@@ -7,7 +7,9 @@ export default defineConfig({
       "@airship-restaurant/contracts": fileURLToPath(
         new URL("./packages/contracts/src/index.ts", import.meta.url),
       ),
-      "@airship-restaurant/core": fileURLToPath(
+      "@airship-restaurant/content": fileURLToPath(
+        new URL("./packages/content/src/index.ts", import.meta.url),
+      ),      "@airship-restaurant/core": fileURLToPath(
         new URL("./packages/core/src/index.ts", import.meta.url),
       ),
       "@airship-restaurant/persistence": fileURLToPath(
@@ -17,7 +19,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["apps/**/*.test.ts", "packages/**/*.test.ts"],
+    include: ["apps/**/*.test.ts", "apps/**/*.test.tsx", "packages/**/*.test.ts", "packages/**/*.test.tsx"],
     exclude: ["spikes/**", "**/node_modules/**", "**/dist/**"],
   },
 });

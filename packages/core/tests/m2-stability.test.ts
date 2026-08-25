@@ -4,12 +4,12 @@ import {
 } from "../../content/src";
 import { describe, expect, it } from "vitest";
 import {
-  isM2SimulationState,
-  M2Simulation,
+  isGameplayRuntimeSaveSlices,
+  GameplayRuntime,
   type InventoryContainerSnapshot,
-  type M2SimulationConfig,
-  type M2SimulationSnapshot,
-  type M2SimulationState,
+  type GameplayRuntimeConfig,
+  type GameplayRuntimeSnapshot,
+  type GameplayRuntimeSaveSlices,
 } from "../src";
 
 const START_UTC_MS = Date.UTC(2026, 0, 1);
@@ -25,14 +25,14 @@ const RECIPE_PRICES = new Map(
 );
 
 function createConfig(
-  initialState?: M2SimulationState,
-): M2SimulationConfig {
+  initialSlices?: GameplayRuntimeSaveSlices,
+): GameplayRuntimeConfig {
   const supply = M2_CONTENT_DEFINITIONS.supplyBundles[0];
   if (supply === undefined) {
     throw new Error("M2 stability test requires the basic supply bundle.");
   }
-  const config: M2SimulationConfig = {
-    startUtcMs: initialState?.currentUtcMs ?? START_UTC_MS,
+  const config: GameplayRuntimeConfig = {
+    startUtcMs: initialSlices?.gameplayRuntime.currentUtcMs ?? START_UTC_MS,
     randomSeed: 0x0a17_5eed,
     ingredients: M2_CONTENT_DEFINITIONS.ingredients.map(
       (ingredient) => ({
@@ -50,28 +50,27 @@ function createConfig(
     },
     defaultRecipeId: "recipe.hearth_flatbread",
   };
-  return initialState === undefined
+  return initialSlices === undefined
     ? config
-    : { ...config, initialState };
+    : { ...config, initialSlices };
 }
 
-function getComparableState(
-  simulation: M2Simulation,
-): Omit<M2SimulationState, "revision"> {
-  const { revision: _revision, ...state } = simulation.exportState();
-  return state;
+function getComparableState(simulation: GameplayRuntime) {
+  const state = simulation.exportSaveSlices();
+  const { revision: _revision, ...gameplayRuntime } = state.gameplayRuntime;
+  return { ...state, gameplayRuntime };
 }
 
 function getComparableSnapshot(
-  simulation: M2Simulation,
-): Omit<M2SimulationSnapshot, "revision"> {
+  simulation: GameplayRuntime,
+): Omit<GameplayRuntimeSnapshot, "revision"> {
   const { revision: _revision, ...snapshot } =
     simulation.getSnapshot();
   return snapshot;
 }
 
 function advanceInOneSecondTicks(
-  simulation: M2Simulation,
+  simulation: GameplayRuntime,
   targetUtcMs: number,
 ): void {
   for (
@@ -87,13 +86,13 @@ function advanceInOneSecondTicks(
 }
 
 function restoreFromSerializedState(
-  simulation: M2Simulation,
-): M2Simulation {
+  simulation: GameplayRuntime,
+): GameplayRuntime {
   const parsed: unknown = JSON.parse(
-    JSON.stringify(simulation.exportState()),
+    JSON.stringify(simulation.exportSaveSlices()),
   );
-  expect(isM2SimulationState(parsed)).toBe(true);
-  return new M2Simulation(createConfig(parsed as M2SimulationState));
+  expect(isGameplayRuntimeSaveSlices(parsed)).toBe(true);
+  return new GameplayRuntime(createConfig(parsed as GameplayRuntimeSaveSlices));
 }
 
 function expectContainerInvariants(
@@ -120,7 +119,7 @@ function expectContainerInvariants(
 }
 
 function expectBusinessInvariants(
-  snapshot: M2SimulationSnapshot,
+  snapshot: GameplayRuntimeSnapshot,
 ): void {
   for (const container of Object.values(snapshot.inventory)) {
     expectContainerInvariants(container);
@@ -154,7 +153,7 @@ function expectBusinessInvariants(
 }
 
 function expectFlatbreadConservation(
-  snapshot: M2SimulationSnapshot,
+  snapshot: GameplayRuntimeSnapshot,
 ): void {
   const dishesOnHand =
     snapshot.inventory.kitchenOutput.totalQuantity +
@@ -170,8 +169,8 @@ function expectFlatbreadConservation(
 
 function runMenuSchedule(
   restoreEachCheckpoint: boolean,
-): M2Simulation {
-  let simulation = new M2Simulation(createConfig());
+): GameplayRuntime {
+  let simulation = new GameplayRuntime(createConfig());
   const checkpoints = [
     {
       atUtcMs: START_UTC_MS + 2 * HOUR_MS,
@@ -204,7 +203,7 @@ function runMenuSchedule(
 
 function reportStabilityResult(
   elapsedWallMs: number,
-  snapshot: M2SimulationSnapshot,
+  snapshot: GameplayRuntimeSnapshot,
 ): void {
   if (process.env.AIRSHIP_STABILITY_REPORT !== "1") {
     return;
@@ -233,8 +232,8 @@ function reportStabilityResult(
 describe("M2 eight-hour stability", () => {
   it("produces the same business state with one jump or one-second ticks", () => {
     const startedAt = performance.now();
-    const oneJump = new M2Simulation(createConfig());
-    const oneSecondTicks = new M2Simulation(createConfig());
+    const oneJump = new GameplayRuntime(createConfig());
+    const oneSecondTicks = new GameplayRuntime(createConfig());
 
     oneJump.advanceTo(TARGET_UTC_MS);
     advanceInOneSecondTicks(oneSecondTicks, TARGET_UTC_MS);
@@ -242,8 +241,8 @@ describe("M2 eight-hour stability", () => {
     expect(getComparableSnapshot(oneSecondTicks)).toEqual(
       getComparableSnapshot(oneJump),
     );
-    expect(oneSecondTicks.exportState().randomState).toBe(
-      oneJump.exportState().randomState,
+    expect(oneSecondTicks.exportSaveSlices().gameplayRuntime.randomState).toBe(
+      oneJump.exportSaveSlices().gameplayRuntime.randomState,
     );
     const snapshot = oneJump.getSnapshot();
     expect(snapshot.currentUtcMs).toBe(TARGET_UTC_MS);
@@ -254,10 +253,10 @@ describe("M2 eight-hour stability", () => {
   }, 15_000);
 
   it("remains deterministic across hourly serialized restarts", () => {
-    const continuous = new M2Simulation(createConfig());
+    const continuous = new GameplayRuntime(createConfig());
     continuous.advanceTo(TARGET_UTC_MS);
 
-    let restarted = new M2Simulation(createConfig());
+    let restarted = new GameplayRuntime(createConfig());
     for (let hour = 1; hour <= 8; hour += 1) {
       restarted.advanceTo(START_UTC_MS + hour * HOUR_MS);
       restarted = restoreFromSerializedState(restarted);

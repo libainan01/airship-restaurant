@@ -1,0 +1,227 @@
+{
+  "$schema": "../schemas/story-catalog.schema.json",
+  "schemaVersion": 1,
+  "storyEvents": [
+    {
+      "id": "story.bell_stew_first_service",
+      "title": "贝尔家的炉火炖菜·第一次上桌",
+      "localizationKey": "localization.story.bell_stew_first_service.body",
+      "presentation": "recipe-log",
+      "priority": 100,
+      "characterIds": [
+        "character.baiyecheng",
+        "character.otto",
+        "character.martha_bell",
+        "character.thomas_bell"
+      ],
+      "recipeId": "recipe.homecoming_stew",
+      "prerequisiteEventIds": [],
+      "conditions": [
+        {
+          "type": "online-dish-sales",
+          "dishItemId": "dish.homecoming_stew",
+          "quantity": 2
+        }
+      ],
+      "dialogueId": "dialogue.story.bell_stew_first_service"
+    }
+  ],
+  "recipeJournals": [
+    {
+      "id": "journal.bell_hearth_stew",
+      "recipeId": "recipe.homecoming_stew",
+      "sourceCharacterId": "character.martha_bell",
+      "localizationKey": "localization.journal.bell_hearth_stew.summary",
+      "storyEventIds": [
+        "story.bell_stew_first_service"
+      ]
+    }
+  ],
+  "localizations": {
+    "localization.story.bell_stew_first_service.body": "玛莎想要的原本只是一顿安稳的热饭。后来，托马斯把这顿饭做了很多年。",
+    "localization.journal.bell_hearth_stew.discovery": "玛莎与托马斯正在等两份记忆里的炖菜。愿望已经重新写进锅边的旧笔记。",
+    "localization.journal.bell_hearth_stew.summary": "玛莎想要的原本只是一顿安稳的热饭。后来，托马斯把这顿饭做了很多年。",
+    "localization.story_profile.martha_bell.identity": "贝尔家的旧友。她记得战时炉火旁那锅让人安心的炖菜。",
+    "localization.story_profile.thomas_bell.identity": "玛莎的家人。多年里，他一直在替那顿没能按时上桌的热饭续火。",
+    "localization.story_node.martha_bell.first_service.hint": "也许一道记忆里的炖菜，能让她愿意谈起过去。",
+    "localization.story_node.martha_bell.first_service.summary": "玛莎终于吃到了记忆里的炉火炖菜，也说出了那段被战争打断的心愿。",
+    "localization.story_node.thomas_bell.first_service.hint": "先让贝尔一家在这里安心吃完一顿饭。",
+    "localization.story_node.thomas_bell.first_service.summary": "托马斯守了很多年的炉火，在这顿饭里终于有了回音。"
+  },
+  "sequences": [
+    {
+      "id": "sequence.greyfeather.first_service",
+      "isPrimary": true,
+      "stages": [
+        {
+          "id": "stage.greyfeather.arrival",
+          "dialogueId": "dialogue.story.greyfeather_arrival",
+          "trigger": {
+            "type": "session-start"
+          }
+        },
+        {
+          "id": "stage.greyfeather.bell_reunion",
+          "dialogueId": "dialogue.story.bell_reunion",
+          "trigger": {
+            "type": "online-sales",
+            "quantity": 1
+          },
+          "minimumDelayMs": 3000
+        },
+        {
+          "id": "stage.greyfeather.wartime_wish",
+          "dialogueId": "dialogue.story.martha_wartime_wish",
+          "trigger": {
+            "type": "after-previous"
+          },
+          "minimumDelayMs": 4000
+        },
+        {
+          "id": "stage.greyfeather.stew_cooking",
+          "dialogueId": "dialogue.story.bell_stew_cooking",
+          "trigger": {
+            "type": "recipe-selected",
+            "recipeId": "recipe.homecoming_stew"
+          },
+          "minimumDelayMs": 1500
+        },
+        {
+          "id": "stage.greyfeather.first_service",
+          "dialogueId": "dialogue.story.bell_stew_first_service",
+          "trigger": {
+            "type": "story-order-fulfilled"
+          },
+          "minimumDelayMs": 1500
+        },
+        {
+          "id": "stage.greyfeather.new_wish",
+          "dialogueId": "dialogue.story.linesman_new_wish",
+          "trigger": {
+            "type": "after-previous"
+          },
+          "minimumDelayMs": 4000
+        },
+        {
+          "id": "stage.greyfeather.departure",
+          "dialogueId": "dialogue.story.bell_departure",
+          "trigger": {
+            "type": "after-previous"
+          },
+          "minimumDelayMs": 4000
+        }
+      ],
+      "storyOrder": {
+        "id": "order.story.bell_homecoming_stew",
+        "recipeId": "recipe.homecoming_stew",
+        "dishItemId": "dish.homecoming_stew",
+        "quantity": 2,
+        "activatesAfterStageId": "stage.greyfeather.wartime_wish"
+      },
+      "journalId": "journal.bell_hearth_stew",
+      "journalDiscoveredAfterStageId": "stage.greyfeather.wartime_wish",
+      "journalCompletedAfterStageId": "stage.greyfeather.first_service",
+      "narrativeEventId": "story.bell_stew_first_service",
+      "narrativeEventAfterStageId": "stage.greyfeather.first_service",
+      "residentSpeakerIds": [
+        "speaker.martha_bell",
+        "speaker.thomas_bell"
+      ],
+      "residentsArriveAtStageId": "stage.greyfeather.bell_reunion",
+      "residentsDepartAfterStageId": "stage.greyfeather.departure"
+    }
+  ],
+  "storyCharacters": [
+    {
+      "characterId": "character.martha_bell",
+      "identityLocalizationKey": "localization.story_profile.martha_bell.identity",
+      "relationshipTiers": [
+        {
+          "id": "relationship.new",
+          "minimumAffinity": 0
+        },
+        {
+          "id": "relationship.familiar",
+          "minimumAffinity": 5
+        },
+        {
+          "id": "relationship.trusted",
+          "minimumAffinity": 15
+        }
+      ]
+    },
+    {
+      "characterId": "character.thomas_bell",
+      "identityLocalizationKey": "localization.story_profile.thomas_bell.identity",
+      "relationshipTiers": [
+        {
+          "id": "relationship.new",
+          "minimumAffinity": 0
+        },
+        {
+          "id": "relationship.familiar",
+          "minimumAffinity": 5
+        },
+        {
+          "id": "relationship.trusted",
+          "minimumAffinity": 15
+        }
+      ]
+    }
+  ],
+  "mealAffinityQualityTiers": [
+    {
+      "qualityTier": 1,
+      "minimumQuality": 1,
+      "affinityIncrease": 1
+    },
+    {
+      "qualityTier": 2,
+      "minimumQuality": 3,
+      "affinityIncrease": 2
+    },
+    {
+      "qualityTier": 3,
+      "minimumQuality": 5,
+      "affinityIncrease": 4
+    }
+  ],
+  "storyRosterNodes": [
+    {
+      "id": "story_node.martha_bell.first_service",
+      "characterId": "character.martha_bell",
+      "sequence": 1,
+      "hintLocalizationKey": "localization.story_node.martha_bell.first_service.hint",
+      "summaryLocalizationKey": "localization.story_node.martha_bell.first_service.summary",
+      "prerequisiteNodeIds": [],
+      "rewardContentIds": [
+        "region.windroot"
+      ],
+      "availableWhen": {
+        "type": "story-stage-completed",
+        "stageId": "stage.greyfeather.bell_reunion"
+      },
+      "completeWhen": {
+        "type": "story-stage-completed",
+        "stageId": "stage.greyfeather.first_service"
+      }
+    },
+    {
+      "id": "story_node.thomas_bell.first_service",
+      "characterId": "character.thomas_bell",
+      "sequence": 1,
+      "hintLocalizationKey": "localization.story_node.thomas_bell.first_service.hint",
+      "summaryLocalizationKey": "localization.story_node.thomas_bell.first_service.summary",
+      "prerequisiteNodeIds": [],
+      "rewardContentIds": [],
+      "availableWhen": {
+        "type": "story-stage-completed",
+        "stageId": "stage.greyfeather.bell_reunion"
+      },
+      "completeWhen": {
+        "type": "story-stage-completed",
+        "stageId": "stage.greyfeather.first_service"
+      }
+    }
+  ]
+}

@@ -1,0 +1,623 @@
+{
+  "$schema": "../schemas/building-catalog.schema.json",
+  "schemaVersion": 1,
+  "buildings": [
+    {
+      "id": "building.ground_exchange_station",
+      "name": "地面交换站",
+      "footprint": {
+        "width": 3,
+        "height": 2
+      },
+      "capabilityIds": [
+        "capability.storage",
+        "capability.exchange"
+      ],
+      "placementZoneTags": [
+        "zone.ground"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.storage",
+          "capabilityId": "capability.storage"
+        },
+        {
+          "slotId": "slot.exchange",
+          "capabilityId": "capability.exchange"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 3,
+            "height": 2
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "storage.total-capacity": 9999
+          }
+        }
+      ],
+      "buildCostCopper": 1200,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": true,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.airship_exchange_station",
+      "name": "飞艇交换站",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "capabilityIds": [
+        "capability.storage",
+        "capability.exchange"
+      ],
+      "placementZoneTags": [
+        "zone.airship"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.storage",
+          "capabilityId": "capability.storage"
+        },
+        {
+          "slotId": "slot.exchange",
+          "capabilityId": "capability.exchange"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "storage.ingredient-capacity": 12,
+            "storage.dishware-capacity": 8,
+            "storage.meal-capacity": 6
+          }
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 120,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 120,
+          "capabilityValues": {
+            "storage.ingredient-capacity": 18,
+            "storage.dishware-capacity": 12,
+            "storage.meal-capacity": 10
+          }
+        }
+      ],
+      "buildCostCopper": 1500,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": true,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.dish_cabinet",
+      "name": "橱柜",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "capabilityIds": [
+        "capability.dish_supply",
+        "capability.clean_dish_storage",
+        "capability.dirty_dish_storage",
+        "capability.dish_washing"
+      ],
+      "placementZoneTags": [
+        "zone.ground"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.dish_supply",
+          "capabilityId": "capability.dish_supply"
+        },
+        {
+          "slotId": "slot.clean_dish_storage",
+          "capabilityId": "capability.clean_dish_storage"
+        },
+        {
+          "slotId": "slot.dirty_dish_storage",
+          "capabilityId": "capability.dirty_dish_storage"
+        },
+        {
+          "slotId": "slot.dish_washing",
+          "capabilityId": "capability.dish_washing"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "dishware.plate-count": 4,
+            "dishware.dirty-capacity": 4,
+            "dishware.parallel-wash-count": 2,
+            "dishware.wash-duration-ms": 10000
+          }
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 100,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 120,
+          "capabilityValues": {
+            "dishware.plate-count": 6,
+            "dishware.dirty-capacity": 6,
+            "dishware.parallel-wash-count": 3,
+            "dishware.wash-duration-ms": 8000
+          }
+        }
+      ],
+      "buildCostCopper": 800,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": false,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.prep_station",
+      "name": "备菜台",
+      "footprint": {
+        "width": 2,
+        "height": 1
+      },
+      "capabilityIds": [
+        "capability.prep"
+      ],
+      "placementZoneTags": [
+        "zone.airship"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.prep",
+          "capabilityId": "capability.prep"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 2,
+            "height": 1
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "kitchen.cache-slot-count": 2,
+            "kitchen.workstation-count": 1
+          }
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 110,
+          "footprint": {
+            "width": 2,
+            "height": 1
+          },
+          "maxDurability": 130,
+          "capabilityValues": {
+            "kitchen.cache-slot-count": 4,
+            "kitchen.workstation-count": 2
+          }
+        }
+      ],
+      "buildCostCopper": 600,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": false,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.pan_fry_station",
+      "name": "煎炒灶台",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "capabilityIds": [
+        "capability.pan_fry"
+      ],
+      "placementZoneTags": [
+        "zone.airship"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.pan_fry",
+          "capabilityId": "capability.pan_fry"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "kitchen.workstation-count": 1
+          }
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 140,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 130,
+          "capabilityValues": {
+            "kitchen.workstation-count": 2
+          }
+        }
+      ],
+      "buildCostCopper": 900,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": false,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.steam_boil_station",
+      "name": "蒸煮灶台",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "capabilityIds": [
+        "capability.steam_boil"
+      ],
+      "placementZoneTags": [
+        "zone.airship"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.steam_boil",
+          "capabilityId": "capability.steam_boil"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "kitchen.workstation-count": 1
+          }
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 140,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 130,
+          "capabilityValues": {
+            "kitchen.workstation-count": 2
+          }
+        }
+      ],
+      "buildCostCopper": 900,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": false,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.baking_station",
+      "name": "烘烤设备",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "capabilityIds": [
+        "capability.baking"
+      ],
+      "placementZoneTags": [
+        "zone.airship"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.baking",
+          "capabilityId": "capability.baking"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "kitchen.workstation-count": 1
+          }
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 140,
+          "footprint": {
+            "width": 2,
+            "height": 2
+          },
+          "maxDurability": 130,
+          "capabilityValues": {
+            "kitchen.workstation-count": 2
+          }
+        }
+      ],
+      "buildCostCopper": 1100,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": false,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.plating_station",
+      "name": "装盘点",
+      "footprint": {
+        "width": 2,
+        "height": 1
+      },
+      "capabilityIds": [
+        "capability.plating"
+      ],
+      "placementZoneTags": [
+        "zone.airship"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.plating",
+          "capabilityId": "capability.plating"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 2,
+            "height": 1
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "kitchen.workstation-count": 1
+          }
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 90,
+          "footprint": {
+            "width": 2,
+            "height": 1
+          },
+          "maxDurability": 110,
+          "capabilityValues": {
+            "kitchen.workstation-count": 2
+          }
+        }
+      ],
+      "buildCostCopper": 500,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": false,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.personnel_elevator",
+      "name": "人员电梯",
+      "footprint": {
+        "width": 1,
+        "height": 2
+      },
+      "capabilityIds": [
+        "capability.person_transport"
+      ],
+      "placementZoneTags": [
+        "zone.edge"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.person_transport",
+          "capabilityId": "capability.person_transport"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 1,
+            "height": 2
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "person-transport.capacity": 1
+          }
+        }
+      ],
+      "buildCostCopper": 1200,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": false,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.cargo_lift",
+      "name": "小型货梯",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "capabilityIds": [
+        "capability.single_item_transport"
+      ],
+      "placementZoneTags": [
+        "zone.edge"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.single_item_transport",
+          "capabilityId": "capability.single_item_transport"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 1,
+            "height": 1
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "single-item-transport.capacity": 1
+          }
+        }
+      ],
+      "buildCostCopper": 700,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": false,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    },
+    {
+      "id": "building.waiting_area",
+      "name": "顾客等候区",
+      "footprint": {
+        "width": 2,
+        "height": 1
+      },
+      "capabilityIds": [
+        "capability.waiting_area"
+      ],
+      "placementZoneTags": [
+        "zone.ground"
+      ],
+      "componentSlots": [
+        {
+          "slotId": "slot.waiting_area",
+          "capabilityId": "capability.waiting_area"
+        }
+      ],
+      "levels": [
+        {
+          "level": 1,
+          "upgradeCostCopper": 0,
+          "footprint": {
+            "width": 2,
+            "height": 1
+          },
+          "maxDurability": 100,
+          "capabilityValues": {
+            "waiting-area.slot-count": 4
+          }
+        },
+        {
+          "level": 2,
+          "upgradeCostCopper": 80,
+          "footprint": {
+            "width": 2,
+            "height": 1
+          },
+          "maxDurability": 110,
+          "capabilityValues": {
+            "waiting-area.slot-count": 6
+          }
+        }
+      ],
+      "buildCostCopper": 400,
+      "styleIds": [
+        "default",
+        "brass"
+      ],
+      "defaultStyleId": "default",
+      "necessary": true,
+      "movable": true,
+      "storable": true,
+      "removable": true
+    }
+  ]
+}

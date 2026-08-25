@@ -2,6 +2,8 @@ export interface SaveEnvelope<TPayload> {
   readonly schemaVersion: number;
   readonly savedAtUtcMs: number;
   readonly payload: TPayload;
+  readonly checksumAlgorithm?: "sha256";
+  readonly checksum?: string;
 }
 
 export function createSaveEnvelope<TPayload>(
@@ -17,3 +19,4 @@ export function createSaveEnvelope<TPayload>(
 }
 
 export * from "./json-save-store";
+export * from "./modular-save";

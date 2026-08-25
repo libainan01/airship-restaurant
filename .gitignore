@@ -7,6 +7,23 @@ dist/
 coverage/
 *.log
 
+# Local Godot editor and generated files
+.tools/
+apps/godot/.godot/
+apps/godot/.mono/
+apps/godot/bin/
+apps/godot/obj/
+apps/godot/*.csproj.old
+*.import
+
+# Generated smoke-test and capture outputs
+artifacts/
+apps/godot/*.csproj.old
+*.import
+
+# Generated smoke-test and capture outputs
+artifacts/
+
 # Codex document build and review intermediates
 .codex_doc_work/
 .codex_doc_review/
@@ -19,3 +36,5 @@ prototype/
 .DS_Store
 Thumbs.db
 desktop.ini
+~$*.docx
+~$*.docx
